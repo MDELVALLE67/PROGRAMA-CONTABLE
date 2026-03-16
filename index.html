@@ -1544,10 +1544,9 @@
             if (!empresa) return;
             try {
                 const keys = [
-                    empresa + '_asientos',
-                    empresa + '_planCuentas',
-                    empresa + '_centrosCosto',
-                    empresa + '_presupuesto',
+                    'asientos_' + empresa,
+                    'flujo_' + empresa,
+                    'ppto_montos_' + empresa,
                     'usuarios_claves',
                     'empresas_config'
                 ];
@@ -1557,6 +1556,7 @@
                     if (v) datos[k] = v;
                 });
                 await db.collection('empresas').doc(empresa).set({datos, updated: new Date().toISOString()});
+                console.log('Firebase guardado OK:', Object.keys(datos));
             } catch(e) { console.warn('Firebase save error:', e); }
         }
 
