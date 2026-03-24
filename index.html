@@ -1681,7 +1681,7 @@
                     const v = localStorage.getItem(k);
                     if (v) datos[k] = v;
                 });
-                await db.collection('empresas').doc(empresa).set({datos, updated: new Date().toISOString()});
+                await db.collection('empresas').doc(empresa).set({datos, updated: new Date().toISOString(), timestamp: Date.now()});
                 console.log('Firebase guardado OK:', Object.keys(datos));
             } catch(e) { console.warn('Firebase save error:', e); }
         }
@@ -1691,6 +1691,12 @@
             try {
                 const doc = await db.collection('empresas').doc(empresa).get();
                 if (doc.exists && doc.data().datos) {
+                    // Primero limpiar datos locales de esta empresa para evitar datos viejos
+                    const keysToRemove = Object.keys(localStorage).filter(k => 
+                        k.endsWith('_' + empresa) || k === 'usuarios_claves' || k === 'empresas_config'
+                    );
+                    keysToRemove.forEach(k => localStorage.removeItem(k));
+                    // Luego escribir los datos de Firebase
                     Object.entries(doc.data().datos).forEach(([k,v]) => localStorage.setItem(k, v));
                     return true;
                 }
@@ -1900,6 +1906,8 @@
                 if (d.presupuestado > 0) montos[cod] = d.presupuestado;
             });
             localStorage.setItem('ppto_montos_' + key, JSON.stringify(montos));
+            // Sincronizar con Firebase automáticamente
+            syncFirebase();
         }
 
         // Version del plan de cuentas - cambiar cuando se actualice el plan
@@ -2048,10 +2056,21 @@ function getUsuarios() {
                 
                 // Cargar datos desde Firebase primero
                 cargarDesdeFirebase(empresa).then(cargado => {
+                    // Limpiar localStorage local antes de cargar desde Firebase
+                    // para asegurar que siempre se usen los datos más recientes
+                    if (cargado) {
+                        // Firebase tiene datos — borrar keys locales antes de recargar
+                        const keysToClear = [
+                            'asientos_' + empresa,
+                            'flujo_' + empresa,
+                            'ppto_montos_' + empresa,
+                        ];
+                        // No borramos — Firebase ya sobreescribió localStorage en cargarDesdeFirebase
+                    }
                     cargarLocalStorage();
                     actualizarTodo();
                     initLineasDiario();
-                    showToast('¡Bienvenido ' + usuario + (cargado ? ' — datos sincronizados ☁️' : '!'), 'success');
+                    showToast('¡Bienvenido ' + usuario + (cargado ? ' — datos sincronizados ☁️' : ' — sin conexión, datos locales'), 'success');
                 });
             } else {
                 showToast('Usuario o contraseña incorrectos', 'error');
@@ -2059,6 +2078,7 @@ function getUsuarios() {
         }
 
         function cerrarSesion() {
+            if (_firestoreListener) { _firestoreListener(); _firestoreListener = null; }
             sesionActual = {usuario: null, rol: null, empresa: null};
             document.getElementById('login-screen').classList.remove('hidden');
             document.getElementById('app-main').classList.add('hidden');
@@ -2517,11 +2537,12 @@ function getUsuarios() {
             if (!confirm('¿Eliminar este movimiento?')) return;
             asientos.splice(index, 1);
             guardarLocalStorage();
+            syncFirebase();
             actualizarTablaAsientos();
             actualizarUltimosMovimientos();
             actualizarTablaMayor();
             calcularReportes();
-            showToast('Movimiento eliminado', 'success');
+            showToast('Movimiento eliminado ☁️', 'success');
         }
 
         function abrirEditarAsiento(index) {
