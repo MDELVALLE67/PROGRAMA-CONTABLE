@@ -500,10 +500,9 @@
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z"/>
                             </svg>
                         </button>
-                        <button onclick="cerrarSesion()" title="Cerrar sesión" class="p-2 bg-white/10 rounded-lg text-white hover:bg-white/20 transition-all">
-                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                            </svg>
+                        <button onclick="cerrarSesion()" title="Cerrar sesión" class="flex items-center gap-2 px-3 py-2 bg-red-500 hover:bg-red-600 rounded-lg text-white text-sm font-medium transition-all" style="position:relative;z-index:50;cursor:pointer">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                            <span>Salir</span>
                         </button>
                     </div>
                 </div>
@@ -1650,6 +1649,8 @@
     <script>
         // Estado global
         let sesionActual = {usuario: null, rol: null, empresa: null};
+        let _firestoreListener = null;
+        let _syncTimeout = null;
 
         // ── FIREBASE CONFIG ───────────────────────────────────────
         const firebaseConfig = {
@@ -1664,7 +1665,6 @@
         const db = firebase.firestore();
 
         // ── SYNC FIREBASE ─────────────────────────────────────────
-        let _syncTimeout = null;
 
         async function guardarEnFirebase(empresa) {
             if (!empresa) return;
@@ -7733,10 +7733,19 @@ function getUsuarios() {
         }
 
         function imprimirAuditoria() {
-            const area = document.getElementById('aud-print-area');
-            if (!area) { showToast('Genera el análisis primero','error'); return; }
-            const emp = document.querySelector('.empresa-nombre')?.textContent || 'Empresa';
-            imprimirInforme('Auditoría — ' + emp, area.innerHTML);
+            const area = document.getElementById('auditoria-contenido');
+            if (!area || area.innerHTML.trim() === '' || area.innerHTML.includes('Ejecutar Análisis')) {
+                // Run analysis first then print
+                ejecutarAuditoria();
+                setTimeout(() => {
+                    const emp = getEmpresasConfig ? getEmpresasConfig()[sesionActual?.empresa]?.nombre || 'Empresa' : 'Empresa';
+                    const cuerpo = document.getElementById('auditoria-contenido')?.innerHTML || '';
+                    imprimirInforme('Auditoría Contable — ' + emp, cuerpo);
+                }, 500);
+                return;
+            }
+            const emp = getEmpresasConfig ? getEmpresasConfig()[sesionActual?.empresa]?.nombre || 'Empresa' : 'Empresa';
+            imprimirInforme('Auditoría Contable — ' + emp, area.innerHTML);
         }
 
 
