@@ -568,6 +568,11 @@
                         <span>Auditoría</span>
                         <div class="nav-indicator"></div>
                     </button>
+                    <button onclick="changeTab('conciliacion')" class="nav-item permisos-admin" id="tab-conciliacion">
+                        <span>🏦</span>
+                        <span>Conciliación</span>
+                        <div class="nav-indicator"></div>
+                    </button>
                     <button onclick="changeTab('exportar')" class="nav-item" id="tab-exportar">
                         <span>💾</span>
                         <span>Exportar</span>
@@ -1052,7 +1057,7 @@
                             <span class="text-xl">📊</span>
                             <span>Balance General</span>
                             <div class="ml-auto flex gap-2">
-                                <button onclick="abrirFiltroFecha('Balance General','🖨️',(d,h)=>descargarExcelBalance(d,h))" title="Imprimir" class="btn-download">🖨️</button>
+                                <button onclick="imprimirBalanceGeneral()" title="Imprimir" class="btn-download">🖨️</button>
                                 <button onclick="abrirFiltroFecha('Balance General','📊',(d,h)=>excelBalance(d,h))" title="Excel" class="btn-download" style="background:linear-gradient(135deg,#166534,#15803d)">📊</button>
                                 <button onclick="abrirFiltroFecha('Balance General','📄',(d,h)=>pdfBalance(d,h))" title="PDF" class="btn-download" style="background:linear-gradient(135deg,#991b1b,#dc2626)">📄</button>
                             </div>
@@ -1064,7 +1069,7 @@
                             <span class="text-xl">💹</span>
                             <span>Estado de Resultados</span>
                             <div class="ml-auto flex gap-2">
-                                <button onclick="abrirFiltroFecha('Estado de Resultados','🖨️',(d,h)=>descargarExcelResultados(d,h))" title="Imprimir" class="btn-download">🖨️</button>
+                                <button onclick="imprimirEstadoResultados()" title="Imprimir" class="btn-download">🖨️</button>
                                 <button onclick="abrirFiltroFecha('Estado de Resultados','📊',(d,h)=>excelResultados(d,h))" title="Excel" class="btn-download" style="background:linear-gradient(135deg,#166534,#15803d)">📊</button>
                                 <button onclick="abrirFiltroFecha('Estado de Resultados','📄',(d,h)=>pdfResultados(d,h))" title="PDF" class="btn-download" style="background:linear-gradient(135deg,#991b1b,#dc2626)">📄</button>
                             </div>
@@ -1170,7 +1175,7 @@
                         <span class="text-xl">💵</span>
                         <span>Detalle Presupuestario</span>
 <div class="ml-auto flex gap-2">
-                                <button onclick="abrirFiltroFecha('Presupuesto','🖨️',(d,h)=>descargarExcelPresupuesto(d,h))" title="Imprimir" class="btn-download">🖨️ Imprimir</button>
+                                <button onclick="imprimirPresupuesto()" title="Imprimir" class="btn-download">🖨️ Imprimir</button>
                                 <button onclick="abrirFiltroFecha('Presupuesto','📊',(d,h)=>excelPresupuesto(d,h))" title="Excel" class="btn-download" style="background:linear-gradient(135deg,#166534,#15803d)">📊 Excel</button>
                                 <button onclick="abrirFiltroFecha('Presupuesto','📄',(d,h)=>pdfPresupuesto(d,h))" title="PDF" class="btn-download" style="background:linear-gradient(135deg,#991b1b,#dc2626)">📄 PDF</button>
                             </div>
@@ -1203,15 +1208,19 @@
                     <div class="section-header">
                         <span class="text-xl">💧</span>
                         <span>Estado de Flujo de Efectivo</span>
-                        <div class="ml-auto flex items-center gap-3">
+                        <div class="ml-auto flex items-center gap-3 flex-wrap">
                             <span class="text-sm text-white/80">Método:</span>
                             <select id="flujo-metodo" class="text-sm bg-white/20 text-white border border-white/30 rounded-lg px-3 py-1.5 font-medium" onchange="renderFlujo()">
                                 <option value="directo">Directo</option>
                                 <option value="indirecto">Indirecto</option>
                             </select>
-<button onclick="abrirFiltroFecha('Flujo de Caja','🖨️',(d,h)=>imprimirFlujo(d,h))" class="btn-download">🖨️ Imprimir</button>
-                            <button onclick="abrirFiltroFecha('Flujo de Caja','📊',(d,h)=>excelFlujo(d,h))" class="btn-download" style="background:linear-gradient(135deg,#166534,#15803d)">📊 Excel</button>
-                            <button onclick="abrirFiltroFecha('Flujo de Caja','📄',(d,h)=>pdfFlujo(d,h))" class="btn-download" style="background:linear-gradient(135deg,#991b1b,#dc2626)">📄 PDF</button>
+                            <span class="text-sm text-white/80">Desde:</span>
+                            <input type="date" id="flujo-desde" class="text-sm bg-white/20 text-white border border-white/30 rounded-lg px-2 py-1.5" onchange="renderFlujo()">
+                            <span class="text-sm text-white/80">Hasta:</span>
+                            <input type="date" id="flujo-hasta" class="text-sm bg-white/20 text-white border border-white/30 rounded-lg px-2 py-1.5" onchange="renderFlujo()">
+                            <button onclick="imprimirFlujoConFiltro()" class="btn-download">🖨️ Imprimir</button>
+                            <button onclick="excelFlujoConFiltro()" class="btn-download" style="background:linear-gradient(135deg,#166534,#15803d)">📊 Excel</button>
+                            <button onclick="pdfFlujoConFiltro()" class="btn-download" style="background:linear-gradient(135deg,#991b1b,#dc2626)">📄 PDF</button>
                         </div>
                     </div>
                     <!-- Tabs método descripción -->
@@ -1256,6 +1265,9 @@
                             <button onclick="agregarFlujo()" class="btn-primary w-full justify-center text-sm py-2">
                                 <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z"/></svg>
                                 Agregar Línea
+                            </button>
+                            <button onclick="resetearFlujoCuentas()" class="w-full mt-2 px-4 py-2 text-sm font-medium border border-blue-300 text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl">
+                                🔄 Restaurar Cuentas Automáticas
                             </button>
                         </div>
                     </div>
@@ -1414,6 +1426,186 @@
                     <div class="bg-white rounded-2xl p-12 text-center text-gray-400">
                         <div class="text-5xl mb-3">🔍</div>
                         <div class="font-medium">Haz clic en "Analizar" para generar el informe de auditoría</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CONCILIACIÓN BANCARIA TAB -->
+            <div id="content-conciliacion" class="tab-content hidden">
+
+                <!-- Header -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
+                    <div class="section-header" style="background:linear-gradient(135deg,#0f4c81,#1a7bc4)">
+                        <span class="text-2xl">🏦</span>
+                        <div>
+                            <div class="font-bold text-lg">Conciliación Bancaria Automática</div>
+                            <div class="text-white/70 text-xs">Compara tu cartola del banco con el Libro Diario</div>
+                        </div>
+                        <div class="ml-auto flex gap-2">
+                            <button onclick="imprimirConciliacion()" class="btn-download">🖨️ Imprimir</button>
+                            <button onclick="excelConciliacion()" class="btn-download" style="background:linear-gradient(135deg,#166534,#15803d)">📊 Excel</button>
+                        </div>
+                    </div>
+
+                    <!-- Config -->
+                    <div class="p-5 bg-blue-50 border-b border-blue-100">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <div>
+                                <label class="text-xs font-semibold text-gray-600 uppercase block mb-1">Cuenta Bancaria</label>
+                                <select id="conc-cuenta" class="form-input py-2 text-sm w-full">
+                                    <option value="">Seleccionar cuenta...</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-600 uppercase block mb-1">Período Desde</label>
+                                <input type="date" id="conc-desde" class="form-input py-2 text-sm w-full">
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-600 uppercase block mb-1">Período Hasta</label>
+                                <input type="date" id="conc-hasta" class="form-input py-2 text-sm w-full">
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-600 uppercase block mb-1">Saldo Banco (Cartola)</label>
+                                <input type="number" id="conc-saldo-banco" class="form-input py-2 text-sm w-full font-mono" placeholder="$0">
+                            </div>
+                            <div>
+                                <label class="text-xs font-semibold text-gray-600 uppercase block mb-1">Tolerancia (días)</label>
+                                <input type="number" id="conc-tolerancia" class="form-input py-2 text-sm w-full font-mono" value="5" min="0" max="30">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Subir cartola -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <div class="section-header text-sm" style="background:linear-gradient(135deg,#1d4ed8,#3b82f6)">
+                            <span class="text-xl">📂</span>
+                            <span>Subir Cartola Bancaria</span>
+                        </div>
+                        <div class="p-5 space-y-4">
+                            <div class="border-2 border-dashed border-blue-200 rounded-xl p-6 text-center bg-blue-50 hover:bg-blue-100 transition-all cursor-pointer" onclick="document.getElementById('conc-file').click()">
+                                <div class="text-4xl mb-2">📄</div>
+                                <div class="font-semibold text-blue-700 mb-1">Arrastra o haz clic para subir</div>
+                                <div class="text-xs text-gray-500">Formatos: Excel (.xlsx, .xls) o CSV (.csv)</div>
+                                <div class="text-xs text-gray-400 mt-1">Columnas requeridas: Fecha, Descripción, Débito/Crédito o Monto</div>
+                                <input type="file" id="conc-file" accept=".xlsx,.xls,.csv" class="hidden" onchange="cargarCartola(this)">
+                            </div>
+                            <!-- Mapeo de columnas -->
+                            <div id="conc-mapeo" class="hidden space-y-2">
+                                <div class="text-xs font-bold text-gray-500 uppercase mb-2">Mapear columnas del archivo:</div>
+                                <div class="grid grid-cols-2 gap-2 text-xs">
+                                    <div>
+                                        <label class="block text-gray-600 mb-1">Columna Fecha</label>
+                                        <select id="map-fecha" class="form-input py-1.5 text-xs w-full"></select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-600 mb-1">Columna Descripción</label>
+                                        <select id="map-desc" class="form-input py-1.5 text-xs w-full"></select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-600 mb-1">Columna Débito (salida)</label>
+                                        <select id="map-debito" class="form-input py-1.5 text-xs w-full"><option value="">-- No aplica --</option></select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-gray-600 mb-1">Columna Crédito (entrada)</label>
+                                        <select id="map-credito" class="form-input py-1.5 text-xs w-full"><option value="">-- No aplica --</option></select>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <label class="block text-gray-600 mb-1">O columna Monto único (positivo=entrada)</label>
+                                        <select id="map-monto" class="form-input py-1.5 text-xs w-full"><option value="">-- No aplica --</option></select>
+                                    </div>
+                                </div>
+                                <button onclick="procesarCartola()" class="btn-primary w-full justify-center text-sm py-2 mt-2">
+                                    ⚡ Procesar y Conciliar
+                                </button>
+                            </div>
+                            <div id="conc-resumen-cartola" class="hidden text-sm bg-blue-50 rounded-xl p-3 border border-blue-100"></div>
+                        </div>
+                    </div>
+
+                    <!-- KPIs conciliación -->
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <div class="section-header text-sm" style="background:linear-gradient(135deg,#0f4c81,#1a7bc4)">
+                            <span class="text-xl">📊</span>
+                            <span>Resumen Conciliación</span>
+                        </div>
+                        <div class="p-5 space-y-3" id="conc-kpis">
+                            <div class="text-center py-8 text-gray-400">
+                                <div class="text-4xl mb-2">🏦</div>
+                                <div class="text-sm">Sube una cartola para ver el resumen</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resultado conciliación -->
+                <div id="conc-resultado" class="hidden space-y-6">
+
+                    <!-- Conciliados -->
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <div class="px-5 py-3 bg-green-700 text-white font-bold flex items-center justify-between">
+                            <span>✅ Movimientos Conciliados</span>
+                            <span class="text-sm font-normal bg-green-600 px-3 py-1 rounded-full" id="conc-count-ok">0</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-green-50 border-b-2 border-green-200">
+                                    <tr>
+                                        <th class="px-4 py-2.5 text-left text-xs font-semibold text-green-800">Fecha Banco</th>
+                                        <th class="px-4 py-2.5 text-left text-xs font-semibold text-green-800">Descripción Banco</th>
+                                        <th class="px-4 py-2.5 text-right text-xs font-semibold text-green-800">Monto Banco</th>
+                                        <th class="px-4 py-2.5 text-left text-xs font-semibold text-green-800">Fecha Libro</th>
+                                        <th class="px-4 py-2.5 text-left text-xs font-semibold text-green-800">V# / Glosa</th>
+                                        <th class="px-4 py-2.5 text-right text-xs font-semibold text-green-800">Monto Libro</th>
+                                        <th class="px-4 py-2.5 text-center text-xs font-semibold text-green-800">Diferencia</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="conc-tabla-ok"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Solo en banco -->
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <div class="px-5 py-3 bg-orange-600 text-white font-bold flex items-center justify-between">
+                            <span>⚠️ Solo en Banco (no en Libro Diario)</span>
+                            <span class="text-sm font-normal bg-orange-500 px-3 py-1 rounded-full" id="conc-count-banco">0</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-orange-50 border-b-2 border-orange-200">
+                                    <tr>
+                                        <th class="px-4 py-2.5 text-left text-xs font-semibold text-orange-800">Fecha</th>
+                                        <th class="px-4 py-2.5 text-left text-xs font-semibold text-orange-800">Descripción</th>
+                                        <th class="px-4 py-2.5 text-right text-xs font-semibold text-orange-800">Monto</th>
+                                        <th class="px-4 py-2.5 text-center text-xs font-semibold text-orange-800">Acción</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="conc-tabla-banco"></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Solo en libro -->
+                    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+                        <div class="px-5 py-3 bg-blue-700 text-white font-bold flex items-center justify-between">
+                            <span>📒 Solo en Libro Diario (no en Banco)</span>
+                            <span class="text-sm font-normal bg-blue-600 px-3 py-1 rounded-full" id="conc-count-libro">0</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-sm">
+                                <thead class="bg-blue-50 border-b-2 border-blue-200">
+                                    <tr>
+                                        <th class="px-4 py-2.5 text-left text-xs font-semibold text-blue-800">Fecha</th>
+                                        <th class="px-4 py-2.5 text-left text-xs font-semibold text-blue-800">V# / Glosa</th>
+                                        <th class="px-4 py-2.5 text-left text-xs font-semibold text-blue-800">Cuenta</th>
+                                        <th class="px-4 py-2.5 text-right text-xs font-semibold text-blue-800">Monto</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="conc-tabla-libro"></tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1682,6 +1874,15 @@
                     if (v) datos[k] = v;
                 });
                 await db.collection('empresas').doc(empresa).set({datos, updated: new Date().toISOString(), timestamp: Date.now()});
+                // Also save global config (empresa names, users) to all docs
+                const globalConfig = {};
+                ['usuarios_claves','empresas_config'].forEach(k => {
+                    const v = localStorage.getItem(k);
+                    if (v) globalConfig[k] = v;
+                });
+                if (Object.keys(globalConfig).length) {
+                    await db.collection('empresas').doc('global').set({datos: globalConfig, updated: new Date().toISOString()});
+                }
                 console.log('Firebase guardado OK:', Object.keys(datos));
             } catch(e) { console.warn('Firebase save error:', e); }
         }
@@ -1689,6 +1890,13 @@
         async function cargarDesdeFirebase(empresa) {
             if (!empresa) return false;
             try {
+                // Load global config first (empresa names, users)
+                const globalDoc = await db.collection('empresas').doc('global').get();
+                if (globalDoc.exists && globalDoc.data().datos) {
+                    Object.entries(globalDoc.data().datos).forEach(([k,v]) => {
+                        localStorage.setItem(k, v);
+                    });
+                }
                 const doc = await db.collection('empresas').doc(empresa).get();
                 if (doc.exists && doc.data().datos) {
                     // Primero limpiar datos locales de esta empresa para evitar datos viejos
@@ -1722,6 +1930,7 @@
         }
         function saveEmpresasConfig(cfg) {
             localStorage.setItem('empresas_config', JSON.stringify(cfg));
+            syncFirebase();
         }
         function getNombreEmpresa(key) {
             const cfg = getEmpresasConfig();
@@ -1969,6 +2178,9 @@
             // Restore flujo
             const flujoData = localStorage.getItem('flujo_' + key);
             if (flujoData) flujoCuentas = JSON.parse(flujoData);
+            if (!flujoCuentas || flujoCuentas.length === 0) {
+                flujoCuentas = autoPopularFlujoCuentas();
+            }
 
             guardarLocalStorage();
         }
@@ -2002,10 +2214,14 @@
             actualizarSelectorEmpresas();
             // Update header if logged in
             if (sesionActual.empresa) {
-                document.getElementById('empresa-nombre').textContent = getNombreEmpresa(sesionActual.empresa);
+                const nuevoNombre = getNombreEmpresa(sesionActual.empresa);
+                document.getElementById('empresa-nombre').textContent = nuevoNombre;
+                // Update app title too
+                const appTitle = document.querySelector('.empresa-nombre');
+                if (appTitle) appTitle.textContent = nuevoNombre;
             }
             cerrarConfigEmpresas();
-            showToast('✅ Configuración de empresas guardada', 'success');
+            showToast('✅ Configuración guardada — recarga si no ves el cambio', 'success');
         }
         function actualizarSelectorEmpresas() {
             const sel = document.getElementById('login-empresa');
@@ -2017,21 +2233,30 @@
             sel.value = val;
         }
 
-function getUsuarios() {
-            // Default passwords, overridden by localStorage if changed
+        function getUsuarios() {
             const defaults = {
                 "admin":    {password: "admin123",    rol: "administrador"},
                 "contador": {password: "contador123", rol: "solo_lectura"}
             };
             const saved = localStorage.getItem('usuarios_claves');
             if (saved) {
-                const savedObj = JSON.parse(saved);
-                Object.keys(savedObj).forEach(u => {
-                    if (defaults[u]) defaults[u].password = savedObj[u];
-                });
+                try {
+                    const savedObj = JSON.parse(saved);
+                    Object.keys(savedObj).forEach(u => {
+                        if (!defaults[u]) defaults[u] = {password:'', rol:'solo_lectura'};
+                        // Handle both string format (old) and object format (new)
+                        if (typeof savedObj[u] === 'string') {
+                            defaults[u].password = savedObj[u];
+                        } else if (savedObj[u] && savedObj[u].password) {
+                            defaults[u].password = savedObj[u].password;
+                            if (savedObj[u].rol) defaults[u].rol = savedObj[u].rol;
+                        }
+                    });
+                } catch(e) {}
             }
             return defaults;
         }
+
 
         function iniciarSesion() {
             const empresa = document.getElementById('login-empresa').value;
@@ -2548,13 +2773,22 @@ function getUsuarios() {
         function abrirEditarAsiento(index) {
             const a = asientos[index];
             document.getElementById('edit-index').value = index;
-            document.getElementById('edit-fecha').value = a.fecha;
-            document.getElementById('edit-voucher').value = a.voucher;
-            document.getElementById('edit-cuenta').value = a.cuenta;
-            document.getElementById('edit-cc').value = a.cc;
-            document.getElementById('edit-debe').value = a.debe;
-            document.getElementById('edit-haber').value = a.haber;
-            document.getElementById('edit-glosa').value = a.glosa;
+            document.getElementById('edit-fecha').value = a.fecha || '';
+            document.getElementById('edit-voucher').value = a.voucher || '';
+            document.getElementById('edit-cuenta').value = a.cuenta || '';
+            document.getElementById('edit-debe').value = a.debe || 0;
+            document.getElementById('edit-haber').value = a.haber || 0;
+            document.getElementById('edit-glosa').value = a.glosa || '';
+            // Populate CC select
+            const ccSel = document.getElementById('edit-cc');
+            ccSel.innerHTML = '';
+            Object.entries(centrosCosto).forEach(([cod,c]) => {
+                const op = document.createElement('option');
+                op.value = cod;
+                op.textContent = c.nombre;
+                if (cod === a.cc) op.selected = true;
+                ccSel.appendChild(op);
+            });
             document.getElementById('modal-editar').classList.remove('hidden');
         }
 
@@ -2575,8 +2809,8 @@ function getUsuarios() {
             actualizarUltimosMovimientos();
             actualizarTablaMayor();
             calcularReportes();
-            cerrarModalEditar();
-            showToast('Movimiento actualizado', 'success');
+            document.getElementById('modal-editar').classList.add('hidden');
+            showToast('Asiento actualizado ✅', 'success');
         }
 
         function cerrarModalEditar() {
@@ -2661,6 +2895,11 @@ function getUsuarios() {
             
             tabla.innerHTML = Object.entries(mayor)
                 .sort((a, b) => a[0].localeCompare(b[0]))
+                .filter(([codigo, d]) => {
+                    const tipo = planCuentas[codigo]?.tipo || d.tipo;
+                    const saldo = (tipo==='Activo'||tipo==='Gasto') ? d.debe-d.haber : d.haber-d.debe;
+                    return Math.round(saldo) !== 0 || d.debe > 0 || d.haber > 0;
+                })
                 .map(([codigo, d]) => {
                     const tipo = planCuentas[codigo]?.tipo || d.tipo;
                     const saldo = (tipo==='Activo'||tipo==='Gasto') ? d.debe-d.haber : d.haber-d.debe;
@@ -2705,11 +2944,11 @@ function getUsuarios() {
             const detActivos = [], detPasivos = [], detPatrimonio = [], detIngresos = [], detGastos = [];
 
             Object.entries(mayor).sort((a,b) => a[0].localeCompare(b[0])).forEach(([cod, d]) => {
-                if (d.tipo === 'Activo')     { const s = d.debe - d.haber; activos     += s; detActivos.push({cod, nombre: d.nombre, monto: s}); }
-                if (d.tipo === 'Pasivo')     { const s = d.haber - d.debe; pasivos     += s; detPasivos.push({cod, nombre: d.nombre, monto: s}); }
-                if (d.tipo === 'Patrimonio') { const s = d.haber - d.debe; patrimonio  += s; detPatrimonio.push({cod, nombre: d.nombre, monto: s}); }
-                if (d.tipo === 'Ingreso')    { const s = d.haber - d.debe; ingresos    += s; detIngresos.push({cod, nombre: d.nombre, monto: s}); }
-                if (d.tipo === 'Gasto')      { const s = d.debe - d.haber; gastos      += s; detGastos.push({cod, nombre: d.nombre, monto: s}); }
+                if (d.tipo === 'Activo')     { const s = d.debe - d.haber; activos     += s; if (Math.round(s) !== 0) detActivos.push({cod, nombre: d.nombre, monto: s}); }
+                if (d.tipo === 'Pasivo')     { const s = d.haber - d.debe; pasivos     += s; if (Math.round(s) !== 0) detPasivos.push({cod, nombre: d.nombre, monto: s}); }
+                if (d.tipo === 'Patrimonio') { const s = d.haber - d.debe; patrimonio  += s; if (Math.round(s) !== 0) detPatrimonio.push({cod, nombre: d.nombre, monto: s}); }
+                if (d.tipo === 'Ingreso')    { const s = d.haber - d.debe; ingresos    += s; if (Math.round(s) !== 0) detIngresos.push({cod, nombre: d.nombre, monto: s}); }
+                if (d.tipo === 'Gasto')      { const s = d.debe - d.haber; gastos      += s; if (Math.round(s) !== 0) detGastos.push({cod, nombre: d.nombre, monto: s}); }
             });
 
             // KPI cards
@@ -2830,7 +3069,7 @@ function getUsuarios() {
                 const key = planCuentas[prefix2] ? prefix2 : (planCuentas[prefix3] ? prefix3 : cod.substring(0,1));
                 if (!saldosPorGrupo[key]) saldosPorGrupo[key] = {nombre: planCuentas[key]?.nombre||key, tipo: d.tipo, saldo: 0, detalle: []};
                 saldosPorGrupo[key].saldo += saldo;
-                saldosPorGrupo[key].detalle.push({cod, nombre: d.nombre, saldo});
+                if(Math.round(saldo)!==0) saldosPorGrupo[key].detalle.push({cod, nombre: d.nombre, saldo});
             });
 
             // Totales por categoría
@@ -3006,7 +3245,6 @@ function getUsuarios() {
             const sec=(label,color)=>`<tr><td colspan="2" style="padding:6px 10px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;background:${color};color:#fff">${label}</td></tr>`;
 
             const html=`
-            <div class="header"><h1>${emp}</h1><h2>🇨🇱 Balance Tributario — Norma Chilena (SII)</h2><p>Ejercicio ${new Date().getFullYear()} · Art. 20 LIR · Generado: ${hoy}</p></div>
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
               <div>
                 <table style="width:100%;border-collapse:collapse;font-size:12px;border:1px solid #e2e8f0">
@@ -3056,7 +3294,7 @@ function getUsuarios() {
                 </div>
               </div>
             </div>`;
-            imprimirInforme('Balance Tributario', html);
+            imprimirInforme('Balance Tributario', html, rangoTxt);
         }
 
         // ── BALANCE 8 COLUMNAS NORMA CHILENA SII ─────────────────
@@ -3315,10 +3553,7 @@ function getUsuarios() {
             </tr>` : '';
 
             const html = `
-            <div class="header"><h1>${emp}</h1>
-            <h2>🗂️ Balance Tributario 8 Columnas — Norma Chilena SII</h2>
-            <p>${rangoTxt} · Ejercicio ${new Date().getFullYear()} · Generado: ${hoy}</p></div>
-            <table style="width:100%;border-collapse:collapse">
+<table style="width:100%;border-collapse:collapse">
                 <thead>
                     <tr style="background:#1e293b;color:#fff;font-size:9px">
                         <th style="padding:5px 4px;text-align:center" rowspan="2">N°</th>
@@ -3363,7 +3598,7 @@ function getUsuarios() {
                     </tr>
                 </tfoot>
             </table>`;
-            imprimirInforme('Balance 8 Columnas', html);
+            imprimirInforme('Balance 8 Columnas', html, rangoTxt);
         }
 
 
@@ -3686,7 +3921,7 @@ function getUsuarios() {
                 const datos = presupuesto[codigo] || {presupuestado:0, ejecutado:0};
                 const ejec  = datos.ejecutado    || 0;
                 const ppto  = datos.presupuestado || 0;
-                const variacion = ejec - ppto;
+                const variacion = cuenta.tipo==='Ingreso' ? ejec - ppto : ppto - ejec;
                 const pct = ppto > 0 ? ((ejec/ppto)*100).toFixed(1) : (ejec>0?'100.0':'0.0');
 
                 let colorPct = 'bg-gray-100 text-gray-600';
@@ -3769,7 +4004,7 @@ function getUsuarios() {
         }
 
         // ── IMPRESIÓN PROFESIONAL ─────────────────────────────
-        function imprimirInforme(titulo, htmlContent) {
+        function imprimirInforme(titulo, htmlContent, rangoTxt) {
             // Remove previous preview if exists
             const old = document.getElementById('modal-preview-informe');
             if (old) old.remove();
@@ -3850,15 +4085,222 @@ function getUsuarios() {
             ].join('\n');
 
             const d = iframe.contentDocument || iframe.contentWindow.document;
+            const empCfg2 = typeof getEmpresasConfig === 'function' ? getEmpresasConfig() : {};
+            const empKey2  = (sesionActual && sesionActual.empresa) ? sesionActual.empresa : 'anfa_renca';
+            const empNom2  = (empCfg2[empKey2] && empCfg2[empKey2].nombre) ? empCfg2[empKey2].nombre : 
+                             (typeof getNombreEmpresa === 'function' ? getNombreEmpresa(empKey2) : empKey2.toUpperCase().replace('_',' '));
+            const empRut2  = (empCfg2[empKey2] && empCfg2[empKey2].rut) ? empCfg2[empKey2].rut : '';
+            const fechaHoy = new Date().toLocaleDateString('es-CL', {day:'numeric',month:'long',year:'numeric'});
+
             d.open();
             d.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' + css + '</style></head><body>');
+            var periodoTxt = rangoTxt ? rangoTxt : ('Fecha: ' + fechaHoy);
+            d.write('<div class="header"><h1>' + empNom2 + (empRut2 ? ' &nbsp;|&nbsp; RUT: ' + empRut2 : '') + '</h1><h2>' + titulo + '</h2><p>' + periodoTxt + ' &middot; Generado: ' + fechaHoy + '</p></div>');
             d.write(htmlContent);
-            d.write('<div class="footer">ANFA RENCA &middot; Sistema Contable &middot; ' + new Date().toLocaleString('es-CL') + '</div>');
+            d.write('<div class="footer">' + empNom2 + ' &middot; Sistema Contable &middot; ' + new Date().toLocaleString('es-CL') + '</div>');
             d.write('</body></html>');
             d.close();
         }
 
-        const emp  = () => getNombreEmpresa(sesionActual.empresa||'anfa_renca');
+        function imprimirPresupuesto() {
+            const empKey = sesionActual?.empresa || 'anfa_renca';
+            const empCfg = typeof getEmpresasConfig === 'function' ? getEmpresasConfig() : {};
+            const empNom = empCfg[empKey]?.nombre || empKey.toUpperCase().replace('_',' ');
+            const empRut = empCfg[empKey]?.rut || '';
+            const fechaHoy = new Date().toLocaleDateString('es-CL', {day:'numeric',month:'long',year:'numeric'});
+
+            calcularEjecutado();
+            const fmt = n => '$' + Math.round(Math.abs(n)).toLocaleString('es-CL');
+            const cuentasPpto = Object.entries(planCuentas)
+                .filter(([,c]) => c.nivel===4 && (c.tipo==='Ingreso'||c.tipo==='Gasto'))
+                .sort((a,b) => a[0].localeCompare(b[0]));
+
+            let totIngPpto=0, totIngEjec=0, totGasPpto=0, totGasEjec=0;
+            let rowsIng='', rowsGas='';
+
+            cuentasPpto.forEach(([codigo, cuenta]) => {
+                const datos = presupuesto[codigo] || {presupuestado:0, ejecutado:0};
+                const ejec  = datos.ejecutado    || 0;
+                const ppto  = datos.presupuestado || 0;
+                if (ppto === 0 && ejec === 0) return;
+                const variacion = cuenta.tipo==='Ingreso' ? ejec - ppto : ppto - ejec;
+                const pct = ppto > 0 ? ((ejec/ppto)*100).toFixed(1) : (ejec>0?'100.0':'0.0');
+                const varColor = variacion >= 0 ? 'color:#15803d' : 'color:#b91c1c';
+                const varSig   = variacion >= 0 ? '+' : '-';
+                const row = `<tr style="border-bottom:1px solid #f1f5f9">
+                    <td style="padding:7px 10px;font-family:monospace;font-size:11px">${codigo}</td>
+                    <td style="padding:7px 10px">${cuenta.nombre}</td>
+                    <td style="padding:7px 10px;text-align:right;font-family:monospace">$${Math.round(ppto).toLocaleString('es-CL')}</td>
+                    <td style="padding:7px 10px;text-align:right;font-family:monospace">$${Math.round(ejec).toLocaleString('es-CL')}</td>
+                    <td style="padding:7px 10px;text-align:right;font-family:monospace;${varColor}">${varSig}$${Math.round(Math.abs(variacion)).toLocaleString('es-CL')}</td>
+                    <td style="padding:7px 10px;text-align:right;font-family:monospace">${pct}%</td>
+                </tr>`;
+                if (cuenta.tipo==='Ingreso') { rowsIng += row; totIngPpto+=ppto; totIngEjec+=ejec; }
+                else { rowsGas += row; totGasPpto+=ppto; totGasEjec+=ejec; }
+            });
+
+            const resultado  = totIngEjec - totGasEjec;
+            const resColor   = resultado >= 0 ? '#15803d' : '#b91c1c';
+            const resBg      = resultado >= 0 ? '#f0fdf4' : '#fef2f2';
+            const thS  = 'background:#0A2463;color:#fff;padding:8px 10px;text-align:left;font-size:11px;font-weight:700;';
+            const thSR = thS + 'text-align:right;';
+            const secH = (lbl, bg) => `<tr><td colspan="6" style="background:${bg};color:#fff;padding:8px 12px;font-weight:700;font-size:12px">${lbl}</td></tr>`;
+            const sub  = (lbl, p, e, bg) => `<tr style="background:${bg};font-weight:700">
+                <td colspan="2" style="padding:8px 10px">${lbl}</td>
+                <td style="padding:8px 10px;text-align:right;font-family:monospace">$${Math.round(p).toLocaleString('es-CL')}</td>
+                <td style="padding:8px 10px;text-align:right;font-family:monospace">$${Math.round(e).toLocaleString('es-CL')}</td>
+                <td colspan="2"></td></tr>`;
+
+            const html = `<table style="width:100%;border-collapse:collapse;font-size:12px">
+                <thead><tr>
+                    <th style="${thS}">Código</th><th style="${thS}">Cuenta</th>
+                    <th style="${thSR}">Presupuestado</th><th style="${thSR}">Ejecutado</th>
+                    <th style="${thSR}">Variación</th><th style="${thSR}">% Ejec.</th>
+                </tr></thead><tbody>
+                ${secH('📥 INGRESOS','#7c3aed')}${rowsIng||'<tr><td colspan="6" style="padding:8px;color:#999">Sin ingresos</td></tr>'}
+                ${sub('Subtotal Ingresos',totIngPpto,totIngEjec,'#ede9fe')}
+                ${secH('📤 GASTOS','#ea580c')}${rowsGas||'<tr><td colspan="6" style="padding:8px;color:#999">Sin gastos</td></tr>'}
+                ${sub('Subtotal Gastos',totGasPpto,totGasEjec,'#ffedd5')}
+                <tr style="background:${resBg};font-weight:800;font-size:13px;border-top:3px solid #374151">
+                    <td colspan="2" style="padding:10px;color:${resColor}">${resultado>=0?'✅ SUPERÁVIT':'❌ DÉFICIT'} DEL PERÍODO</td>
+                    <td style="padding:10px;text-align:right;font-family:monospace;color:#374151">$${Math.round(totIngPpto-totGasPpto).toLocaleString('es-CL')}</td>
+                    <td style="padding:10px;text-align:right;font-family:monospace;color:${resColor};font-size:15px">$${Math.round(Math.abs(resultado)).toLocaleString('es-CL')}</td>
+                    <td colspan="2"></td>
+                </tr></tbody></table>`;
+
+            imprimirInforme('Presupuesto ' + new Date().getFullYear(), html, 'Período Anual');
+        }
+
+        function imprimirBalanceGeneral() {
+            const el = document.getElementById('reporte-balance');
+            if (!el || !el.innerHTML.trim() || el.innerHTML.includes('<!-- JS -->')) {
+                showToast('Sin datos — ve al tab Reportes primero','error'); return;
+            }
+            const empKey = sesionActual?.empresa || 'anfa_renca';
+            const empCfg = typeof getEmpresasConfig === 'function' ? getEmpresasConfig() : {};
+            const empNom = empCfg[empKey]?.nombre || empKey.toUpperCase().replace('_',' ');
+            const empRut = empCfg[empKey]?.rut || '';
+            const fechaHoy = new Date().toLocaleDateString('es-CL', {day:'numeric',month:'long',year:'numeric'});
+            imprimirConCSSTailwind('Balance General', el.innerHTML, 'Todos los períodos', empNom, empRut, fechaHoy);
+        }
+
+        function imprimirEstadoResultados() {
+            const el = document.getElementById('reporte-resultados');
+            if (!el || !el.innerHTML.trim() || el.innerHTML.includes('<!-- JS -->')) {
+                showToast('Sin datos — ve al tab Reportes primero','error'); return;
+            }
+            const empKey = sesionActual?.empresa || 'anfa_renca';
+            const empCfg = typeof getEmpresasConfig === 'function' ? getEmpresasConfig() : {};
+            const empNom = empCfg[empKey]?.nombre || empKey.toUpperCase().replace('_',' ');
+            const empRut = empCfg[empKey]?.rut || '';
+            const fechaHoy = new Date().toLocaleDateString('es-CL', {day:'numeric',month:'long',year:'numeric'});
+            imprimirConCSSTailwind('Estado de Resultados', el.innerHTML, 'Todos los períodos', empNom, empRut, fechaHoy);
+        }
+
+        function imprimirConCSSTailwind(titulo, bodyHTML, rangoTxt, empNom, empRut, fechaHoy) {
+            const old = document.getElementById('modal-preview-informe');
+            if (old) old.remove();
+
+            const modal = document.createElement('div');
+            modal.id = 'modal-preview-informe';
+            modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:9999;display:flex;flex-direction:column';
+
+            const bar = document.createElement('div');
+            bar.style.cssText = 'background:#0A2463;color:#fff;padding:12px 20px;display:flex;align-items:center;gap:12px;flex-shrink:0';
+            bar.innerHTML = '<span style="font-weight:700;font-size:15px;flex:1">' + titulo + '</span>';
+
+            const btnPrint = document.createElement('button');
+            btnPrint.textContent = '🖨️ Imprimir / Guardar PDF';
+            btnPrint.style.cssText = 'background:#3E92CC;color:#fff;border:none;padding:8px 20px;border-radius:8px;cursor:pointer;font-weight:700;font-size:13px';
+            btnPrint.onclick = () => { const f = document.getElementById('pi-frame'); f.contentWindow.focus(); f.contentWindow.print(); };
+
+            const btnClose = document.createElement('button');
+            btnClose.textContent = '✕ Cerrar';
+            btnClose.style.cssText = 'background:#dc2626;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;font-weight:700;font-size:13px';
+            btnClose.onclick = () => modal.remove();
+
+            bar.appendChild(btnPrint);
+            bar.appendChild(btnClose);
+
+            const iframe = document.createElement('iframe');
+            iframe.id = 'pi-frame';
+            iframe.style.cssText = 'flex:1;border:none;background:#fff;width:100%';
+
+            modal.appendChild(bar);
+            modal.appendChild(iframe);
+            document.body.appendChild(modal);
+
+            // CSS que replica exactamente las clases Tailwind usadas en los reportes de pantalla
+            const css = `
+* { font-family: Arial, sans-serif; box-sizing: border-box; margin:0; padding:0; }
+body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
+.print-header { background:linear-gradient(135deg,#0A2463,#3E92CC); color:#fff; border-radius:8px; padding:18px 22px; margin-bottom:24px; text-align:center; }
+.print-header h1 { font-size:10px; font-weight:700; letter-spacing:3px; text-transform:uppercase; opacity:.8; margin-bottom:4px; }
+.print-header h2 { font-size:22px; font-weight:800; margin:4px 0; }
+.print-header p  { font-size:10px; opacity:.75; margin-top:4px; }
+.print-footer { margin-top:24px; padding-top:10px; border-top:2px solid #e2e8f0; text-align:center; font-size:9px; color:#94a3b8; }
+/* Tailwind utilities used by calcularReportes */
+.space-y-4 > * + * { margin-top:16px; }
+.flex { display:flex; }
+.justify-between { justify-content:space-between; }
+.items-center { align-items:center; }
+.flex-1 { flex:1; }
+.font-bold { font-weight:700; }
+.font-semibold { font-weight:600; }
+.font-mono { font-family:monospace; }
+.text-xs { font-size:11px; }
+.text-sm { font-size:13px; }
+.text-base { font-size:14px; }
+.text-lg { font-size:16px; }
+.text-xl { font-size:18px; }
+.uppercase { text-transform:uppercase; }
+.tracking-wider { letter-spacing:.05em; }
+.rounded-t-lg { border-radius:8px 8px 0 0; }
+.rounded-b-lg { border-radius:0 0 8px 8px; }
+.rounded-lg { border-radius:8px; }
+.rounded-xl { border-radius:12px; }
+.border-b { border-bottom:1px solid #e2e8f0; }
+.py-1\\.5 { padding-top:6px; padding-bottom:6px; }
+.py-2 { padding-top:8px; padding-bottom:8px; }
+.py-4 { padding-top:16px; padding-bottom:16px; }
+.px-3 { padding-left:12px; padding-right:12px; }
+.p-3 { padding:12px; }
+.p-4 { padding:16px; }
+.p-6 { padding:24px; }
+.mr-2 { margin-right:8px; }
+.text-gray-400 { color:#9ca3af; }
+.text-gray-500 { color:#6b7280; }
+.text-gray-600 { color:#4b5563; }
+.text-gray-700 { color:#374151; }
+.text-gray-800 { color:#1f2937; }
+.text-green-700 { color:#15803d; }
+.text-green-800 { color:#166534; }
+.text-red-700   { color:#b91c1c; }
+.text-red-800   { color:#991b1b; }
+.text-blue-700  { color:#1d4ed8; }
+.text-blue-800  { color:#1e40af; }
+.text-purple-800 { color:#6b21a8; }
+.bg-green-50  { background:#f0fdf4; }
+.bg-green-100 { background:#dcfce7; }
+.bg-red-50    { background:#fef2f2; }
+.bg-red-100   { background:#fee2e2; }
+.bg-blue-50   { background:#eff6ff; }
+.bg-blue-100  { background:#dbeafe; }
+.bg-gray-100  { background:#f3f4f6; }
+.bg-purple-50 { background:#faf5ff; }
+@media print { body{padding:10px 14px;} .print-header{border-radius:0;margin:-10px -14px 18px;} @page{margin:10mm;} }
+`;
+            const d = iframe.contentDocument || iframe.contentWindow.document;
+            d.open();
+            d.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>' + css + '</style></head><body>');
+            d.write('<div class="print-header"><h1>' + empNom + (empRut ? ' &nbsp;|&nbsp; RUT: ' + empRut : '') + '</h1><h2>' + titulo + '</h2><p>' + rangoTxt + ' &middot; Generado: ' + fechaHoy + '</p></div>');
+            d.write(bodyHTML);
+            d.write('<div class="print-footer">' + empNom + ' &middot; Sistema Contable &middot; ' + new Date().toLocaleString('es-CL') + '</div>');
+            d.write('</body></html>');
+            d.close();
+        }
+
+
         const hoyS = () => new Date().toLocaleDateString('es-CL');
         const fmtM = n  => '$' + Math.round(n).toLocaleString('es-CL');
         const pctColor = (pct, tipo) => {
@@ -3904,7 +4346,7 @@ function getUsuarios() {
                     <td></td>
                 </tr></tfoot>
             </table>`;
-            imprimirInforme('Libro Diario — ' + rangoTxt, html);
+            imprimirInforme('Libro Diario', html, rangoTxt);
         }
 
         // ── LIBRO MAYOR ──────────────────────────────────────────
@@ -3955,15 +4397,14 @@ function getUsuarios() {
             });
 
             var html = '';
-            html += '<div class="header"><h1>'+emp()+'</h1><h2>Libro Mayor</h2>';
-            html += '<p>'+rangoTxt+' &middot; Generado: '+hoyS()+' &middot; '+src.length+' movimientos</p></div>';
+            html += '<p style="text-align:center;font-size:11px;color:#64748b;margin-bottom:12px">'+src.length+' movimientos</p>';
             html += '<table><thead><tr>';
             html += '<th>Código / Fecha</th><th>Cuenta / Detalle</th><th>Tipo</th>';
             html += '<th class="num">Debe</th><th class="num">Haber</th><th class="num">Saldo</th>';
             html += '</tr></thead><tbody>'+filas+'</tbody>';
             html += '<tfoot><tr class="total-row"><td colspan="3">TOTALES</td>';
             html += '<td class="num">'+fmtM(totD)+'</td><td class="num">'+fmtM(totH)+'</td><td></td></tr></tfoot></table>';
-            imprimirInforme('Libro Mayor', html);
+            imprimirInforme('Libro Mayor', html, rangoTxt);
         }
         // ── BALANCE GENERAL ──────────────────────────────────────
         function descargarExcelBalance(desde, hasta) {
@@ -3991,9 +4432,9 @@ function getUsuarios() {
             Object.keys(cuentasMap).sort().forEach(function(cod) {
                 var d = cuentasMap[cod];
                 var s;
-                if (d.tipo==='Activo')     { s=d.debe-d.haber;  activos+=s;    dA.push([cod,d.nombre,s,d.movs]); }
-                if (d.tipo==='Pasivo')     { s=d.haber-d.debe;  pasivos+=s;    dP.push([cod,d.nombre,s,d.movs]); }
-                if (d.tipo==='Patrimonio') { s=d.haber-d.debe;  patrimonio+=s; dPat.push([cod,d.nombre,s,d.movs]); }
+                if (d.tipo==='Activo')     { s=d.debe-d.haber;  activos+=s;    if(Math.abs(s)>0) dA.push([cod,d.nombre,s,d.movs]); }
+                if (d.tipo==='Pasivo')     { s=d.haber-d.debe;  pasivos+=s;    if(Math.abs(s)>0) dP.push([cod,d.nombre,s,d.movs]); }
+                if (d.tipo==='Patrimonio') { s=d.haber-d.debe;  patrimonio+=s; if(Math.abs(s)>0) dPat.push([cod,d.nombre,s,d.movs]); }
                 if (d.tipo==='Ingreso')    ingresos += d.haber-d.debe;
                 if (d.tipo==='Gasto')      gastos   += d.debe-d.haber;
             });
@@ -4032,8 +4473,7 @@ function getUsuarios() {
                 diagRows += '<tr><td>'+a.fecha+'</td><td>'+a.codigo+'</td><td>'+(a.cuenta||'')+'</td><td style="color:'+(cta?'green':'red')+'">'+tipoFinal+'</td><td>'+(a.debe||0)+'</td><td>'+(a.haber||0)+'</td></tr>';
             });
             var html = '';
-            html += '<div class="header"><h1>'+emp()+'</h1><h2>Balance General</h2><p>'+rangoTxt+' &middot; Generado: '+hoyS()+'</p></div>';
-            html += '<div style="margin-bottom:16px;padding:12px;background:#fef9c3;border:1px solid #fbbf24;border-radius:8px"><b>DIAGNOSTICO ASIENTOS (rojo = codigo no encontrado en plan)</b><table border="1" style="width:100%;font-size:11px;margin-top:6px"><tr><th>Fecha</th><th>Codigo</th><th>Cuenta</th><th>Tipo</th><th>Debe</th><th>Haber</th></tr>'+diagRows+'</table></div>';
+                        html += '<div style="margin-bottom:16px;padding:12px;background:#fef9c3;border:1px solid #fbbf24;border-radius:8px"><b>DIAGNOSTICO ASIENTOS (rojo = codigo no encontrado en plan)</b><table border="1" style="width:100%;font-size:11px;margin-top:6px"><tr><th>Fecha</th><th>Codigo</th><th>Cuenta</th><th>Tipo</th><th>Debe</th><th>Haber</th></tr>'+diagRows+'</table></div>';
             html += '<div class="kpi-row">';
             html += '<div class="kpi-box"><div class="kpi-label">Total Activos</div><div class="kpi-val" style="color:#047857">'+fmtM(activos)+'</div></div>';
             html += '<div class="kpi-box"><div class="kpi-label">Total Pasivos</div><div class="kpi-val" style="color:#DC2626">'+fmtM(pasivos)+'</div></div>';
@@ -4063,7 +4503,7 @@ function getUsuarios() {
             html += '<span>'+(cuadra?'Balance cuadra correctamente':'Balance NO cuadra — revisar asientos')+'</span>';
             html += '<span style="font-family:monospace">'+(cuadra?'Diferencia: $0':'Diferencia: '+fmtM(activos-total))+'</span>';
             html += '</div>';
-            imprimirInforme('Balance General', html);
+            imprimirInforme('Balance General', html, rangoTxt);
         }
 
         // ── ESTADO DE RESULTADOS ─────────────────────────────────
@@ -4077,8 +4517,8 @@ function getUsuarios() {
             var dI=[], dG=[];
             Object.keys(mayor).sort().forEach(function(cod) {
                 var d = mayor[cod];
-                if (d.tipo==='Ingreso') { var s=d.haber-d.debe; ingresos+=s; dI.push([cod,d.nombre,s,d.movs]); }
-                if (d.tipo==='Gasto')   { var s=d.debe-d.haber; gastos+=s;   dG.push([cod,d.nombre,s,d.movs]); }
+                if (d.tipo==='Ingreso') { var s=d.haber-d.debe; ingresos+=s; if(Math.abs(s)>0) dI.push([cod,d.nombre,s,d.movs]); }
+                if (d.tipo==='Gasto')   { var s=d.debe-d.haber; gastos+=s;   if(Math.abs(s)>0) dG.push([cod,d.nombre,s,d.movs]); }
             });
             var resultado = ingresos - gastos;
 
@@ -4105,8 +4545,7 @@ function getUsuarios() {
             }
 
             var html = '';
-            html += '<div class="header"><h1>'+emp()+'</h1><h2>Estado de Resultados</h2><p>'+rangoTxt+' &middot; Generado: '+hoyS()+'</p></div>';
-            html += '<div class="kpi-row">';
+                        html += '<div class="kpi-row">';
             html += '<div class="kpi-box"><div class="kpi-label">Total Ingresos</div><div class="kpi-val" style="color:#047857">'+fmtM(ingresos)+'</div></div>';
             html += '<div class="kpi-box"><div class="kpi-label">Total Gastos</div><div class="kpi-val" style="color:#DC2626">'+fmtM(gastos)+'</div></div>';
             html += '<div class="kpi-box"><div class="kpi-label">'+(resultado>=0?'Utilidad':'Pérdida')+'</div><div class="kpi-val" style="color:'+(resultado>=0?'#047857':'#DC2626')+'">'+fmtM(resultado)+'</div></div>';
@@ -4123,7 +4562,7 @@ function getUsuarios() {
             html += '<span>'+(resultado>=0?'UTILIDAD DEL PERÍODO':'PÉRDIDA DEL PERÍODO')+'</span>';
             html += '<span style="font-family:monospace;font-size:18px">'+fmtM(resultado)+'</span>';
             html += '</div>';
-            imprimirInforme('Estado de Resultados', html);
+            imprimirInforme('Estado de Resultados', html, rangoTxt);
         }
 
         // ── PLAN DE CUENTAS ──────────────────────────────────────
@@ -4176,7 +4615,7 @@ function getUsuarios() {
             <table><thead><tr><th>Código</th><th>Centro</th><th class="num">Ingresos</th><th class="num">Gastos</th><th class="num">Resultado</th></tr></thead>
             <tbody>${filas}</tbody>
             <tfoot><tr class="total-row"><td colspan="2">TOTALES</td><td class="num">${fmtM(totI)}</td><td class="num">${fmtM(totG)}</td><td class="num">${fmtM(totI-totG)}</td></tr></tfoot></table>`;
-            imprimirInforme('Centros de Costo', html);
+            imprimirInforme('Centros de Costo', html, rangoTxt);
         }
 
         // ── PRESUPUESTO ──────────────────────────────────────────
@@ -4319,7 +4758,7 @@ function getUsuarios() {
 
             ccs.forEach(([ccCod, cc]) => {
                 const cuentas = Object.entries(cc.cuentas)
-                    .filter(([,c]) => !filtrTipo || c.tipo === filtrTipo)
+                    .filter(([,c]) => (!filtrTipo || c.tipo === filtrTipo) && Math.round(Math.abs(c.saldo)) > 0)
                     .sort((a,b) => a[0].localeCompare(b[0]));
                 if (!cuentas.length) return;
 
@@ -4411,7 +4850,7 @@ function getUsuarios() {
             const filtrTipo = document.getElementById('rptcc-tipo')?.value || '';
             const tipoStyle = t => t==='Ingreso'?'color:#5b21b6':t==='Gasto'?'color:#9a3412':t==='Activo'?'color:#065f46':'color:#991b1b';
 
-            let htmlBody = '<div class="header"><h1>' + emp() + '</h1><h2>🏢 Reporte por Centro de Costo</h2><p>' + rangoTxt + ' · Generado: ' + hoyS() + '</p></div>';
+            let htmlBody = '';
 
             Object.entries(data)
                 .filter(([cod]) => !filtrCC || cod === filtrCC)
@@ -4449,7 +4888,7 @@ function getUsuarios() {
                         '<td class="num">' + fmt(ccDebe) + '</td><td class="num">' + fmt(ccHaber) + '</td><td class="num">' + fmt(ccDebe-ccHaber) + '</td></tr></tfoot></table>';
                 });
 
-            imprimirInforme('Reporte Centro de Costo', htmlBody);
+            imprimirInforme('Reporte Centro de Costo', htmlBody, rangoTxt);
         }
 
         // ── EXCEL REPORTE CC ──────────────────────────────────────
@@ -4855,8 +5294,7 @@ function getUsuarios() {
 
             if (!clubes.length) { showToast('Sin clubes con saldo pendiente','error'); return; }
             var html = '';
-            html += '<div class="header"><h1>'+emp()+'</h1><h2>Estado de Cuenta por Club</h2><p>'+rangoTxt+' &middot; Generado: '+hoyS()+'</p></div>';
-
+            
             clubes.forEach(function(club) {
                 var saldo = club.totalCargos - club.totalAbonos;
                 var saldoColor = saldo > 0 ? '#dc2626' : saldo < 0 ? '#1d4ed8' : '#16a34a';
@@ -4883,7 +5321,7 @@ function getUsuarios() {
                 html += '</tr></tfoot></table>';
             });
 
-            imprimirInforme('Estado de Cuenta por Club', html);
+            imprimirInforme('Estado de Cuenta por Club', html, rangoTxt);
         }
 
         function pdfEstadoCuenta(desde='', hasta='') {
@@ -5491,9 +5929,9 @@ function getUsuarios() {
             let activos=0,pasivos=0,patrimonio=0,ingresos=0,gastos=0;
             const dA=[],dP=[],dPat=[];
             Object.entries(mayor).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([cod,d])=>{
-                if(d.tipo==='Activo')     {const s=d.debe-d.haber; activos+=s;    dA.push([cod,d.nombre,s]);}
-                if(d.tipo==='Pasivo')     {const s=d.haber-d.debe; pasivos+=s;    dP.push([cod,d.nombre,s]);}
-                if(d.tipo==='Patrimonio') {const s=d.haber-d.debe; patrimonio+=s; dPat.push([cod,d.nombre,s]);}
+                if(d.tipo==='Activo')     {const s=d.debe-d.haber; activos+=s;    if(Math.round(s)!==0) dA.push([cod,d.nombre,s]);}
+                if(d.tipo==='Pasivo')     {const s=d.haber-d.debe; pasivos+=s;    if(Math.round(s)!==0) dP.push([cod,d.nombre,s]);}
+                if(d.tipo==='Patrimonio') {const s=d.haber-d.debe; patrimonio+=s; if(Math.round(s)!==0) dPat.push([cod,d.nombre,s]);}
                 if(d.tipo==='Ingreso')    ingresos+=d.haber-d.debe;
                 if(d.tipo==='Gasto')      gastos+=d.debe-d.haber;
             });
@@ -5518,8 +5956,8 @@ function getUsuarios() {
             let ingresos=0, gastos=0;
             const dI=[],dG=[];
             Object.entries(mayor).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([cod,d])=>{
-                if(d.tipo==='Ingreso'){const s=d.haber-d.debe; ingresos+=s; dI.push([cod,d.nombre,s]);}
-                if(d.tipo==='Gasto')  {const s=d.debe-d.haber; gastos+=s;   dG.push([cod,d.nombre,s]);}
+                if(d.tipo==='Ingreso'){const s=d.haber-d.debe; ingresos+=s; if(Math.round(s)!==0) dI.push([cod,d.nombre,s]);}
+                if(d.tipo==='Gasto')  {const s=d.debe-d.haber; gastos+=s;   if(Math.round(s)!==0) dG.push([cod,d.nombre,s]);}
             });
             const res = ingresos-gastos;
             const rows = [
@@ -5638,9 +6076,9 @@ function getUsuarios() {
             // Balance
             let act=0,pas=0,pat=0,ing=0,gas=0; const bA=[],bP=[],bPat=[];
             Object.entries(mayor).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([cod,d])=>{
-                if(d.tipo==='Activo'){const s=d.debe-d.haber;act+=s;bA.push([cod,d.nombre,s]);}
-                if(d.tipo==='Pasivo'){const s=d.haber-d.debe;pas+=s;bP.push([cod,d.nombre,s]);}
-                if(d.tipo==='Patrimonio'){const s=d.haber-d.debe;pat+=s;bPat.push([cod,d.nombre,s]);}
+                if(d.tipo==='Activo'){const s=d.debe-d.haber;act+=s;if(Math.round(s)!==0)bA.push([cod,d.nombre,s]);}
+                if(d.tipo==='Pasivo'){const s=d.haber-d.debe;pas+=s;if(Math.round(s)!==0)bP.push([cod,d.nombre,s]);}
+                if(d.tipo==='Patrimonio'){const s=d.haber-d.debe;pat+=s;if(Math.round(s)!==0)bPat.push([cod,d.nombre,s]);}
                 if(d.tipo==='Ingreso')ing+=d.haber-d.debe; if(d.tipo==='Gasto')gas+=d.debe-d.haber;
             });
             const res=ing-gas;
@@ -5653,8 +6091,8 @@ function getUsuarios() {
             // Resultados
             const dI=[],dG=[];
             Object.entries(mayor).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([cod,d])=>{
-                if(d.tipo==='Ingreso'){const s=d.haber-d.debe;dI.push([cod,d.nombre,s]);}
-                if(d.tipo==='Gasto')  {const s=d.debe-d.haber;dG.push([cod,d.nombre,s]);}
+                if(d.tipo==='Ingreso'){const s=d.haber-d.debe;if(Math.round(s)!==0)dI.push([cod,d.nombre,s]);}
+                if(d.tipo==='Gasto')  {const s=d.debe-d.haber;if(Math.round(s)!==0)dG.push([cod,d.nombre,s]);}
             });
             addSheet('Estado Resultados',[],
                 [['INGRESOS'],['Código','Cuenta','Monto'],...dI,['','Total Ingresos',ing],[''],
@@ -5761,9 +6199,9 @@ function getUsuarios() {
             let act=0,pas=0,pat=0,ing=0,gas=0;
             const dA=[],dP=[],dPat=[];
             Object.entries(mayor).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([cod,d])=>{
-                if(d.tipo==='Activo')     {const s=d.debe-d.haber;act+=s;dA.push([cod,d.nombre,s]);}
-                if(d.tipo==='Pasivo')     {const s=d.haber-d.debe;pas+=s;dP.push([cod,d.nombre,s]);}
-                if(d.tipo==='Patrimonio') {const s=d.haber-d.debe;pat+=s;dPat.push([cod,d.nombre,s]);}
+                if(d.tipo==='Activo')     {const s=d.debe-d.haber;act+=s;if(Math.round(s)!==0)dA.push([cod,d.nombre,s]);}
+                if(d.tipo==='Pasivo')     {const s=d.haber-d.debe;pas+=s;if(Math.round(s)!==0)dP.push([cod,d.nombre,s]);}
+                if(d.tipo==='Patrimonio') {const s=d.haber-d.debe;pat+=s;if(Math.round(s)!==0)dPat.push([cod,d.nombre,s]);}
                 if(d.tipo==='Ingreso') ing+=d.haber-d.debe; if(d.tipo==='Gasto') gas+=d.debe-d.haber;
             });
             const res=ing-gas;
@@ -5947,8 +6385,46 @@ function getUsuarios() {
 
         // ── FLUJO DE CAJA ─────────────────────────────────────
 
+        function autoPopularFlujoCuentas() {
+            const reglas = [
+                { prefijo: '111', actividad: 'operacion',      ajuste: '' },
+                { prefijo: '112', actividad: 'operacion',      ajuste: 'cxc' },
+                { prefijo: '113', actividad: 'operacion',      ajuste: 'inv' },
+                { prefijo: '211', actividad: 'operacion',      ajuste: 'cxp' },
+                { prefijo: '212', actividad: 'operacion',      ajuste: 'cxp' },
+                { prefijo: '213', actividad: 'operacion',      ajuste: 'cxp' },
+                { prefijo: '121', actividad: 'inversion',      ajuste: '' },
+                { prefijo: '122', actividad: 'inversion',      ajuste: '' },
+                { prefijo: '221', actividad: 'financiamiento', ajuste: '' },
+                { prefijo: '222', actividad: 'financiamiento', ajuste: '' },
+                { prefijo: '311', actividad: 'financiamiento', ajuste: '' },
+                { prefijo: '312', actividad: 'financiamiento', ajuste: '' },
+            ];
+            const nuevas = [];
+            Object.entries(planCuentas)
+                .filter(([, c]) => c.nivel === 4)
+                .sort((a, b) => a[0].localeCompare(b[0]))
+                .forEach(([cod]) => {
+                    const regla = reglas.find(r => cod.startsWith(r.prefijo));
+                    if (regla && !nuevas.find(f => f.codigo === cod))
+                        nuevas.push({ codigo: cod, actividad: regla.actividad, ajuste: regla.ajuste });
+                });
+            return nuevas;
+        }
+
+        function resetearFlujoCuentas() {
+            flujoCuentas = autoPopularFlujoCuentas();
+            guardarLocalStorage();
+            renderFlujo();
+            actualizarSelectFlujo();
+            showToast('Cuentas restauradas (' + flujoCuentas.length + ')', 'success');
+        }
+
         function inicializarFlujo() {
-            flujoCuentas = [];
+            if (!flujoCuentas || flujoCuentas.length === 0) {
+                flujoCuentas = autoPopularFlujoCuentas();
+                guardarLocalStorage();
+            }
             renderFlujo();
             actualizarSelectFlujo();
         }
@@ -5994,6 +6470,8 @@ function getUsuarios() {
 
         function renderFlujo() {
             const metodo = document.getElementById('flujo-metodo')?.value || 'directo';
+            const desde  = document.getElementById('flujo-desde')?.value  || '';
+            const hasta  = document.getElementById('flujo-hasta')?.value  || '';
             const desc   = document.getElementById('flujo-desc');
             const titulo = document.getElementById('flujo-tabla-titulo');
             const cont   = document.getElementById('flujo-contenido');
@@ -6002,7 +6480,8 @@ function getUsuarios() {
             if (desc) desc.innerHTML = metodo === 'directo'
                 ? '<strong>Método Directo:</strong> Entradas y salidas reales de Caja/Banco.'
                 : '<strong>Método Indirecto:</strong> Parte del Resultado Neto ajustado por partidas no monetarias.';
-            if (titulo) titulo.textContent = 'Flujo de Caja — Método ' + (metodo==='directo'?'Directo':'Indirecto');
+            const rangoLabel = desde||hasta ? ` | ${desde||'inicio'} al ${hasta||'hoy'}` : '';
+            if (titulo) titulo.textContent = 'Flujo de Caja — Método ' + (metodo==='directo'?'Directo':'Indirecto') + rangoLabel;
 
             const fmt    = n => '$' + Math.round(Math.abs(n)).toLocaleString('es-CL');
             const fmtS   = n => (n < 0 ? '-' : '') + fmt(n);
@@ -6024,7 +6503,7 @@ function getUsuarios() {
                 cuentasCaja.forEach(cta => {
                     let entradas=0, salidas=0;
                     const detalles=[];
-                    asientos.forEach(a => {
+                    asientosFiltrados(desde, hasta).forEach(a => {
                         if (a.codigo !== cta.codigo) return;
                         if (a.debe>0)  { entradas+=a.debe;  detalles.push({fecha:a.fecha,v:a.voucher,glosa:a.glosa||'Cobro',monto:a.debe});  hayMovs=true; }
                         if (a.haber>0) { salidas+=a.haber;  detalles.push({fecha:a.fecha,v:a.voucher,glosa:a.glosa||'Pago', monto:-a.haber}); hayMovs=true; }
@@ -6083,7 +6562,7 @@ function getUsuarios() {
             }
 
             // ── MÉTODO INDIRECTO ──────────────────────────────────
-            const mayor = calcularMayorCompleto();
+            const mayor = calcularMayorCompleto(desde, hasta);
             let ingresos=0, gastos=0;
             Object.values(mayor).forEach(d => {
                 if (d.tipo==='Ingreso') ingresos += d.haber - d.debe;
@@ -6238,8 +6717,7 @@ function getUsuarios() {
             var empresa = (sesionActual.empresa||'ANFA').toUpperCase();
 
             var html = '';
-            html += '<div class="header"><h1>'+empresa+'</h1><h2>Estado de Flujo de Efectivo</h2>';
-            html += '<p>Método '+(metodo==='directo'?'Directo':'Indirecto')+' &middot; '+rangoTxt+' &middot; Generado: '+new Date().toLocaleDateString('es-CL')+'</p></div>';
+            html += '<p style="text-align:center;font-size:11px;color:#64748b;margin-bottom:12px">Método '+(metodo==='directo'?'Directo':'Indirecto')+'</p>';
             html += '<div class="kpi-row">';
             html += '<div class="kpi-box"><div class="kpi-label">Flujo Operacional</div><div class="kpi-val" style="color:#2563eb">'+fmtM2(totalOp)+'</div></div>';
             html += '<div class="kpi-box"><div class="kpi-label">Flujo Inversión</div><div class="kpi-val" style="color:#7c3aed">'+fmtM2(totalInv)+'</div></div>';
@@ -6251,8 +6729,443 @@ function getUsuarios() {
             html += '<span style="font-weight:800;font-size:14px">'+(neto>=0?'✅':'⚠️')+' FLUJO NETO DE EFECTIVO DEL PERÍODO</span>';
             html += '<span style="font-family:monospace;font-size:22px;font-weight:900">'+fmtM2(neto)+'</span></div>';
 
-            imprimirInforme('Flujo de Caja', html);
+            imprimirInforme('Flujo de Caja', html, rangoTxt);
         }
+
+        function imprimirFlujoConFiltro() {
+            const d = document.getElementById('flujo-desde')?.value || '';
+            const h = document.getElementById('flujo-hasta')?.value || '';
+            imprimirFlujo(d, h);
+        }
+        function excelFlujoConFiltro() {
+            const d = document.getElementById('flujo-desde')?.value || '';
+            const h = document.getElementById('flujo-hasta')?.value || '';
+            excelFlujo(d, h);
+        }
+        function pdfFlujoConFiltro() {
+            const d = document.getElementById('flujo-desde')?.value || '';
+            const h = document.getElementById('flujo-hasta')?.value || '';
+            pdfFlujo(d, h);
+        }
+        // ══════════════════════════════════════════════════════
+        // MÓDULO CONCILIACIÓN BANCARIA
+        // ══════════════════════════════════════════════════════
+
+        let _concCartola    = [];
+        let _concConciliado = [];
+        let _concSoloBanco  = [];
+        let _concSoloLibro  = [];
+        let _concColHeaders = [];
+        let _concAjustes    = []; // ajustes manuales: {tipo, desc, monto}
+
+        function iniciarConciliacion() {
+            const sel = document.getElementById('conc-cuenta');
+            if (!sel) return;
+            sel.innerHTML = '<option value="">Seleccionar cuenta...</option>';
+            Object.entries(planCuentas)
+                .filter(([cod, c]) => c.nivel === 4 && cod.startsWith('111'))
+                .sort((a,b) => a[0].localeCompare(b[0]))
+                .forEach(([cod, c]) => {
+                    const o = document.createElement('option');
+                    o.value = cod; o.textContent = cod + ' — ' + c.nombre;
+                    sel.appendChild(o);
+                });
+            const hoy = new Date().toISOString().split('T')[0];
+            const ini = hoy.slice(0,7) + '-01';
+            if (!document.getElementById('conc-desde').value) document.getElementById('conc-desde').value = ini;
+            if (!document.getElementById('conc-hasta').value) document.getElementById('conc-hasta').value = hoy;
+        }
+
+        function cargarCartola(input) {
+            const file = input.files[0];
+            if (!file) return;
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext === 'csv') {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const lines = e.target.result.split('\n').filter(l => l.trim());
+                    _concColHeaders = lines[0].split(/[,;|\t]/).map(h => h.trim().replace(/^"|"$/g,''));
+                    _concCartola = lines.slice(1).map(l => {
+                        const vals = l.split(/[,;|\t]/).map(v => v.trim().replace(/^"|"$/g,''));
+                        const obj = {}; _concColHeaders.forEach((h,i) => obj[h] = vals[i]||'');
+                        return obj;
+                    }).filter(r => Object.values(r).some(v => v));
+                    mostrarMapeo();
+                };
+                reader.readAsText(file, 'utf-8');
+            } else {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const wb = XLSX.read(e.target.result, {type:'array'});
+                    const ws = wb.Sheets[wb.SheetNames[0]];
+                    const data = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+                    if (!data.length) return;
+                    _concColHeaders = data[0].map(h => String(h||'').trim());
+                    _concCartola = data.slice(1).map(row => {
+                        const obj = {}; _concColHeaders.forEach((h,i) => obj[h] = row[i]!==undefined ? String(row[i]) : '');
+                        return obj;
+                    }).filter(r => Object.values(r).some(v => String(v).trim()));
+                    mostrarMapeo();
+                };
+                reader.readAsArrayBuffer(file);
+            }
+        }
+
+        function mostrarMapeo() {
+            const mapeo = document.getElementById('conc-mapeo');
+            const resumen = document.getElementById('conc-resumen-cartola');
+            mapeo.classList.remove('hidden');
+            resumen.classList.remove('hidden');
+            resumen.innerHTML = `<span class="font-semibold text-blue-700">✅ Archivo cargado:</span> ${_concCartola.length} filas · Columnas: ${_concColHeaders.join(', ')}`;
+            const autoMap = (sel, keywords) => {
+                const h = _concColHeaders.find(h => keywords.some(k => h.toLowerCase().includes(k)));
+                if (h) sel.value = h;
+            };
+            ['map-fecha','map-desc','map-debito','map-credito','map-monto'].forEach(id => {
+                const sel = document.getElementById(id);
+                sel.innerHTML = '<option value="">-- Seleccionar --</option>';
+                _concColHeaders.forEach(h => { const o = document.createElement('option'); o.value = h; o.textContent = h; sel.appendChild(o); });
+            });
+            autoMap(document.getElementById('map-fecha'),   ['fecha','date','fec']);
+            autoMap(document.getElementById('map-desc'),    ['desc','glosa','concepto','detalle','detail','narr']);
+            autoMap(document.getElementById('map-debito'),  ['débit','debit','cargo','salida','egreso']);
+            autoMap(document.getElementById('map-credito'), ['crédit','credit','abono','entrada','ingreso','depósit']);
+            autoMap(document.getElementById('map-monto'),   ['monto','amount','valor','importe']);
+        }
+
+        function parseFecha(str) {
+            if (!str) return null;
+            str = String(str).trim();
+            if (/^\d{5}$/.test(str)) {
+                const d = new Date((parseInt(str) - 25569) * 86400 * 1000);
+                return d.toISOString().split('T')[0];
+            }
+            const m1 = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/);
+            if (m1) return `${m1[3]}-${m1[2].padStart(2,'0')}-${m1[1].padStart(2,'0')}`;
+            const m2 = str.match(/^(\d{4})[\/\-](\d{1,2})[\/\-](\d{1,2})/);
+            if (m2) return `${m2[1]}-${m2[2].padStart(2,'0')}-${m2[3].padStart(2,'0')}`;
+            return null;
+        }
+
+        function parseMonto(str) {
+            if (str === undefined || str === null || str === '') return 0;
+            return parseFloat(String(str).replace(/[^0-9,.\-]/g,'').replace(',','.')) || 0;
+        }
+
+        function procesarCartola() {
+            const colFecha   = document.getElementById('map-fecha').value;
+            const colDesc    = document.getElementById('map-desc').value;
+            const colDebito  = document.getElementById('map-debito').value;
+            const colCredito = document.getElementById('map-credito').value;
+            const colMonto   = document.getElementById('map-monto').value;
+            const cuentaCod  = document.getElementById('conc-cuenta').value;
+            const desde      = document.getElementById('conc-desde').value;
+            const hasta      = document.getElementById('conc-hasta').value;
+            const tolerDias  = parseInt(document.getElementById('conc-tolerancia')?.value || '5');
+
+            if (!colFecha) { showToast('Selecciona la columna de fecha','error'); return; }
+            if (!colDesc)  { showToast('Selecciona la columna de descripción','error'); return; }
+            if (!cuentaCod){ showToast('Selecciona la cuenta bancaria','error'); return; }
+
+            const movsBanco = _concCartola.map((row, idx) => {
+                const fecha = parseFecha(row[colFecha]);
+                let monto = 0;
+                if (colMonto) {
+                    monto = parseMonto(row[colMonto]);
+                } else {
+                    const deb = parseMonto(row[colDebito]);
+                    const cre = parseMonto(row[colCredito]);
+                    monto = cre > 0 ? cre : -deb;
+                }
+                return { id: 'B'+idx, fecha, desc: row[colDesc]||'', monto, conciliado: false };
+            }).filter(m => m.fecha && m.monto !== 0);
+
+            const movsBancoFiltrados = movsBanco.filter(m => {
+                if (desde && m.fecha < desde) return false;
+                if (hasta && m.fecha > hasta) return false;
+                return true;
+            });
+
+            const movsLibro = asientosFiltrados(desde, hasta)
+                .filter(a => String(a.codigo) === String(cuentaCod))
+                .map(a => ({
+                    id: 'L'+a.voucher+'_'+a.fecha,
+                    fecha: a.fecha, voucher: a.voucher, glosa: a.glosa || '',
+                    cuenta: planCuentas[a.codigo]?.nombre || a.codigo,
+                    monto: (a.debe||0) - (a.haber||0),
+                    conciliado: false
+                }));
+
+            _concConciliado = [];
+            _concSoloBanco  = [];
+            _concSoloLibro  = [...movsLibro];
+            _concAjustes    = [];
+
+            const usedLibro = new Set();
+            movsBancoFiltrados.forEach(mb => {
+                let mejor = null, mejorDiff = Infinity;
+                movsLibro.forEach((ml, i) => {
+                    if (usedLibro.has(i)) return;
+                    const diffMonto = Math.abs(Math.round(mb.monto) - Math.round(ml.monto));
+                    if (diffMonto > Math.max(1, Math.abs(mb.monto) * 0.001)) return;
+                    const diffDias = mb.fecha && ml.fecha
+                        ? Math.abs((new Date(mb.fecha) - new Date(ml.fecha)) / 86400000) : 999;
+                    if (diffDias <= tolerDias && diffDias < mejorDiff) { mejor = i; mejorDiff = diffDias; }
+                });
+                if (mejor !== null) { usedLibro.add(mejor); _concConciliado.push({ banco: mb, libro: movsLibro[mejor] }); }
+                else _concSoloBanco.push(mb);
+            });
+            _concSoloLibro = movsLibro.filter((_, i) => !usedLibro.has(i));
+
+            renderConciliacion(movsBancoFiltrados, desde, hasta);
+        }
+
+        function conciliarManual(idxBanco, idxLibro) {
+            // Move from _concSoloBanco + _concSoloLibro into _concConciliado
+            const mb = _concSoloBanco[idxBanco];
+            const ml = _concSoloLibro[idxLibro];
+            if (!mb || !ml) return;
+            _concConciliado.push({ banco: mb, libro: ml, manual: true });
+            _concSoloBanco.splice(idxBanco, 1);
+            _concSoloLibro.splice(idxLibro, 1);
+            const desde = document.getElementById('conc-desde').value;
+            const hasta  = document.getElementById('conc-hasta').value;
+            const allBanco = [..._concConciliado.map(p=>p.banco), ..._concSoloBanco];
+            renderConciliacion(allBanco, desde, hasta);
+            showToast('Movimiento conciliado manualmente','success');
+        }
+
+        function agregarAjuste() {
+            const tipo  = document.getElementById('ajuste-tipo')?.value || 'nota_debito';
+            const desc  = document.getElementById('ajuste-desc')?.value || '';
+            const monto = parseFloat(document.getElementById('ajuste-monto')?.value || 0);
+            if (!desc || !monto) { showToast('Completa descripción y monto','error'); return; }
+            _concAjustes.push({tipo, desc, monto});
+            document.getElementById('ajuste-desc').value = '';
+            document.getElementById('ajuste-monto').value = '';
+            const desde = document.getElementById('conc-desde').value;
+            const hasta  = document.getElementById('conc-hasta').value;
+            const allBanco = [..._concConciliado.map(p=>p.banco), ..._concSoloBanco];
+            renderConciliacion(allBanco, desde, hasta);
+            showToast('Ajuste agregado','success');
+        }
+
+        function renderConciliacion(movsBanco, desde, hasta) {
+            const fmt     = n => (n < 0 ? '-' : '') + '$' + Math.round(Math.abs(n)).toLocaleString('es-CL');
+            const fmtDate = d => d ? new Date(d + 'T12:00:00').toLocaleDateString('es-CL') : '—';
+            const cuentaCod = document.getElementById('conc-cuenta').value;
+
+            const totalBanco  = movsBanco.reduce((s,m) => s + m.monto, 0);
+            const saldoBanco  = parseFloat(document.getElementById('conc-saldo-banco').value) || 0;
+            const saldoLibro  = asientosFiltrados(desde, hasta)
+                .filter(a => String(a.codigo) === cuentaCod)
+                .reduce((s,a) => s + (a.debe||0) - (a.haber||0), 0);
+            const totalAjustes = _concAjustes.reduce((s,a) => s + a.monto, 0);
+            const diferencia  = saldoBanco - (saldoLibro + totalAjustes);
+
+            // ── KPIs ──────────────────────────────────────────────────
+            document.getElementById('conc-kpis').innerHTML = `
+                <div class="grid grid-cols-2 gap-3 mb-3">
+                    <div class="bg-green-50 rounded-xl p-3 border border-green-200">
+                        <div class="text-xs text-green-700 font-semibold uppercase mb-1">✅ Conciliados</div>
+                        <div class="text-2xl font-bold font-mono text-green-800">${_concConciliado.length}</div>
+                        <div class="text-xs text-green-600 mt-1">movimientos pareados</div>
+                    </div>
+                    <div class="bg-orange-50 rounded-xl p-3 border border-orange-200">
+                        <div class="text-xs text-orange-700 font-semibold uppercase mb-1">⚠️ Solo Banco</div>
+                        <div class="text-2xl font-bold font-mono text-orange-800">${_concSoloBanco.length}</div>
+                        <div class="text-xs text-orange-600 mt-1">sin registro contable</div>
+                    </div>
+                    <div class="bg-blue-50 rounded-xl p-3 border border-blue-200">
+                        <div class="text-xs text-blue-700 font-semibold uppercase mb-1">📒 Solo Libro</div>
+                        <div class="text-2xl font-bold font-mono text-blue-800">${_concSoloLibro.length}</div>
+                        <div class="text-xs text-blue-600 mt-1">no en cartola banco</div>
+                    </div>
+                    <div class="bg-${Math.abs(diferencia)<1?'green':'red'}-50 rounded-xl p-3 border border-${Math.abs(diferencia)<1?'green':'red'}-200">
+                        <div class="text-xs text-${Math.abs(diferencia)<1?'green':'red'}-700 font-semibold uppercase mb-1">${Math.abs(diferencia)<1?'✅':'⚠️'} Diferencia</div>
+                        <div class="text-xl font-bold font-mono text-${Math.abs(diferencia)<1?'green':'red'}-800">${fmt(diferencia)}</div>
+                        <div class="text-xs text-gray-500 mt-1">Banco vs Libro+Ajustes</div>
+                    </div>
+                </div>
+
+                <!-- Resumen formal conciliación -->
+                <div class="bg-gray-50 rounded-xl border border-gray-200 p-4 text-sm space-y-1.5">
+                    <div class="font-bold text-gray-700 text-xs uppercase tracking-wider mb-2">📋 Resumen Formal de Conciliación</div>
+                    <div class="flex justify-between border-b pb-1.5">
+                        <span class="text-gray-600 font-semibold">Saldo según Cartola Banco</span>
+                        <span class="font-mono font-bold text-blue-800">${fmt(saldoBanco)}</span>
+                    </div>
+                    ${_concSoloBanco.length ? `
+                    <div class="text-xs text-orange-700 font-semibold mt-1 mb-0.5">Más: Depósitos en tránsito (en libro, no en banco)</div>
+                    ${_concSoloBanco.filter(m=>m.monto>0).map(m=>`<div class="flex justify-between pl-3 text-xs text-gray-600"><span>${fmtDate(m.fecha)} — ${m.desc.substring(0,40)}</span><span class="font-mono text-green-700">+${fmt(Math.abs(m.monto))}</span></div>`).join('')}
+                    <div class="text-xs text-red-700 font-semibold mt-1 mb-0.5">Menos: Cheques girados no cobrados</div>
+                    ${_concSoloBanco.filter(m=>m.monto<0).map(m=>`<div class="flex justify-between pl-3 text-xs text-gray-600"><span>${fmtDate(m.fecha)} — ${m.desc.substring(0,40)}</span><span class="font-mono text-red-700">${fmt(m.monto)}</span></div>`).join('')}
+                    ` : ''}
+                    ${_concAjustes.length ? `
+                    <div class="text-xs text-purple-700 font-semibold mt-1 mb-0.5">Ajustes bancarios:</div>
+                    ${_concAjustes.map(a=>`<div class="flex justify-between pl-3 text-xs text-gray-600"><span>${a.desc}</span><span class="font-mono ${a.monto>=0?'text-green-700':'text-red-700'}">${fmt(a.monto)}</span></div>`).join('')}
+                    ` : ''}
+                    <div class="flex justify-between border-t pt-1.5 mt-1.5 font-bold">
+                        <span class="${Math.abs(diferencia)<1?'text-green-700':'text-red-700'}">${Math.abs(diferencia)<1?'✅ Saldo conciliado':'⚠️ Diferencia pendiente'}</span>
+                        <span class="font-mono ${Math.abs(diferencia)<1?'text-green-700':'text-red-700'}">${fmt(saldoLibro)}</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-gray-500 border-t pt-1">
+                        <span>Saldo según Libro Diario</span>
+                        <span class="font-mono">${fmt(saldoLibro)}</span>
+                    </div>
+                </div>
+
+                <!-- Agregar ajuste manual -->
+                <div class="mt-3 p-3 bg-purple-50 rounded-xl border border-purple-200">
+                    <div class="text-xs font-bold text-purple-700 uppercase mb-2">➕ Agregar Ajuste Bancario</div>
+                    <div class="grid grid-cols-3 gap-2">
+                        <select id="ajuste-tipo" class="form-input py-1.5 text-xs col-span-1">
+                            <option value="nota_debito">Nota Débito Banco</option>
+                            <option value="nota_credito">Nota Crédito Banco</option>
+                            <option value="interes">Intereses/Comisión</option>
+                            <option value="deposito_transito">Depósito en Tránsito</option>
+                            <option value="cheque_pendiente">Cheque Pendiente</option>
+                            <option value="otro">Otro Ajuste</option>
+                        </select>
+                        <input type="text" id="ajuste-desc" placeholder="Descripción" class="form-input py-1.5 text-xs col-span-1">
+                        <div class="flex gap-1">
+                            <input type="number" id="ajuste-monto" placeholder="Monto (±)" class="form-input py-1.5 text-xs flex-1 font-mono">
+                            <button onclick="agregarAjuste()" class="px-3 py-1.5 bg-purple-600 text-white rounded-lg text-xs font-bold hover:bg-purple-700">+</button>
+                        </div>
+                    </div>
+                    ${_concAjustes.length ? `<div class="mt-2 space-y-1">
+                        ${_concAjustes.map((a,i)=>`<div class="flex justify-between items-center text-xs bg-white rounded p-1.5 border border-purple-100">
+                            <span class="text-gray-600">${a.desc}</span>
+                            <div class="flex items-center gap-2">
+                                <span class="font-mono font-bold ${a.monto>=0?'text-green-700':'text-red-700'}">${fmt(a.monto)}</span>
+                                <button onclick="_concAjustes.splice(${i},1);renderConciliacion([...concConciliado.map(p=>p.banco),..._concSoloBanco],document.getElementById('conc-desde').value,document.getElementById('conc-hasta').value)" class="text-red-400 hover:text-red-600">✕</button>
+                            </div>
+                        </div>`).join('')}
+                    </div>` : ''}
+                </div>`;
+
+            // ── Tabla conciliados ──────────────────────────────────────
+            document.getElementById('conc-count-ok').textContent = _concConciliado.length;
+            document.getElementById('conc-tabla-ok').innerHTML = _concConciliado.length
+                ? _concConciliado.map((p,i) => `
+                <tr class="border-b ${i%2?'bg-gray-50':''} hover:bg-green-50">
+                    <td class="px-4 py-2 font-mono text-xs text-gray-500">${fmtDate(p.banco.fecha)}</td>
+                    <td class="px-4 py-2 text-gray-700 text-xs">${p.banco.desc}${p.manual?'<span class="ml-1 px-1.5 py-0.5 bg-purple-100 text-purple-700 text-xs rounded">Manual</span>':''}</td>
+                    <td class="px-4 py-2 text-right font-mono font-semibold ${p.banco.monto>=0?'text-green-700':'text-red-700'}">${fmt(p.banco.monto)}</td>
+                    <td class="px-4 py-2 font-mono text-xs text-gray-500">${fmtDate(p.libro.fecha)}</td>
+                    <td class="px-4 py-2 text-gray-700 text-xs">V${p.libro.voucher} ${p.libro.glosa}</td>
+                    <td class="px-4 py-2 text-right font-mono font-semibold ${p.libro.monto>=0?'text-green-700':'text-red-700'}">${fmt(p.libro.monto)}</td>
+                    <td class="px-4 py-2 text-center"><span class="px-2 py-0.5 rounded-full text-xs font-bold ${Math.abs(p.banco.monto-p.libro.monto)<1?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'}">${Math.abs(p.banco.monto-p.libro.monto)<1?'✓ OK':fmt(p.banco.monto-p.libro.monto)}</span></td>
+                </tr>`).join('')
+                : '<tr><td colspan="7" class="px-4 py-6 text-center text-gray-400">Sin movimientos conciliados</td></tr>';
+
+            // ── Tabla solo banco ───────────────────────────────────────
+            document.getElementById('conc-count-banco').textContent = _concSoloBanco.length;
+            document.getElementById('conc-tabla-banco').innerHTML = _concSoloBanco.length
+                ? _concSoloBanco.map((m,i) => `
+                <tr class="border-b ${i%2?'bg-gray-50':''} hover:bg-orange-50">
+                    <td class="px-4 py-2 font-mono text-xs text-gray-500">${fmtDate(m.fecha)}</td>
+                    <td class="px-4 py-2 text-gray-700 text-xs">${m.desc}</td>
+                    <td class="px-4 py-2 text-right font-mono font-semibold ${m.monto>=0?'text-green-700':'text-red-700'}">${fmt(m.monto)}</td>
+                    <td class="px-4 py-2 text-center">
+                        <button onclick="selBancoParaManual(${i})" class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs hover:bg-purple-200 font-medium">🔗 Conciliar</button>
+                    </td>
+                </tr>`).join('')
+                : '<tr><td colspan="4" class="px-4 py-6 text-center text-gray-400">✅ Todo registrado en contabilidad</td></tr>';
+
+            // ── Tabla solo libro ───────────────────────────────────────
+            document.getElementById('conc-count-libro').textContent = _concSoloLibro.length;
+            document.getElementById('conc-tabla-libro').innerHTML = _concSoloLibro.length
+                ? _concSoloLibro.map((m,i) => `
+                <tr class="border-b ${i%2?'bg-gray-50':''} hover:bg-blue-50" id="libro-row-${i}">
+                    <td class="px-4 py-2 font-mono text-xs text-gray-500">${fmtDate(m.fecha)}</td>
+                    <td class="px-4 py-2 text-gray-700 text-xs">V${m.voucher} — ${m.glosa}</td>
+                    <td class="px-4 py-2 text-xs text-gray-500">${m.cuenta}</td>
+                    <td class="px-4 py-2 text-right font-mono font-semibold ${m.monto>=0?'text-green-700':'text-red-700'}">${fmt(m.monto)}</td>
+                </tr>`).join('')
+                : '<tr><td colspan="4" class="px-4 py-6 text-center text-gray-400">✅ Todo en banco está contabilizado</td></tr>';
+
+            document.getElementById('conc-resultado').classList.remove('hidden');
+            showToast(`Conciliación: ${_concConciliado.length} ok · ${_concSoloBanco.length} solo banco · ${_concSoloLibro.length} solo libro`, 'success');
+        }
+
+        let _selBancoIdx = null;
+        function selBancoParaManual(idx) {
+            _selBancoIdx = idx;
+            showToast('Ahora haz clic en la fila del Libro Diario para conciliar manualmente','info');
+            // Highlight libro rows as selectable
+            document.querySelectorAll('[id^="libro-row-"]').forEach((row, i) => {
+                row.style.cursor = 'pointer';
+                row.style.background = '#fefce8';
+                row.onclick = () => { if(_selBancoIdx!==null){ conciliarManual(_selBancoIdx, i); _selBancoIdx=null; } };
+            });
+        }
+
+        function imprimirConciliacion() {
+            if (!_concConciliado.length && !_concSoloBanco.length && !_concSoloLibro.length) {
+                showToast('Realiza la conciliación primero','error'); return;
+            }
+            const empKey = sesionActual?.empresa || 'anfa_renca';
+            const empCfg = typeof getEmpresasConfig === 'function' ? getEmpresasConfig() : {};
+            const empNom = empCfg[empKey]?.nombre || empKey.toUpperCase().replace('_',' ');
+            const empRut = empCfg[empKey]?.rut || '';
+            const fechaHoy = new Date().toLocaleDateString('es-CL',{day:'numeric',month:'long',year:'numeric'});
+            const cuentaNom = document.getElementById('conc-cuenta').selectedOptions[0]?.text || '';
+            const desde = document.getElementById('conc-desde').value;
+            const hasta  = document.getElementById('conc-hasta').value;
+            const rangoTxt = `Cuenta: ${cuentaNom} · Período: ${desde||'inicio'} al ${hasta||'hoy'}`;
+            const kpisEl = document.getElementById('conc-kpis');
+            const resEl  = document.getElementById('conc-resultado');
+            const bodyHTML = (kpisEl?.innerHTML||'') + (resEl?.innerHTML||'');
+            imprimirConCSSTailwind('Conciliación Bancaria', bodyHTML, rangoTxt, empNom, empRut, fechaHoy);
+        }
+
+        function excelConciliacion() {
+            if (!_concConciliado.length && !_concSoloBanco.length && !_concSoloLibro.length) {
+                showToast('Realiza la conciliación primero','error'); return;
+            }
+            const fmt    = n => Math.round(n);
+            const wb     = XLSX.utils.book_new();
+            const cuentaNom = document.getElementById('conc-cuenta').selectedOptions[0]?.text || 'Cuenta';
+            const desde  = document.getElementById('conc-desde').value;
+            const hasta  = document.getElementById('conc-hasta').value;
+            const empKey = sesionActual?.empresa || '';
+            const empCfg = typeof getEmpresasConfig === 'function' ? getEmpresasConfig() : {};
+            const empNom = empCfg[empKey]?.nombre || empKey;
+            const hoy    = new Date().toLocaleDateString('es-CL');
+            const header = [empNom, 'CONCILIACIÓN BANCARIA', cuentaNom, `${desde||'inicio'} al ${hasta||'hoy'}`, `Generado: ${hoy}`, '', ''];
+
+            const ws1 = XLSX.utils.aoa_to_sheet([header, [],
+                ['Fecha Banco','Descripción Banco','Monto Banco','Fecha Libro','V# Glosa','Monto Libro','Diferencia','Manual'],
+                ..._concConciliado.map(p=>[p.banco.fecha,p.banco.desc,fmt(p.banco.monto),p.libro.fecha,'V'+p.libro.voucher+' '+p.libro.glosa,fmt(p.libro.monto),fmt(p.banco.monto-p.libro.monto),p.manual?'Sí':'Auto'])
+            ]);
+            ws1['!cols'] = [{wch:12},{wch:35},{wch:14},{wch:12},{wch:30},{wch:14},{wch:12},{wch:8}];
+            XLSX.utils.book_append_sheet(wb, ws1, 'Conciliados');
+
+            const ws2 = XLSX.utils.aoa_to_sheet([header, [], ['Fecha','Descripción','Monto'],
+                ..._concSoloBanco.map(m=>[m.fecha,m.desc,fmt(m.monto)])
+            ]);
+            ws2['!cols'] = [{wch:12},{wch:40},{wch:14}];
+            XLSX.utils.book_append_sheet(wb, ws2, 'Solo Banco');
+
+            const ws3 = XLSX.utils.aoa_to_sheet([header, [], ['Fecha','Voucher','Glosa','Cuenta','Monto'],
+                ..._concSoloLibro.map(m=>[m.fecha,'V'+m.voucher,m.glosa,m.cuenta,fmt(m.monto)])
+            ]);
+            ws3['!cols'] = [{wch:12},{wch:8},{wch:35},{wch:25},{wch:14}];
+            XLSX.utils.book_append_sheet(wb, ws3, 'Solo Libro');
+
+            if (_concAjustes.length) {
+                const ws4 = XLSX.utils.aoa_to_sheet([header, [], ['Tipo','Descripción','Monto'],
+                    ..._concAjustes.map(a=>[a.tipo,a.desc,a.monto])
+                ]);
+                XLSX.utils.book_append_sheet(wb, ws4, 'Ajustes');
+            }
+
+            XLSX.writeFile(wb, `${empKey}_conciliacion_${desde||'todo'}_${hasta||'hoy'}.xlsx`);
+            showToast('📊 Excel conciliación descargado','success');
+        }
+
+
         // ── CAMBIO DE CLAVE ──────────────────────────────────────
         function abrirCambioClave() {
             document.getElementById('cambio-usuario-label').textContent = sesionActual.usuario;
@@ -6294,13 +7207,14 @@ function getUsuarios() {
                 mostrarError('❌ Las contraseñas no coinciden'); return;
             }
 
-            // Save new password to localStorage
+            // Save new password to localStorage AND Firebase
             const saved = JSON.parse(localStorage.getItem('usuarios_claves') || '{}');
-            saved[user] = nueva;
+            saved[user] = { password: nueva, rol: usuarios[user].rol };
             localStorage.setItem('usuarios_claves', JSON.stringify(saved));
+            syncFirebase(); // Sync to Firebase so other devices get the new password
 
             cerrarCambioClave();
-            showToast('✅ Contraseña actualizada correctamente', 'success');
+            showToast('✅ Contraseña actualizada correctamente ☁️', 'success');
         }
 
         // Tabs
@@ -7509,243 +8423,28 @@ function getUsuarios() {
         }
 
         function generarAuditoria() {
-            const desde = document.getElementById('aud-desde')?.value || '';
-            const hasta  = document.getElementById('aud-hasta')?.value  || '';
-            const fmt  = n => '$' + Math.round(Math.abs(n)).toLocaleString('es-CL');
-            const fmtS = n => (n<0?'-':'') + fmt(n);
-
-            // Filtrar asientos por período
-            const asientosPer = asientos.filter(a => {
-                if (desde && a.fecha < desde) return false;
-                if (hasta  && a.fecha > hasta)  return false;
-                return true;
-            });
-
-            // ── ANÁLISIS DE CONTROL ──────────────────────────────────
-            const hallazgos = [];
-
-            // 1. Asientos descuadrados
-            const vouchers = {};
-            asientosPer.forEach(a => {
-                if (!vouchers[a.voucher]) vouchers[a.voucher] = {debe:0, haber:0, fecha:a.fecha, movs:[]};
-                vouchers[a.voucher].debe  += (a.debe  || 0);
-                vouchers[a.voucher].haber += (a.haber || 0);
-                vouchers[a.voucher].movs.push(a);
-            });
-            const descuadrados = Object.entries(vouchers).filter(([v,d]) => Math.abs(d.debe - d.haber) > 1);
-            if (descuadrados.length) {
-                hallazgos.push({
-                    tipo: 'error', icon: '❌',
-                    titulo: 'Asientos Descuadrados (' + descuadrados.length + ')',
-                    detalle: descuadrados.map(([v,d]) => `Voucher V${v} (${d.fecha}): Debe ${fmt(d.debe)} / Haber ${fmt(d.haber)} — Diferencia: ${fmt(Math.abs(d.debe-d.haber))}`).join('<br>')
-                });
-            }
-
-            // 2. Vouchers duplicados
-            const vouchersNums = asientosPer.map(a => a.voucher);
-            const dupVouchers = vouchersNums.filter((v,i,arr) => {
-                const first = arr.indexOf(v);
-                return first !== i && first !== arr.lastIndexOf(v);
-            });
-            const uniqueDups = [...new Set(dupVouchers)];
-            if (uniqueDups.length) {
-                hallazgos.push({
-                    tipo: 'advertencia', icon: '⚠️',
-                    titulo: 'Vouchers con múltiples entradas (' + uniqueDups.length + ')',
-                    detalle: 'Vouchers: ' + uniqueDups.map(v=>'V'+v).join(', ')
-                });
-            }
-
-            // 3. Movimientos sin centro de costo
-            const sinCC = asientosPer.filter(a => !a.cc || a.cc === '' || a.cc === 'CC000');
-            if (sinCC.length) {
-                hallazgos.push({
-                    tipo: 'advertencia', icon: '⚠️',
-                    titulo: 'Movimientos sin Centro de Costo (' + sinCC.length + ')',
-                    detalle: 'Se encontraron ' + sinCC.length + ' líneas sin CC asignado. Revisar asientos: ' + [...new Set(sinCC.map(a=>'V'+a.voucher))].slice(0,10).join(', ')
-                });
-            }
-
-            // 4. Cuentas sin movimiento
-            const codigosUsados = new Set(asientosPer.map(a => a.codigo));
-            const sinMov = Object.entries(planCuentas).filter(([cod,c]) => c.nivel===4 && !codigosUsados.has(cod));
-            if (sinMov.length) {
-                hallazgos.push({
-                    tipo: 'info', icon: 'ℹ️',
-                    titulo: 'Cuentas sin movimiento en el período (' + sinMov.length + ')',
-                    detalle: sinMov.map(([cod,c]) => cod + ' — ' + c.nombre).join('<br>')
-                });
-            }
-
-            // 5. Análisis presupuesto vs ejecutado
-            calcularEjecutado();
-            const variaciones = [];
-            Object.entries(presupuesto).forEach(([cod, p]) => {
-                if (p.presupuestado <= 0) return;
-                const pct = (p.ejecutado / p.presupuestado) * 100;
-                if (pct > 120 || pct < 50) {
-                    const cta = planCuentas[cod];
-                    variaciones.push({cod, nombre: cta?.nombre||cod, ppto: p.presupuestado, ejec: p.ejecutado, pct: pct.toFixed(1)});
-                }
-            });
-            if (variaciones.length) {
-                hallazgos.push({
-                    tipo: 'advertencia', icon: '📊',
-                    titulo: 'Variaciones Presupuestarias Significativas (' + variaciones.length + ')',
-                    detalle: variaciones.map(v => `${v.cod} ${v.nombre}: Ppto ${fmt(v.ppto)} / Ejec ${fmt(v.ejec)} = ${v.pct}%`).join('<br>')
-                });
-            }
-
-            if (!hallazgos.length) {
-                hallazgos.push({tipo:'ok', icon:'✅', titulo:'Sin hallazgos relevantes', detalle:'El período analizado no presenta irregularidades contables.'});
-            }
-
-            // ── BALANCE POR GRUPO ────────────────────────────────────
-            const balance = {activo:{}, pasivo:{}, patrimonio:{}, ingreso:{}, gasto:{}};
-            asientosPer.forEach(a => {
-                const cta = planCuentas[a.codigo];
-                if (!cta || cta.nivel !== 4) return;
-                const tipo = cta.tipo.toLowerCase();
-                if (!balance[tipo]) return;
-                if (!balance[tipo][a.codigo]) balance[tipo][a.codigo] = {nombre:cta.nombre, debe:0, haber:0};
-                balance[tipo][a.codigo].debe  += (a.debe  || 0);
-                balance[tipo][a.codigo].haber += (a.haber || 0);
-            });
-
-            // ── CALCULAR TOTALES PARA NOTAS ──────────────────────────
-            const calcSaldo = (grupo, tipo) => Object.values(grupo).reduce((t,c) => {
-                const s = tipo==='activo'||tipo==='gasto' ? c.debe-c.haber : c.haber-c.debe;
-                return t + s;
-            }, 0);
-
-            const totActivo    = calcSaldo(balance.activo,    'activo');
-            const totPasivo    = calcSaldo(balance.pasivo,    'pasivo');
-            const totPatrimonio= calcSaldo(balance.patrimonio,'patrimonio');
-            const totIngreso   = calcSaldo(balance.ingreso,   'ingreso');
-            const totGasto     = calcSaldo(balance.gasto,     'gasto');
-            const resultado    = totIngreso - totGasto;
-
-            // ── KPIs ─────────────────────────────────────────────────
-            const kpiData = [
-                {label:'Total Activo',    valor:fmtS(totActivo),    color:'bg-blue-600',   icon:'🏦'},
-                {label:'Total Pasivo',    valor:fmtS(totPasivo),    color:'bg-red-600',    icon:'📋'},
-                {label:'Resultado',       valor:fmtS(resultado),    color: resultado>=0?'bg-green-600':'bg-red-600', icon: resultado>=0?'✅':'❌'},
-                {label:'Hallazgos',       valor:hallazgos.length,   color:'bg-purple-600', icon:'🔍'},
-            ];
-
-            document.getElementById('aud-kpis').innerHTML = kpiData.map(k => `
-                <div class="${k.color} text-white rounded-2xl p-5 shadow-lg">
-                    <div class="text-2xl mb-1">${k.icon}</div>
-                    <div class="text-xs font-semibold opacity-80 uppercase tracking-wide">${k.label}</div>
-                    <div class="text-xl font-bold font-mono mt-1">${k.valor}</div>
-                </div>`).join('');
-
-            // ── RENDER ───────────────────────────────────────────────
-            const mkTable = (items, tipo) => {
-                if (!Object.keys(items).length) return '<div class="text-gray-400 text-sm px-4 py-3 italic">Sin movimientos en el período</div>';
-                return '<table class="w-full text-sm"><thead><tr class="bg-gray-50 text-xs text-gray-500 uppercase border-b"><th class="px-4 py-2 text-left">Código</th><th class="px-4 py-2 text-left">Cuenta</th><th class="px-4 py-2 text-right">Debe</th><th class="px-4 py-2 text-right">Haber</th><th class="px-4 py-2 text-right font-bold">Saldo</th></tr></thead><tbody>' +
-                Object.entries(items).sort((a,b)=>a[0].localeCompare(b[0])).map(([cod,c],i) => {
-                    const saldo = tipo==='activo'||tipo==='gasto' ? c.debe-c.haber : c.haber-c.debe;
-                    return `<tr class="border-b ${i%2?'bg-gray-50':''}"><td class="px-4 py-2 font-mono text-xs text-gray-500">${cod}</td><td class="px-4 py-2 text-gray-700">${c.nombre}</td><td class="px-4 py-2 text-right font-mono">${c.debe>0?fmt(c.debe):'-'}</td><td class="px-4 py-2 text-right font-mono">${c.haber>0?fmt(c.haber):'-'}</td><td class="px-4 py-2 text-right font-mono font-bold ${saldo>=0?'text-green-600':'text-red-600'}">${fmtS(saldo)}</td></tr>`;
-                }).join('') + '</tbody></table>';
-            };
-
-            const mkHallazgo = h => `
-                <div class="rounded-xl border-l-4 p-4 mb-3 ${h.tipo==='error'?'border-red-500 bg-red-50':h.tipo==='advertencia'?'border-yellow-500 bg-yellow-50':h.tipo==='ok'?'border-green-500 bg-green-50':'border-blue-500 bg-blue-50'}">
-                    <div class="font-bold text-sm mb-1">${h.icon} ${h.titulo}</div>
-                    <div class="text-xs text-gray-600 leading-relaxed">${h.detalle}</div>
-                </div>`;
-
-            const periodoStr = (desde||'inicio') + ' al ' + (hasta||'hoy');
-            const emp = document.querySelector('.empresa-nombre')?.textContent || '';
-
-            const html = `
-            <div id="aud-print-area">
-                <!-- Encabezado -->
-                <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4">
-                    <div class="p-6 bg-gradient-to-r from-blue-900 to-purple-700 text-white">
-                        <div class="text-xs opacity-60 uppercase tracking-widest mb-1">Informe de Auditoría Interna</div>
-                        <div class="text-2xl font-bold">${emp}</div>
-                        <div class="text-sm opacity-80 mt-1">Período: ${periodoStr}</div>
-                        <div class="text-xs opacity-60 mt-1">Generado: ${new Date().toLocaleDateString('es-CL',{dateStyle:'full'})}</div>
-                    </div>
-                    <div class="p-5">
-                        <div class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-3">Resumen Ejecutivo</div>
-                        <div class="grid grid-cols-3 gap-4 text-sm">
-                            <div class="bg-blue-50 rounded-xl p-3"><span class="text-gray-500 text-xs block">Total Asientos</span><span class="font-bold text-lg">${asientosPer.length}</span></div>
-                            <div class="bg-purple-50 rounded-xl p-3"><span class="text-gray-500 text-xs block">Vouchers</span><span class="font-bold text-lg">${Object.keys(vouchers).length}</span></div>
-                            <div class="${resultado>=0?'bg-green-50':'bg-red-50'} rounded-xl p-3"><span class="text-gray-500 text-xs block">Resultado</span><span class="font-bold text-lg ${resultado>=0?'text-green-700':'text-red-700'}">${fmtS(resultado)}</span></div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Hallazgos -->
-                <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4">
-                    <div class="px-5 py-3 bg-purple-700 text-white font-bold flex items-center gap-2">🔍 Hallazgos de Auditoría</div>
-                    <div class="p-5">${hallazgos.map(mkHallazgo).join('')}</div>
-                </div>
-
-                <!-- Nota 1: Activo -->
-                <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4">
-                    <div class="px-5 py-3 bg-blue-700 text-white font-bold flex justify-between"><span>📘 Nota 1 — Activo <span class="text-sm font-normal opacity-80">(detalle por cuenta)</span></span><span class="font-mono">${fmtS(totActivo)}</span></div>
-                    ${mkTable(balance.activo,'activo')}
-                    <div class="px-4 py-3 bg-blue-50 border-t font-bold text-sm flex justify-between"><span>TOTAL ACTIVO</span><span class="font-mono text-blue-700">${fmtS(totActivo)}</span></div>
-                </div>
-
-                <!-- Nota 2: Pasivo -->
-                <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4">
-                    <div class="px-5 py-3 bg-red-700 text-white font-bold flex justify-between"><span>📕 Nota 2 — Pasivo <span class="text-sm font-normal opacity-80">(detalle por cuenta)</span></span><span class="font-mono">${fmtS(totPasivo)}</span></div>
-                    ${mkTable(balance.pasivo,'pasivo')}
-                    <div class="px-4 py-3 bg-red-50 border-t font-bold text-sm flex justify-between"><span>TOTAL PASIVO</span><span class="font-mono text-red-700">${fmtS(totPasivo)}</span></div>
-                </div>
-
-                <!-- Nota 3: Patrimonio -->
-                <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4">
-                    <div class="px-5 py-3 bg-gray-700 text-white font-bold flex justify-between"><span>📗 Nota 3 — Patrimonio</span><span class="font-mono">${fmtS(totPatrimonio)}</span></div>
-                    ${mkTable(balance.patrimonio,'patrimonio')}
-                </div>
-
-                <!-- Nota 4: Resultado -->
-                <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4">
-                    <div class="px-5 py-3 bg-green-700 text-white font-bold flex justify-between"><span>📊 Nota 4 — Resultado del Período</span><span class="font-mono">${fmtS(resultado)}</span></div>
-                    <table class="w-full text-sm"><tbody>
-                        <tr class="border-b bg-green-50"><td class="px-4 py-3 font-bold">Total Ingresos</td><td class="px-4 py-3 text-right font-mono text-green-700 font-bold">${fmtS(totIngreso)}</td></tr>
-                        <tr class="border-b bg-red-50"><td class="px-4 py-3 font-bold">Total Gastos</td><td class="px-4 py-3 text-right font-mono text-red-700 font-bold">${fmtS(totGasto)}</td></tr>
-                    </tbody><tfoot><tr class="${resultado>=0?'bg-green-700':'bg-red-700'} text-white font-bold"><td class="px-4 py-3">${resultado>=0?'SUPERÁVIT':'DÉFICIT'} DEL PERÍODO</td><td class="px-4 py-3 text-right font-mono text-xl">${fmtS(resultado)}</td></tr></tfoot></table>
-                    <!-- Detalle ingresos -->
-                    <div class="px-4 py-2 bg-gray-50 text-xs font-bold text-gray-500 uppercase border-t">Detalle Ingresos</div>
-                    ${mkTable(balance.ingreso,'ingreso')}
-                    <div class="px-4 py-2 bg-gray-50 text-xs font-bold text-gray-500 uppercase border-t">Detalle Gastos</div>
-                    ${mkTable(balance.gasto,'gasto')}
-                </div>
-
-                <!-- Firma -->
-                <div class="bg-white rounded-2xl shadow-lg p-6 mb-4">
-                    <div class="text-xs text-gray-500 uppercase font-bold tracking-wider mb-4">Certificación</div>
-                    <div class="grid grid-cols-2 gap-8">
-                        <div class="border-t-2 border-gray-300 pt-3 text-center text-sm text-gray-500">Contador</div>
-                        <div class="border-t-2 border-gray-300 pt-3 text-center text-sm text-gray-500">Administrador</div>
-                    </div>
-                </div>
-            </div>`;
-
-            document.getElementById('aud-contenido').innerHTML = html;
+            ejecutarAuditoria();
         }
 
         function imprimirAuditoria() {
-            const area = document.getElementById('auditoria-contenido');
-            if (!area || area.innerHTML.trim() === '' || area.innerHTML.includes('Ejecutar Análisis')) {
-                // Run analysis first then print
-                ejecutarAuditoria();
+            const desde = document.getElementById('aud-desde')?.value || '';
+            const hasta  = document.getElementById('aud-hasta')?.value  || '';
+            const rangoTxt = desde||hasta
+                ? 'Período: '+(desde?new Date(desde+'T12:00:00').toLocaleDateString('es-CL'):'inicio')+' al '+(hasta?new Date(hasta+'T12:00:00').toLocaleDateString('es-CL'):'hoy')
+                : 'Todos los períodos';
+            const area1 = document.getElementById('auditoria-contenido');
+            const area2 = document.getElementById('aud-contenido');
+            const ok = el => el && el.innerHTML.trim() !== '' && !el.innerHTML.includes('clic en') && !el.innerHTML.includes('Analizar');
+            const area = ok(area1) ? area1 : ok(area2) ? area2 : null;
+            if (!area) {
+                ejecutarAuditoria && ejecutarAuditoria();
                 setTimeout(() => {
-                    const emp = getEmpresasConfig ? getEmpresasConfig()[sesionActual?.empresa]?.nombre || 'Empresa' : 'Empresa';
-                    const cuerpo = document.getElementById('auditoria-contenido')?.innerHTML || '';
-                    imprimirInforme('Auditoría Contable — ' + emp, cuerpo);
-                }, 500);
+                    const a = document.getElementById('auditoria-contenido') || document.getElementById('aud-contenido');
+                    imprimirInforme('Auditoría Contable', a?.innerHTML||'', rangoTxt);
+                }, 800);
                 return;
             }
-            const emp = getEmpresasConfig ? getEmpresasConfig()[sesionActual?.empresa]?.nombre || 'Empresa' : 'Empresa';
-            imprimirInforme('Auditoría Contable — ' + emp, area.innerHTML);
+            imprimirInforme('Auditoría Contable', area.innerHTML, rangoTxt);
         }
 
 
@@ -7802,7 +8501,8 @@ function getUsuarios() {
             }
 
             // 1c. Movimientos sin CC
-            const sinCC = asts.filter(a => !a.cc || a.cc === '' || a.cc === 'CC000');
+            // CC000 = General es válido
+            const sinCC = asts.filter(a => !a.cc || a.cc === '');
 
             // 1d. Asientos descuadrados (suma debe ≠ suma haber por voucher)
             const descuadrados = [];
@@ -7821,11 +8521,11 @@ function getUsuarios() {
                 if (!planCuentas[cod] || planCuentas[cod].nivel !== 4) return;
                 const nom = d.nombre;
                 const saldo = d.debe - d.haber;
-                if (d.tipo === 'Activo')     { activo     += saldo;           activoItems.push({cod,nom,saldo}); }
-                if (d.tipo === 'Pasivo')     { pasivo     += Math.abs(saldo); pasivoItems.push({cod,nom,saldo:-saldo}); }
-                if (d.tipo === 'Patrimonio') { patrimonio += Math.abs(saldo); patItems.push({cod,nom,saldo:-saldo}); }
-                if (d.tipo === 'Ingreso')    { ingresos   += d.haber-d.debe;  ingItems.push({cod,nom,saldo:d.haber-d.debe}); }
-                if (d.tipo === 'Gasto')      { gastos     += d.debe-d.haber;  gasItems.push({cod,nom,saldo:d.debe-d.haber}); }
+                if (d.tipo === 'Activo')     { activo     += saldo;           if(Math.round(saldo)!==0) activoItems.push({cod,nom,saldo}); }
+                if (d.tipo === 'Pasivo')     { pasivo     += Math.abs(saldo); if(Math.round(saldo)!==0) pasivoItems.push({cod,nom,saldo:-saldo}); }
+                if (d.tipo === 'Patrimonio') { patrimonio += Math.abs(saldo); if(Math.round(saldo)!==0) patItems.push({cod,nom,saldo:-saldo}); }
+                if (d.tipo === 'Ingreso')    { ingresos   += d.haber-d.debe;  if(Math.round(d.haber-d.debe)!==0) ingItems.push({cod,nom,saldo:d.haber-d.debe}); }
+                if (d.tipo === 'Gasto')      { gastos     += d.debe-d.haber;  if(Math.round(d.debe-d.haber)!==0) gasItems.push({cod,nom,saldo:d.debe-d.haber}); }
             });
 
             const resultado = ingresos - gastos;
@@ -8190,7 +8890,10 @@ function getUsuarios() {
 
             html += mkCard('OPINIÓN DEL AUDITOR', 'bg-gradient-to-r ' + colorOpinion, iconoOpinion, opinionBody);
 
-            document.getElementById('auditoria-contenido').innerHTML = html;
+            const _c1=document.getElementById('auditoria-contenido');
+            const _c2=document.getElementById('aud-contenido');
+            if(_c1)_c1.innerHTML=html;
+            if(_c2)_c2.innerHTML=html;
         }
 
         
@@ -8353,7 +9056,11 @@ function getUsuarios() {
                 <div class="firma-linea">Presidente<br>${empNom}</div>
                 <div class="firma-linea">Tesorero/Contador<br>${empNom}</div>
             </div>
-            </body></html>`;
+            
+            </div>
+    </div>
+
+</body></html>`;
 
             const w = window.open('', '_blank');
             w.document.write(html);
@@ -8444,7 +9151,7 @@ function getUsuarios() {
             const mayorRows = [[empNom + ' — LIBRO MAYOR'],['Código','Cuenta','Tipo','Debe','Haber','Saldo']];
             Object.entries(mayor).sort((a,b)=>a[0].localeCompare(b[0])).forEach(([cod,d]) => {
                 const saldo = d.tipo==='Activo'||d.tipo==='Gasto' ? d.debe-d.haber : d.haber-d.debe;
-                mayorRows.push([cod, d.nombre, d.tipo, fmt(d.debe), fmt(d.haber), fmt(saldo)]);
+                if(Math.round(saldo)!==0) mayorRows.push([cod, d.nombre, d.tipo, fmt(d.debe), fmt(d.haber), fmt(saldo)]);
             });
             const wsMayor = XLSX.utils.aoa_to_sheet(mayorRows);
             wsMayor['!cols'] = [{wch:8},{wch:30},{wch:12},{wch:14},{wch:14},{wch:14}];
@@ -8525,6 +9232,7 @@ function getUsuarios() {
                 actualizarSelectPresupuesto();
                 actualizarTablaPresupuesto();
             }
+            if (tabName === 'conciliacion') iniciarConciliacion();
             if (tabName === 'flujo') {
                 actualizarSelectFlujo();
                 renderFlujo();
@@ -8779,12 +9487,9 @@ function getUsuarios() {
             </div>
         </div>
     </div>
-</body>
-</html>tml>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema Contable Empresarial ANFA</title>
+
+            </div>
+    </div>
+
 </body>
 </html>
