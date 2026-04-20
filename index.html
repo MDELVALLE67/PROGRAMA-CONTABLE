@@ -5,6 +5,18 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sistema Contable Empresarial ANFA</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Suppress Tailwind CDN production warning
+        if (typeof tailwind !== 'undefined') {
+            tailwind.config = { corePlugins: {} };
+        }
+        // Override console.warn to suppress only the Tailwind CDN warning
+        const _warn = console.warn.bind(console);
+        console.warn = (...args) => {
+            if (args[0] && String(args[0]).includes('cdn.tailwindcss.com')) return;
+            _warn(...args);
+        };
+    </script>
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -1874,9 +1886,10 @@
                     if (v) datos[k] = v;
                 });
                 await db.collection('empresas').doc(empresa).set({datos, updated: new Date().toISOString(), timestamp: Date.now()});
-                // Also save global config (empresa names, users) to all docs
+                // Save global config: ONLY empresas_config, NOT usuarios_claves
+                // (usuarios_claves se guarda por empresa para evitar conflictos de contraseña)
                 const globalConfig = {};
-                ['usuarios_claves','empresas_config'].forEach(k => {
+                ['empresas_config'].forEach(k => {
                     const v = localStorage.getItem(k);
                     if (v) globalConfig[k] = v;
                 });
@@ -1890,21 +1903,22 @@
         async function cargarDesdeFirebase(empresa) {
             if (!empresa) return false;
             try {
-                // Load global config first (empresa names, users)
+                // Load global config first (only empresas_config, NOT usuarios_claves)
                 const globalDoc = await db.collection('empresas').doc('global').get();
                 if (globalDoc.exists && globalDoc.data().datos) {
                     Object.entries(globalDoc.data().datos).forEach(([k,v]) => {
-                        localStorage.setItem(k, v);
+                        // Skip usuarios_claves from global — will be loaded from empresa doc
+                        if (k !== 'usuarios_claves') localStorage.setItem(k, v);
                     });
                 }
                 const doc = await db.collection('empresas').doc(empresa).get();
                 if (doc.exists && doc.data().datos) {
-                    // Primero limpiar datos locales de esta empresa para evitar datos viejos
+                    // Limpiar datos locales de esta empresa
                     const keysToRemove = Object.keys(localStorage).filter(k => 
                         k.endsWith('_' + empresa) || k === 'usuarios_claves' || k === 'empresas_config'
                     );
                     keysToRemove.forEach(k => localStorage.removeItem(k));
-                    // Luego escribir los datos de Firebase
+                    // Escribir datos de Firebase (incluye usuarios_claves actualizado)
                     Object.entries(doc.data().datos).forEach(([k,v]) => localStorage.setItem(k, v));
                     return true;
                 }
@@ -2770,51 +2784,76 @@
             showToast('Movimiento eliminado ☁️', 'success');
         }
 
+        function editCuentaChange(sel) {
+            document.getElementById('edit-codigo').value = sel.value;
+        }
+
         function abrirEditarAsiento(index) {
             const a = asientos[index];
-            document.getElementById('edit-index').value = index;
-            document.getElementById('edit-fecha').value = a.fecha || '';
-            document.getElementById('edit-voucher').value = a.voucher || '';
-            document.getElementById('edit-cuenta').value = a.cuenta || '';
-            document.getElementById('edit-debe').value = a.debe || 0;
-            document.getElementById('edit-haber').value = a.haber || 0;
-            document.getElementById('edit-glosa').value = a.glosa || '';
+            if (!a) return;
+            document.getElementById('edit-index').value   = index;
+            document.getElementById('edit-codigo').value  = a.codigo || '';
+            document.getElementById('edit-fecha').value   = a.fecha   || '';
+            document.getElementById('edit-voucher').value = a.voucher  || '';
+            document.getElementById('edit-debe').value    = a.debe    || 0;
+            document.getElementById('edit-haber').value   = a.haber   || 0;
+            document.getElementById('edit-glosa').value   = a.glosa   || '';
+
+            // Populate cuenta select
+            const cSel = document.getElementById('edit-cuenta-sel');
+            cSel.innerHTML = '';
+            Object.entries(planCuentas)
+                .filter(([, c]) => c.nivel === 4)
+                .sort((x, y) => x[0].localeCompare(y[0]))
+                .forEach(([cod, c]) => {
+                    const op = document.createElement('option');
+                    op.value = cod;
+                    op.textContent = cod + ' — ' + c.nombre;
+                    if (cod === String(a.codigo)) op.selected = true;
+                    cSel.appendChild(op);
+                });
+
             // Populate CC select
             const ccSel = document.getElementById('edit-cc');
             ccSel.innerHTML = '';
-            Object.entries(centrosCosto).forEach(([cod,c]) => {
+            Object.entries(centrosCosto).forEach(([cod, c]) => {
                 const op = document.createElement('option');
                 op.value = cod;
                 op.textContent = c.nombre;
                 if (cod === a.cc) op.selected = true;
                 ccSel.appendChild(op);
             });
+
             document.getElementById('modal-editar').classList.remove('hidden');
         }
 
         function guardarEdicionAsiento() {
-            const index = parseInt(document.getElementById('edit-index').value);
+            const index   = parseInt(document.getElementById('edit-index').value);
+            if (isNaN(index) || index < 0 || index >= asientos.length) return;
+            const codigo  = document.getElementById('edit-codigo').value ||
+                            document.getElementById('edit-cuenta-sel').value;
+            const cuenta  = planCuentas[codigo]?.nombre || asientos[index].cuenta || '';
+            const tipo    = planCuentas[codigo]?.tipo    || asientos[index].tipo   || '';
             asientos[index] = {
                 ...asientos[index],
                 fecha:   document.getElementById('edit-fecha').value,
-                voucher: parseInt(document.getElementById('edit-voucher').value),
-                cuenta:  document.getElementById('edit-cuenta').value,
+                voucher: parseInt(document.getElementById('edit-voucher').value) || asientos[index].voucher,
+                codigo,
+                cuenta,
+                tipo,
                 cc:      document.getElementById('edit-cc').value,
-                debe:    parseFloat(document.getElementById('edit-debe').value) || 0,
+                debe:    parseFloat(document.getElementById('edit-debe').value)  || 0,
                 haber:   parseFloat(document.getElementById('edit-haber').value) || 0,
                 glosa:   document.getElementById('edit-glosa').value
             };
             guardarLocalStorage();
+            syncFirebase();
             actualizarTablaAsientos();
             actualizarUltimosMovimientos();
             actualizarTablaMayor();
             calcularReportes();
             document.getElementById('modal-editar').classList.add('hidden');
             showToast('Asiento actualizado ✅', 'success');
-        }
-
-        function cerrarModalEditar() {
-            document.getElementById('modal-editar').classList.add('hidden');
         }
 
         function actualizarTop5Deudores() {
@@ -7207,11 +7246,17 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 mostrarError('❌ Las contraseñas no coinciden'); return;
             }
 
-            // Save new password to localStorage AND Firebase
+            // Guardar nueva clave en localStorage
             const saved = JSON.parse(localStorage.getItem('usuarios_claves') || '{}');
             saved[user] = { password: nueva, rol: usuarios[user].rol };
             localStorage.setItem('usuarios_claves', JSON.stringify(saved));
-            syncFirebase(); // Sync to Firebase so other devices get the new password
+
+            // Sincronizar INMEDIATAMENTE con Firebase (sin debounce)
+            if (sesionActual.empresa) {
+                guardarEnFirebase(sesionActual.empresa).then(() => {
+                    console.log('Clave guardada en Firebase OK');
+                });
+            }
 
             cerrarCambioClave();
             showToast('✅ Contraseña actualizada correctamente ☁️', 'success');
@@ -8478,7 +8523,10 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             const periodo = desde || hasta ? ((desde || '?') + ' al ' + (hasta || '?')) : 'Todo el período';
 
             // ── 1. HALLAZGOS DE CONTROL ──────────────────────────
-            // 1a. Vouchers duplicados
+            // 1a. Vouchers realmente duplicados
+            // Duplicado real = línea 100% idéntica (codigo + cc + debe + haber + fecha + glosa)
+            // Un club puede aparecer varias veces en un voucher con mismo monto si son series distintas
+            // Eso NO es duplicado — solo es duplicado si absolutamente todo es igual
             const voucherMap = {};
             asts.forEach(a => {
                 const k = String(a.voucher);
@@ -8487,10 +8535,11 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             });
             const vouchersDuplicados = Object.entries(voucherMap)
                 .filter(([v, lines]) => {
-                    // Un voucher es duplicado si tiene más de 2 líneas con el mismo código de cuenta
-                    const codigos = lines.map(l => l.codigo);
-                    const unicos = new Set(codigos);
-                    return unicos.size < codigos.length;
+                    // Clave única: codigo + cc + debe + haber + fecha + glosa (todo debe coincidir)
+                    const claves = lines.map(l =>
+                        `${l.codigo}|${l.cc||''}|${Math.round(l.debe||0)}|${Math.round(l.haber||0)}|${l.fecha||''}|${(l.glosa||'').trim().toLowerCase()}`
+                    );
+                    return new Set(claves).size < claves.length;
                 });
 
             // 1b. Vouchers faltantes
@@ -8596,14 +8645,21 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             }
 
             if (vouchersDuplicados.length > 0) {
-                hallBody += '<div class="mb-4"><div class="text-sm font-bold text-yellow-700 mb-2">🔁 Vouchers con Líneas Duplicadas</div>';
-                hallBody += '<p class="text-xs text-gray-500 mb-2">Los siguientes vouchers tienen la misma cuenta registrada más de una vez. Puede indicar una contabilización doble.</p>';
-                hallBody += mkTable(['Voucher','Líneas','Cuentas repetidas'],
+                hallBody += '<div class="mb-4"><div class="text-sm font-bold text-yellow-700 mb-2">🔁 Líneas Exactamente Duplicadas</div>';
+                hallBody += '<p class="text-xs text-gray-500 mb-2">Los siguientes vouchers tienen la misma línea (cuenta + club + monto) repetida dos o más veces. Esto indica una posible doble contabilización del mismo movimiento.</p>';
+                hallBody += mkTable(['Voucher','Total Líneas','Línea duplicada (Cuenta | Club | Monto)'],
                     vouchersDuplicados.map(([v, lines]) => {
-                        const cnt = lines.length;
-                        const codigos = lines.map(l=>l.codigo);
-                        const reps = codigos.filter((c,i) => codigos.indexOf(c) !== i);
-                        return mkRow(['V'+v, cnt, '<span class="font-mono text-xs text-yellow-700">'+[...new Set(reps)].join(', ')+'</span>']);
+                        const claves = lines.map(l =>
+                            `${l.codigo}|${l.cc||''}|${Math.round(l.debe||0)}|${Math.round(l.haber||0)}`
+                        );
+                        const reps = claves.filter((c,i) => claves.indexOf(c) !== i);
+                        const repDesc = [...new Set(reps)].map(c => {
+                            const [cod, cc, debe, haber] = c.split('|');
+                            const ccNom = centrosCosto[cc]?.nombre || cc;
+                            const monto = parseInt(debe) > 0 ? '$'+parseInt(debe).toLocaleString('es-CL') : '$'+parseInt(haber).toLocaleString('es-CL');
+                            return `${cod} | ${ccNom} | ${monto}`;
+                        }).join('<br>');
+                        return mkRow(['V'+v, lines.length, '<span class="font-mono text-xs text-yellow-700">'+repDesc+'</span>']);
                     }));
                 hallBody += '</div>';
             }
@@ -9489,6 +9545,58 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
     </div>
 
             </div>
+    </div>
+
+    <!-- MODAL EDITAR ASIENTO -->
+    <div id="modal-editar" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4">
+            <div class="section-header rounded-t-2xl flex items-center gap-3 p-4">
+                <span class="text-2xl">✏️</span>
+                <div class="font-bold text-white text-lg">Editar Asiento</div>
+                <button onclick="cerrarModalEditar()" class="ml-auto text-white/70 hover:text-white text-2xl leading-none">&times;</button>
+            </div>
+            <div class="p-5 space-y-3">
+                <input type="hidden" id="edit-index">
+                <input type="hidden" id="edit-codigo">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs font-semibold text-gray-500 uppercase block mb-1">Fecha</label>
+                        <input type="date" id="edit-fecha" class="form-input w-full text-sm">
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-500 uppercase block mb-1">N° Voucher</label>
+                        <input type="number" id="edit-voucher" class="form-input w-full text-sm font-mono">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase block mb-1">Cuenta</label>
+                    <select id="edit-cuenta-sel" class="form-input w-full text-sm" onchange="editCuentaChange(this)">
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase block mb-1">Centro de Costo</label>
+                    <select id="edit-cc" class="form-input w-full text-sm"></select>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs font-semibold text-gray-500 uppercase block mb-1">Debe ($)</label>
+                        <input type="number" id="edit-debe" class="form-input w-full text-sm font-mono" min="0">
+                    </div>
+                    <div>
+                        <label class="text-xs font-semibold text-gray-500 uppercase block mb-1">Haber ($)</label>
+                        <input type="number" id="edit-haber" class="form-input w-full text-sm font-mono" min="0">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-xs font-semibold text-gray-500 uppercase block mb-1">Glosa</label>
+                    <input type="text" id="edit-glosa" class="form-input w-full text-sm" placeholder="Descripción del movimiento">
+                </div>
+            </div>
+            <div class="p-4 border-t border-gray-100 flex gap-3">
+                <button onclick="cerrarModalEditar()" class="flex-1 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50">Cancelar</button>
+                <button onclick="guardarEdicionAsiento()" class="flex-1 btn-primary justify-center text-sm">💾 Guardar Cambios</button>
+            </div>
+        </div>
     </div>
 
 </body>
