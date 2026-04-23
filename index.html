@@ -18,8 +18,8 @@
         };
     </script>
     <!-- Firebase -->
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" onerror="window._firebaseLoadError=true"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js" onerror="window._firebaseLoadError=true"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
@@ -1865,18 +1865,48 @@
             messagingSenderId: "410829248686",
             appId: "1:410829248686:web:0429895d28dd794377b53f"
         };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        let db = null;
+
+        function initFirebaseDB() {
+            try {
+                if (typeof firebase !== 'undefined') {
+                    if (!firebase.apps || !firebase.apps.length) {
+                        firebase.initializeApp(firebaseConfig);
+                    }
+                    db = firebase.firestore();
+                    // Habilitar persistencia offline para que funcione aunque no haya internet momentáneamente
+                    db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+                    console.log('✅ Firebase conectado correctamente.');
+                    return true;
+                }
+            } catch(e) {
+                console.warn('Error inicializando Firebase:', e.message);
+            }
+            return false;
+        }
+
+        // Intentar inicializar de inmediato; si Firebase todavía no cargó, reintentar hasta 5 veces
+        if (!initFirebaseDB()) {
+            let _fbRetries = 0;
+            const _fbInterval = setInterval(() => {
+                _fbRetries++;
+                if (initFirebaseDB() || _fbRetries >= 5) {
+                    clearInterval(_fbInterval);
+                    if (!db) console.warn('Firebase no disponible — el sistema usará almacenamiento local.');
+                }
+            }, 800);
+        }
 
         // ── SYNC FIREBASE ─────────────────────────────────────────
 
         async function guardarEnFirebase(empresa) {
-            if (!empresa) return;
+            if (!empresa || !db) return;
             try {
                 const keys = [
                     'asientos_' + empresa,
                     'flujo_' + empresa,
                     'ppto_montos_' + empresa,
+                    'plan_cuentas_' + empresa,
                     'usuarios_claves',
                     'empresas_config'
                 ];
@@ -1901,7 +1931,7 @@
         }
 
         async function cargarDesdeFirebase(empresa) {
-            if (!empresa) return false;
+            if (!empresa || !db) return false;
             try {
                 // Load global config first (only empresas_config, NOT usuarios_claves)
                 const globalDoc = await db.collection('empresas').doc('global').get();
@@ -2042,6 +2072,7 @@
                 "41102":   {nombre: "Inscripciones",             tipo: "Ingreso",    nivel: 4},
                 "41103":   {nombre: "Multas",                    tipo: "Ingreso",    nivel: 4},
                 "41104":   {nombre: "Cuotas Socios",             tipo: "Ingreso",    nivel: 4},
+                "41105":   {nombre: "Cuota Mortuoria",           tipo: "Ingreso",    nivel: 4},
                 "42":      {nombre: "Ingresos No Operacionales", tipo: "Ingreso",    nivel: 2},
                 "421":     {nombre: "Otros Ingresos",            tipo: "Ingreso",    nivel: 3},
                 "42101":   {nombre: "Intereses Ganados",         tipo: "Ingreso",    nivel: 4},
@@ -2053,6 +2084,9 @@
                 "51101":   {nombre: "Mantencion Canchas",        tipo: "Gasto",      nivel: 4},
                 "51102":   {nombre: "Cuerpo Arbitral",           tipo: "Gasto",      nivel: 4},
                 "51103":   {nombre: "Equipamiento Deportivo",    tipo: "Gasto",      nivel: 4},
+                "51104":   {nombre: "Cuota Mortuoria",           tipo: "Gasto",      nivel: 4},
+                "51105":   {nombre: "Inscripciones Club Campeonatos", tipo: "Gasto", nivel: 4},
+                "51106":   {nombre: "Multas Pagadas",            tipo: "Gasto",      nivel: 4},
                 "512":     {nombre: "Gastos Administrativos",    tipo: "Gasto",      nivel: 2},
                 "51201":   {nombre: "Remuneraciones Directiva",            tipo: "Gasto",      nivel: 4},
                 "51202":   {nombre: "Servicios Basicos",         tipo: "Gasto",      nivel: 4},
@@ -2123,6 +2157,8 @@
             const key = sesionActual.empresa || 'default';
             localStorage.setItem('asientos_' + key, JSON.stringify(asientos));
             localStorage.setItem('flujo_' + key, JSON.stringify(flujoCuentas));
+            // Guardar plan de cuentas personalizado (cuentas agregadas/editadas por el usuario)
+            localStorage.setItem('plan_cuentas_' + key, JSON.stringify(planCuentas));
             // Save only the montos, not the full presupuesto object
             const montos = {};
             Object.entries(presupuesto).forEach(([cod, d]) => {
@@ -2138,13 +2174,25 @@
 
         function cargarLocalStorage() {
             const key = sesionActual.empresa;
-            const asientosData = localStorage.getItem('asientos_' + key);
-            const montosData   = localStorage.getItem('ppto_montos_' + key);
+            const asientosData    = localStorage.getItem('asientos_' + key);
+            const montosData      = localStorage.getItem('ppto_montos_' + key);
+            const planData        = localStorage.getItem('plan_cuentas_' + key);
 
             if (sesionActual.empresa === 'empresa_2' || sesionActual.empresa === 'empresa_3') {
                 inicializarDatosGenericos();
             } else {
                 inicializarDatos();
+            }
+
+            // Restaurar plan de cuentas guardado — fusiona el plan base con las cuentas del usuario
+            if (planData) {
+                try {
+                    const savedPlan = JSON.parse(planData);
+                    // Merge: las cuentas guardadas sobreescriben/agregan al plan base
+                    Object.entries(savedPlan).forEach(([cod, cuenta]) => {
+                        planCuentas[cod] = cuenta;
+                    });
+                } catch(e) { console.warn('Error cargando plan de cuentas:', e); }
             }
 
             // Restaurar asientos y enriquecer con tipo si falta
@@ -2393,6 +2441,37 @@
             }
         }
 
+        function abrirEditarCuenta(codigo) {
+            const cuenta = planCuentas[codigo];
+            if (!cuenta) return;
+            document.getElementById('edit-cta-codigo-orig').value = codigo;
+            document.getElementById('edit-cta-codigo').value = codigo;
+            document.getElementById('edit-cta-nombre').value = cuenta.nombre;
+            document.getElementById('edit-cta-tipo').value = cuenta.tipo;
+            document.getElementById('edit-cta-nivel').value = cuenta.nivel || '';
+            document.getElementById('modal-editar-cuenta').classList.remove('hidden');
+        }
+
+        function cerrarEditarCuenta() {
+            document.getElementById('modal-editar-cuenta').classList.add('hidden');
+        }
+
+        function guardarEdicionCuenta() {
+            const codigoOrig = document.getElementById('edit-cta-codigo-orig').value;
+            const codigoNuevo = document.getElementById('edit-cta-codigo').value.trim();
+            const nombre = document.getElementById('edit-cta-nombre').value.trim();
+            const tipo = document.getElementById('edit-cta-tipo').value;
+            const nivel = parseInt(document.getElementById('edit-cta-nivel').value) || planCuentas[codigoOrig]?.nivel || 4;
+            if (!codigoNuevo || !nombre || !tipo) { showToast('Completa todos los campos', 'error'); return; }
+            if (codigoNuevo !== codigoOrig) delete planCuentas[codigoOrig];
+            planCuentas[codigoNuevo] = { nombre, tipo, nivel };
+            guardarLocalStorage();
+            actualizarTablaCuentas();
+            actualizarSelectCuentas();
+            cerrarEditarCuenta();
+            showToast('Cuenta actualizada ✅', 'success');
+        }
+
         function actualizarTablaCuentas() {
             const tabla = document.getElementById('tabla-cuentas');
             const colores = {
@@ -2411,7 +2490,12 @@
                     <td>${cuenta.nombre}</td>
                     <td><span class="px-2 py-1 text-xs rounded font-medium ${colores[cuenta.tipo] || 'bg-gray-100'}">${cuenta.tipo}</span></td>
                     <td class="text-center">
-                        <button onclick="eliminarCuenta('${codigo}')" class="text-red-600 hover:text-red-800 permisos-admin">
+                        <button onclick="abrirEditarCuenta('${codigo}')" class="text-blue-600 hover:text-blue-800 permisos-admin mr-2" title="Editar">
+                            <svg class="w-5 h-5 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                            </svg>
+                        </button>
+                        <button onclick="eliminarCuenta('${codigo}')" class="text-red-600 hover:text-red-800 permisos-admin" title="Eliminar">
                             <svg class="w-5 h-5 inline" fill="currentColor" viewBox="0 0 20 20">
                                 <path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z"/>
                             </svg>
@@ -3160,8 +3244,7 @@
             el.innerHTML = `
             <!-- Fecha y nota legal -->
             <div class="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800">
-                <strong>🇨🇱 Balance Tributario</strong> — Confeccionado según normas del <strong>SII (Servicio de Impuestos Internos)</strong> de Chile.
-                Tasa Impuesto Primera Categoría aplicada: <strong>27%</strong> (Art. 20 LIR). Ejercicio ${new Date().getFullYear()}.
+                <strong>🇨🇱 Balance Tributario</strong> — Confeccionado según normas del <strong>SII (Servicio de Impuestos Internos)</strong> de Chile. Ejercicio ${new Date().getFullYear()}.
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -7706,21 +7789,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
         if (prev) renderCartola();
     }
 
-        function initFirebase() {
-            try {
-                if (typeof firebase !== 'undefined' && !firebase.apps.length) {
-                    firebase.initializeApp({
-                        apiKey: "AIzaSyC_q4u9Rsp0-DtQ7q8PugLbM7Ao1lWrMD0",
-                        authDomain: "sistema-contable-3f4a4.firebaseapp.com",
-                        projectId: "sistema-contable-3f4a4",
-                        storageBucket: "sistema-contable-3f4a4.firebasestorage.app",
-                        messagingSenderId: "410829248686",
-                        appId: "1:410829248686:web:0429895d28dd794377b53f"
-                    });
-                    db = firebase.firestore();
-                }
-            } catch(e) { console.warn('Firebase:', e.message); }
-        }
+        // initFirebase() consolidada arriba — no duplicar
 
 
 
@@ -8566,15 +8635,13 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             let activo=0, pasivo=0, patrimonio=0, ingresos=0, gastos=0;
             const activoItems=[], pasivoItems=[], patItems=[], ingItems=[], gasItems=[];
 
-            Object.entries(mayor).forEach(([cod, d]) => {
-                if (!planCuentas[cod] || planCuentas[cod].nivel !== 4) return;
+            Object.entries(mayor).sort((a,b) => a[0].localeCompare(b[0])).forEach(([cod, d]) => {
                 const nom = d.nombre;
-                const saldo = d.debe - d.haber;
-                if (d.tipo === 'Activo')     { activo     += saldo;           if(Math.round(saldo)!==0) activoItems.push({cod,nom,saldo}); }
-                if (d.tipo === 'Pasivo')     { pasivo     += Math.abs(saldo); if(Math.round(saldo)!==0) pasivoItems.push({cod,nom,saldo:-saldo}); }
-                if (d.tipo === 'Patrimonio') { patrimonio += Math.abs(saldo); if(Math.round(saldo)!==0) patItems.push({cod,nom,saldo:-saldo}); }
-                if (d.tipo === 'Ingreso')    { ingresos   += d.haber-d.debe;  if(Math.round(d.haber-d.debe)!==0) ingItems.push({cod,nom,saldo:d.haber-d.debe}); }
-                if (d.tipo === 'Gasto')      { gastos     += d.debe-d.haber;  if(Math.round(d.debe-d.haber)!==0) gasItems.push({cod,nom,saldo:d.debe-d.haber}); }
+                if (d.tipo === 'Activo')     { const s = d.debe - d.haber;  activo     += s; if(Math.round(s)!==0) activoItems.push({cod,nom,saldo:s}); }
+                if (d.tipo === 'Pasivo')     { const s = d.haber - d.debe;  pasivo     += s; if(Math.round(s)!==0) pasivoItems.push({cod,nom,saldo:s}); }
+                if (d.tipo === 'Patrimonio') { const s = d.haber - d.debe;  patrimonio += s; if(Math.round(s)!==0) patItems.push({cod,nom,saldo:s}); }
+                if (d.tipo === 'Ingreso')    { const s = d.haber - d.debe;  ingresos   += s; if(Math.round(s)!==0) ingItems.push({cod,nom,saldo:s}); }
+                if (d.tipo === 'Gasto')      { const s = d.debe - d.haber;  gastos     += s; if(Math.round(s)!==0) gasItems.push({cod,nom,saldo:s}); }
             });
 
             const resultado = ingresos - gastos;
@@ -9598,6 +9665,46 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             </div>
         </div>
     </div>
+
+<!-- MODAL EDITAR CUENTA -->
+<div id="modal-editar-cuenta" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md mx-4">
+        <div class="section-header rounded-t-2xl flex items-center gap-3 p-4">
+            <span class="text-2xl">✏️</span>
+            <div class="font-bold text-white text-lg">Editar Cuenta</div>
+            <button onclick="cerrarEditarCuenta()" class="ml-auto text-white/70 hover:text-white text-2xl leading-none">&times;</button>
+        </div>
+        <div class="p-5 space-y-4">
+            <input type="hidden" id="edit-cta-codigo-orig">
+            <div>
+                <label class="text-xs font-semibold text-gray-500 uppercase block mb-1">Código</label>
+                <input type="text" id="edit-cta-codigo" class="form-input w-full text-sm font-mono">
+            </div>
+            <div>
+                <label class="text-xs font-semibold text-gray-500 uppercase block mb-1">Nombre</label>
+                <input type="text" id="edit-cta-nombre" class="form-input w-full text-sm">
+            </div>
+            <div>
+                <label class="text-xs font-semibold text-gray-500 uppercase block mb-1">Tipo</label>
+                <select id="edit-cta-tipo" class="form-input w-full text-sm">
+                    <option value="Activo">Activo</option>
+                    <option value="Pasivo">Pasivo</option>
+                    <option value="Patrimonio">Patrimonio</option>
+                    <option value="Ingreso">Ingreso</option>
+                    <option value="Gasto">Gasto</option>
+                </select>
+            </div>
+            <div>
+                <label class="text-xs font-semibold text-gray-500 uppercase block mb-1">Nivel (1-4)</label>
+                <input type="number" id="edit-cta-nivel" class="form-input w-full text-sm" min="1" max="4">
+            </div>
+        </div>
+        <div class="p-4 border-t border-gray-100 flex gap-3">
+            <button onclick="cerrarEditarCuenta()" class="flex-1 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50">Cancelar</button>
+            <button onclick="guardarEdicionCuenta()" class="flex-1 btn-primary justify-center text-sm">💾 Guardar Cambios</button>
+        </div>
+    </div>
+</div>
 
 </body>
 </html>
