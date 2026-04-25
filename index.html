@@ -438,6 +438,11 @@
                         <option value="anfa_renca">ANFA RENCA</option>
                         <option value="empresa_2">Empresa 2</option>
                         <option value="empresa_3">Empresa 3</option>
+                        <option value="empresa_4">Empresa 4</option>
+                        <option value="empresa_5">Empresa 5</option>
+                        <option value="empresa_6">Empresa 6</option>
+                        <option value="empresa_7">Empresa 7</option>
+                        <option value="empresa_8">Empresa 8</option>
                     </select>
                 </div>
                 
@@ -1966,7 +1971,12 @@
         const EMPRESAS_DEFAULT = {
             anfa_renca: {nombre: 'ANFA RENCA', rut: ''},
             empresa_2:  {nombre: 'Empresa 2',  rut: ''},
-            empresa_3:  {nombre: 'Empresa 3',  rut: ''}
+            empresa_3:  {nombre: 'Empresa 3',  rut: ''},
+            empresa_4:  {nombre: 'Empresa 4',  rut: ''},
+            empresa_5:  {nombre: 'Empresa 5',  rut: ''},
+            empresa_6:  {nombre: 'Empresa 6',  rut: ''},
+            empresa_7:  {nombre: 'Empresa 7',  rut: ''},
+            empresa_8:  {nombre: 'Empresa 8',  rut: ''}
         };
         function getEmpresasConfig() {
             try { return JSON.parse(localStorage.getItem('empresas_config')) || EMPRESAS_DEFAULT; }
@@ -2178,7 +2188,10 @@
             const montosData      = localStorage.getItem('ppto_montos_' + key);
             const planData        = localStorage.getItem('plan_cuentas_' + key);
 
-            if (sesionActual.empresa === 'empresa_2' || sesionActual.empresa === 'empresa_3') {
+            if (sesionActual.empresa === 'empresa_2' || sesionActual.empresa === 'empresa_3' ||
+                sesionActual.empresa === 'empresa_4' || sesionActual.empresa === 'empresa_5' ||
+                sesionActual.empresa === 'empresa_6' || sesionActual.empresa === 'empresa_7' ||
+                sesionActual.empresa === 'empresa_8') {
                 inicializarDatosGenericos();
             } else {
                 inicializarDatos();
@@ -2251,7 +2264,7 @@
                 // ── GESTIÓN CONFIGURACIÓN EMPRESAS ──────────────────────
         function abrirConfigEmpresas() {
             const cfg = getEmpresasConfig();
-            const keys = ['anfa_renca','empresa_2','empresa_3'];
+            const keys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8'];
             keys.forEach(k => {
                 const ni = document.getElementById('cfg-emp-nombre-'+k);
                 const ri = document.getElementById('cfg-emp-rut-'+k);
@@ -2264,7 +2277,7 @@
             document.getElementById('modal-config-empresas').classList.add('hidden');
         }
         function guardarConfigEmpresas() {
-            const keys = ['anfa_renca','empresa_2','empresa_3'];
+            const keys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8'];
             const cfg = {};
             keys.forEach(k => {
                 const nombre = document.getElementById('cfg-emp-nombre-'+k)?.value.trim() || k.toUpperCase().replace('_',' ');
@@ -2289,7 +2302,7 @@
             const sel = document.getElementById('login-empresa');
             if (!sel) return;
             const cfg = getEmpresasConfig();
-            const keys = ['anfa_renca','empresa_2','empresa_3'];
+            const keys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8'];
             const val = sel.value;
             sel.innerHTML = keys.map(k => `<option value="${k}">${cfg[k]?.nombre || k}</option>`).join('');
             sel.value = val;
@@ -9429,13 +9442,13 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
 
     <!-- MODAL CONFIGURACIÓN EMPRESAS -->
     <div id="modal-config-empresas" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4">
-            <div class="section-header rounded-t-2xl flex items-center gap-3 p-4">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg mx-4" style="max-height:90vh;display:flex;flex-direction:column;">
+            <div class="section-header rounded-t-2xl flex items-center gap-3 p-4 flex-shrink-0">
                 <span class="text-2xl">🏢</span>
                 <div class="font-bold text-white text-lg">Configuración de Empresas</div>
                 <button onclick="cerrarConfigEmpresas()" class="ml-auto text-white/70 hover:text-white text-2xl leading-none">&times;</button>
             </div>
-            <div class="p-5 space-y-4">
+            <div class="p-5 space-y-4 overflow-y-auto flex-1">
                 <p class="text-xs text-gray-500">Personaliza el nombre y RUT de cada empresa.</p>
                 <div class="border border-gray-200 rounded-xl p-4">
                     <div class="text-xs font-bold text-gray-500 uppercase mb-3">Empresa 1</div>
@@ -9462,6 +9475,51 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                         <input type="text" id="cfg-emp-nombre-empresa_3" class="form-input text-sm w-full" placeholder="Nombre empresa"></div>
                         <div><label class="block text-xs font-medium text-gray-600 mb-1">RUT</label>
                         <input type="text" id="cfg-emp-rut-empresa_3" class="form-input text-sm w-full" placeholder="12.345.678-9"></div>
+                    </div>
+                </div>
+                <div class="border border-gray-200 rounded-xl p-4">
+                    <div class="text-xs font-bold text-gray-500 uppercase mb-3">Empresa 4</div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Nombre</label>
+                        <input type="text" id="cfg-emp-nombre-empresa_4" class="form-input text-sm w-full" placeholder="Nombre empresa"></div>
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">RUT</label>
+                        <input type="text" id="cfg-emp-rut-empresa_4" class="form-input text-sm w-full" placeholder="12.345.678-9"></div>
+                    </div>
+                </div>
+                <div class="border border-gray-200 rounded-xl p-4">
+                    <div class="text-xs font-bold text-gray-500 uppercase mb-3">Empresa 5</div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Nombre</label>
+                        <input type="text" id="cfg-emp-nombre-empresa_5" class="form-input text-sm w-full" placeholder="Nombre empresa"></div>
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">RUT</label>
+                        <input type="text" id="cfg-emp-rut-empresa_5" class="form-input text-sm w-full" placeholder="12.345.678-9"></div>
+                    </div>
+                </div>
+                <div class="border border-gray-200 rounded-xl p-4">
+                    <div class="text-xs font-bold text-gray-500 uppercase mb-3">Empresa 6</div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Nombre</label>
+                        <input type="text" id="cfg-emp-nombre-empresa_6" class="form-input text-sm w-full" placeholder="Nombre empresa"></div>
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">RUT</label>
+                        <input type="text" id="cfg-emp-rut-empresa_6" class="form-input text-sm w-full" placeholder="12.345.678-9"></div>
+                    </div>
+                </div>
+                <div class="border border-gray-200 rounded-xl p-4">
+                    <div class="text-xs font-bold text-gray-500 uppercase mb-3">Empresa 7</div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Nombre</label>
+                        <input type="text" id="cfg-emp-nombre-empresa_7" class="form-input text-sm w-full" placeholder="Nombre empresa"></div>
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">RUT</label>
+                        <input type="text" id="cfg-emp-rut-empresa_7" class="form-input text-sm w-full" placeholder="12.345.678-9"></div>
+                    </div>
+                </div>
+                <div class="border border-gray-200 rounded-xl p-4">
+                    <div class="text-xs font-bold text-gray-500 uppercase mb-3">Empresa 8</div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Nombre</label>
+                        <input type="text" id="cfg-emp-nombre-empresa_8" class="form-input text-sm w-full" placeholder="Nombre empresa"></div>
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">RUT</label>
+                        <input type="text" id="cfg-emp-rut-empresa_8" class="form-input text-sm w-full" placeholder="12.345.678-9"></div>
                     </div>
                 </div>
                 <div class="flex gap-3 pt-2">
