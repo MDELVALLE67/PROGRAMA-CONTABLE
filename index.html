@@ -815,6 +815,7 @@
                                 <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z"/>
                             </svg>
                             <span>Cuentas Registradas</span>
+                            <button onclick="corregirTiposCuentas()" class="ml-auto btn-download" style="background:linear-gradient(135deg,#7c3aed,#a855f7);font-size:12px;padding:6px 14px">🔧 Corregir Tipos</button>
                         </div>
                         <div class="p-6">
                             <input type="text" id="buscar-cuenta" onkeyup="filtrarCuentas()" class="form-input mb-4" placeholder="🔍 Buscar cuenta...">
@@ -898,7 +899,7 @@
                     <div class="section-header">
                         <span class="text-xl">📝</span>
                         <span>Nuevo Asiento Contable</span>
-                        <div class="ml-auto flex gap-2"><button onclick="abrirModalBorderos()" class="btn-download" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">📥 Cargar Borderos</button><button onclick="importarExcelContable()" class="btn-download" style="background:linear-gradient(135deg,#047857,#059669)">📂 Importar Excel</button></div>
+                        <div class="ml-auto flex gap-2"><button onclick="abrirModalBorderos()" class="btn-download" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">📥 Cargar Borderos</button><button onclick="importarExcelContable()" class="btn-download" style="background:linear-gradient(135deg,#047857,#059669)">📂 Importar Excel</button><button onclick="importarLibroDiarioExcel()" class="btn-download" style="background:linear-gradient(135deg,#0A2463,#3E92CC)" title="Importar Libro Diario formato SERVIT (FECHA/CODIGOS/DEBE/HABER)">📒 Importar Libro Diario</button></div>
                     </div>
                     <div class="p-6">
                         <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -1012,6 +1013,7 @@
                         <table class="data-table">
                             <thead>
                                 <tr>
+                                    <th style="width:36px;text-align:center"><input type="checkbox" id="check-todos" style="width:15px;height:15px;cursor:pointer"></th>
                                     <th>Fecha</th>
                                     <th>Voucher</th>
                                     <th>Centro Costo</th>
@@ -2417,6 +2419,40 @@
         }
 
         // Cuentas
+        function corregirTiposCuentas() {
+            if (!confirm('¿Corregir tipos de cuentas CON GUIÓN y eliminar cuentas SIN GUIÓN?\n\n1xxx-xx → Activo\n2xxx-xx → Pasivo (2301-xx → Patrimonio)\n3xxx-xx → Ingreso\n4xxx-xx → Gasto\n\nLas cuentas sin guión serán eliminadas.')) return;
+            let corregidas = 0;
+            let eliminadas = 0;
+            Object.keys(planCuentas).forEach(cod => {
+                if (!cod.includes('-')) {
+                    // Eliminar cuentas sin guión
+                    delete planCuentas[cod];
+                    eliminadas++;
+                    return;
+                }
+                const soloNum = cod.replace(/-/g,'').replace(/\s/g,'');
+                const p1 = soloNum.charAt(0);
+                const p4 = soloNum.substring(0, 4);
+                let tipoNuevo;
+                const patrimonios = ['2301','2302','2303','2304','2305','2306'];
+                if (p1 === '2' && patrimonios.some(x => p4.startsWith(x) || p4 === x)) {
+                    tipoNuevo = 'Patrimonio';
+                } else if (p1 === '1') tipoNuevo = 'Activo';
+                else if (p1 === '2') tipoNuevo = 'Pasivo';
+                else if (p1 === '3') tipoNuevo = 'Ingreso';
+                else if (p1 === '4') tipoNuevo = 'Gasto';
+                else tipoNuevo = planCuentas[cod].tipo;
+                if (tipoNuevo && tipoNuevo !== planCuentas[cod].tipo) {
+                    planCuentas[cod].tipo = tipoNuevo;
+                    corregidas++;
+                }
+            });
+            guardarLocalStorage();
+            actualizarTablaCuentas();
+            calcularReportes();
+            showToast('✅ ' + corregidas + ' corregidas, ' + eliminadas + ' eliminadas', 'success');
+        }
+
         function crearCuenta() {
             const codigo = document.getElementById('nueva-codigo').value;
             const nombre = document.getElementById('nueva-nombre').value;
@@ -2593,6 +2629,7 @@
 
         function actualizarSelectCC() {
             const select = document.getElementById('input-cc');
+            if (!select) return;
             select.innerHTML = '<option value="">Seleccionar...</option>' + 
                 Object.entries(centrosCosto)
                     .sort((a, b) => a[0].localeCompare(b[0]))
@@ -2602,6 +2639,7 @@
 
         function actualizarSelectCuentas() {
             const select = document.getElementById('input-codigo');
+            if (!select) return;
             select.innerHTML = '<option value="">Seleccionar cuenta...</option>' + 
                 Object.entries(planCuentas)
                     .sort((a, b) => a[0].localeCompare(b[0]))
@@ -2839,7 +2877,8 @@
                 tabla.innerHTML = indicesFiltrados.map(i => {
                     const a = asientos[i];
                     return `
-                    <tr>
+                    <tr id="fila-${i}">
+                        <td style="text-align:center"><input type="checkbox" class="check-asiento" data-idx="${i}" style="width:15px;height:15px;cursor:pointer"></td>
                         <td>${a.fecha}</td>
                         <td class="font-mono">${a.voucher}</td>
                         <td>${centrosCosto[a.cc]?.nombre || a.cc}</td>
@@ -7540,14 +7579,255 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
 
 
 
+    // ══════════════════════════════════════════════════════════
+    // IMPORTAR LIBRO DIARIO EXCEL — formato SERVIT/genérico
+    // Columnas esperadas en la hoja DIARIO (o la primera):
+    //   FECHA | COMP | CODIGOS | CUENTA | CONCEPTO | DEBE | HABER
+    // También detecta hoja "DIARIO" automáticamente.
+    // ══════════════════════════════════════════════════════════
+    function importarLibroDiarioExcel() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.xlsx,.xls';
+        input.onchange = function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                try {
+                    const data = new Uint8Array(ev.target.result);
+                    const wb = XLSX.read(data, { type: 'array', cellDates: true });
+                    procesarLibroDiarioExcel(wb, file.name);
+                } catch(err) {
+                    showToast('❌ Error al leer el archivo: ' + err.message, 'error');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        };
+        input.click();
+    }
+
+    function procesarLibroDiarioExcel(wb, fileName) {
+        // Intentar encontrar hoja DIARIO, si no usar la primera
+        let sheetName = wb.SheetNames.find(n => n.toUpperCase().trim() === 'DIARIO') || wb.SheetNames[0];
+        const ws = wb.Sheets[sheetName];
+        const rows = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '', raw: false, dateNF: 'yyyy-mm-dd' });
+
+        // ── Detectar fila de encabezados ─────────────────────
+        // Buscar fila que tenga FECHA, CODIGOS/CODIGO, DEBE, HABER
+        let headerRow = -1;
+        let colFecha=-1, colCod=-1, colCuenta=-1, colConcepto=-1, colDebe=-1, colHaber=-1, colComp=-1;
+        for (let r = 0; r < Math.min(20, rows.length); r++) {
+            const row = rows[r];
+            const upper = row.map(c => String(c||'').trim().toUpperCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''));
+            const fIdx  = upper.findIndex(c => c === 'FECHA');
+            const dIdx  = upper.findIndex(c => c === 'DEBE');
+            const hIdx  = upper.findIndex(c => c === 'HABER');
+            if (fIdx >= 0 && dIdx >= 0 && hIdx >= 0) {
+                headerRow   = r;
+                colFecha    = fIdx;
+                colDebe     = dIdx;
+                colHaber    = hIdx;
+                colComp     = upper.findIndex(c => c === 'COMP' || c === 'COMP.' || c === 'COMPROBANTE' || c === 'N');
+                colCod      = upper.findIndex(c => c === 'CODIGOS' || c === 'CODIGO' || c === 'COD' || c === 'CUENTA_COD');
+                colCuenta   = upper.findIndex(c => c === 'CUENTA' || c === 'NOMBRE');
+                colConcepto = upper.findIndex(c => c === 'CONCEPTO' || c === 'GLOSA' || c === 'DESCRIPCION' || c === 'DETALLE');
+                break;
+            }
+        }
+        if (headerRow < 0) {
+            showToast('❌ No se encontró encabezado FECHA/DEBE/HABER en la hoja "'+sheetName+'"', 'error');
+            return;
+        }
+
+        // ── Leer filas de datos ───────────────────────────────
+        const asientosPendientes = [];
+        let errores = [];
+        let ultimaFecha = '';
+        let voucherActual = Math.max(0, ...asientos.map(a => a.voucher || 0)) + 1;
+        const voucherBase = voucherActual;
+
+        // Mapa voucher por número de comprobante para agrupar asientos
+        const compVoucher = {};
+
+        for (let r = headerRow + 1; r < rows.length; r++) {
+            const row = rows[r];
+            // Saltar filas totalmente vacías o de totales
+            const rowText = row.map(c => String(c||'').trim()).join('');
+            if (!rowText) continue;
+            const primeraCelda = String(row[0]||'').trim().toUpperCase();
+            if (primeraCelda === 'TOTALES' || primeraCelda === 'TOTAL' || primeraCelda === 'SUB TOTALES' || primeraCelda === 'SUBTOTALES') continue;
+
+            // ── Fecha ─────────────────────────────────────────
+            let fecha = '';
+            if (colFecha >= 0) {
+                const rawF = row[colFecha];
+                fecha = excelDateToStr(rawF);
+            }
+            // Si la celda fecha está vacía, usar la última fecha válida (carry-forward)
+            if (!fecha || !fecha.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                fecha = ultimaFecha;
+            } else {
+                ultimaFecha = fecha;
+            }
+            if (!fecha) continue; // sin fecha válida ni acumulada, saltar
+
+            // ── Código cuenta ─────────────────────────────────
+            let codigo = colCod >= 0 ? String(row[colCod]||'').trim() : '';
+            codigo = codigo.replace(/\s+/g,''); // quitar espacios
+            if (!codigo) continue; // sin código contable, saltar fila
+
+            // ── Nombre cuenta ─────────────────────────────────
+            let cuentaNombre = colCuenta >= 0 ? String(row[colCuenta]||'').trim() : '';
+
+            // ── Concepto / Glosa ──────────────────────────────
+            let glosa = colConcepto >= 0 ? String(row[colConcepto]||'').trim() : '';
+
+            // ── Comprobante (para agrupar en voucher) ─────────
+            let compRaw = colComp >= 0 ? String(row[colComp]||'').trim() : '';
+            let voucher;
+            if (compRaw && !isNaN(Number(compRaw)) && Number(compRaw) > 0) {
+                const compKey = fecha + '_' + compRaw;
+                if (!compVoucher[compKey]) { compVoucher[compKey] = voucherActual++; }
+                voucher = compVoucher[compKey];
+            } else {
+                // Sin comprobante: agrupar por fecha+glosa o asignar secuencialmente
+                const gKey = fecha + '_' + glosa.substring(0,30);
+                if (!compVoucher[gKey]) { compVoucher[gKey] = voucherActual++; }
+                voucher = compVoucher[gKey];
+            }
+
+            // ── Debe / Haber ──────────────────────────────────
+            const rawDebe  = row[colDebe];
+            const rawHaber = row[colHaber];
+            const debe  = parseFloat(String(rawDebe ||'').replace(/[^0-9.-]/g,'')) || 0;
+            const haber = parseFloat(String(rawHaber||'').replace(/[^0-9.-]/g,'')) || 0;
+            if (debe === 0 && haber === 0) continue; // fila sin movimiento
+
+            // ── Tipo: inferir desde plan de cuentas o auto-detectar ─
+            let tipo = '';
+            if (planCuentas[codigo] && planCuentas[codigo].tipo) {
+                tipo = planCuentas[codigo].tipo;
+            } else {
+                // Auto-detectar por prefijo — plan de cuentas cliente:
+                // 1=Activo, 2=Pasivo/Patrimonio, 3=Ingresos, 4=Gastos
+                const p = codigo.charAt(0);
+                if (p === '1') tipo = 'Activo';
+                else if (p === '2') tipo = 'Pasivo';
+                else if (p === '3') tipo = 'Ingreso';
+                else if (p === '4') tipo = 'Gasto';
+                else tipo = 'Activo';
+
+                // Registrar cuenta nueva en planCuentas para que cuadre el balance
+                if (!planCuentas[codigo]) {
+                    planCuentas[codigo] = { nombre: cuentaNombre || codigo, tipo: tipo, nivel: 4 };
+                }
+            }
+
+            asientosPendientes.push({
+                fecha,
+                voucher,
+                codigo,
+                cuenta: cuentaNombre || (planCuentas[codigo] ? planCuentas[codigo].nombre : codigo),
+                tipo,
+                cc: 'CC000',
+                debe,
+                haber,
+                glosa: glosa || ('Importado '+fecha)
+            });
+        }
+
+        if (!asientosPendientes.length) {
+            showToast('⚠️ No se encontraron movimientos válidos en la hoja "'+sheetName+'"', 'error');
+            return;
+        }
+
+        // ── Mostrar preview en modal ──────────────────────────
+        _asientosPendientes = asientosPendientes;
+        document.getElementById('import-filename').textContent = fileName + ' — Hoja: ' + sheetName;
+
+        const totalDebe  = asientosPendientes.reduce((s,a)=>s+a.debe,0);
+        const totalHaber = asientosPendientes.reduce((s,a)=>s+a.haber,0);
+        const cuadra = Math.abs(totalDebe - totalHaber) < 1;
+        const fmtP = n => '$' + Math.round(n).toLocaleString('es-CL');
+        const voucherNuevos = new Set(asientosPendientes.map(a=>a.voucher)).size;
+
+        let html = `
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px">
+            <div style="background:#f0fdf4;border-radius:10px;padding:12px;text-align:center">
+                <div style="font-size:11px;color:#166534;font-weight:600;text-transform:uppercase;margin-bottom:4px">Movimientos</div>
+                <div style="font-size:22px;font-weight:700;color:#15803d">${asientosPendientes.length}</div>
+            </div>
+            <div style="background:#eff6ff;border-radius:10px;padding:12px;text-align:center">
+                <div style="font-size:11px;color:#1e40af;font-weight:600;text-transform:uppercase;margin-bottom:4px">Vouchers</div>
+                <div style="font-size:22px;font-weight:700;color:#1d4ed8">${voucherNuevos}</div>
+            </div>
+            <div style="background:${cuadra?'#f0fdf4':'#fef2f2'};border-radius:10px;padding:12px;text-align:center">
+                <div style="font-size:11px;color:${cuadra?'#166534':'#991b1b'};font-weight:600;text-transform:uppercase;margin-bottom:4px">¿Cuadra?</div>
+                <div style="font-size:20px;font-weight:700;color:${cuadra?'#15803d':'#dc2626'}">${cuadra?'✅ Sí':'⚠️ No'}</div>
+            </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px">
+            <div style="background:#f0fdf4;border-radius:8px;padding:10px;text-align:center">
+                <div style="font-size:11px;color:#166534;margin-bottom:2px">Total Debe</div>
+                <div style="font-size:15px;font-weight:700;color:#15803d;font-family:monospace">${fmtP(totalDebe)}</div>
+            </div>
+            <div style="background:#eff6ff;border-radius:8px;padding:10px;text-align:center">
+                <div style="font-size:11px;color:#1e40af;margin-bottom:2px">Total Haber</div>
+                <div style="font-size:15px;font-weight:700;color:#1d4ed8;font-family:monospace">${fmtP(totalHaber)}</div>
+            </div>
+        </div>`;
+
+        if (errores.length) {
+            html += `<div style="background:#fef2f2;border:1px solid #fca5a5;border-radius:8px;padding:10px;margin-bottom:12px;font-size:12px;color:#991b1b"><b>⚠️ Advertencias (${errores.length}):</b><ul style="margin:6px 0 0 16px">${errores.map(e=>`<li>${e}</li>`).join('')}</ul></div>`;
+        }
+
+        // Tabla preview (primeros 30)
+        const preview = asientosPendientes.slice(0, 30);
+        html += `<div style="font-size:11px;color:#64748b;margin-bottom:6px">Mostrando ${preview.length} de ${asientosPendientes.length} movimientos</div>`;
+        html += `<div style="overflow-x:auto;border-radius:8px;border:1px solid #e2e8f0">
+        <table style="width:100%;border-collapse:collapse;font-size:11px">
+        <thead style="background:#f8fafc"><tr>
+            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #e2e8f0;font-weight:600;color:#475569">Fecha</th>
+            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #e2e8f0;font-weight:600;color:#475569">Vch</th>
+            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #e2e8f0;font-weight:600;color:#475569">Código</th>
+            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #e2e8f0;font-weight:600;color:#475569">Cuenta</th>
+            <th style="padding:6px 8px;text-align:left;border-bottom:1px solid #e2e8f0;font-weight:600;color:#475569">Concepto</th>
+            <th style="padding:6px 8px;text-align:right;border-bottom:1px solid #e2e8f0;font-weight:600;color:#15803d">Debe</th>
+            <th style="padding:6px 8px;text-align:right;border-bottom:1px solid #e2e8f0;font-weight:600;color:#1d4ed8">Haber</th>
+        </tr></thead><tbody>
+        ${preview.map((a,i)=>`<tr style="background:${i%2?'#f8fafc':'#fff'};border-bottom:1px solid #f1f5f9">
+            <td style="padding:5px 8px;font-family:monospace;white-space:nowrap">${a.fecha}</td>
+            <td style="padding:5px 8px;font-family:monospace">${a.voucher}</td>
+            <td style="padding:5px 8px;font-family:monospace;font-weight:600">${a.codigo}</td>
+            <td style="padding:5px 8px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.cuenta}</td>
+            <td style="padding:5px 8px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#64748b">${a.glosa}</td>
+            <td style="padding:5px 8px;text-align:right;font-family:monospace;color:#15803d;font-weight:600">${a.debe>0?fmtP(a.debe):'-'}</td>
+            <td style="padding:5px 8px;text-align:right;font-family:monospace;color:#1d4ed8;font-weight:600">${a.haber>0?fmtP(a.haber):'-'}</td>
+        </tr>`).join('')}
+        </tbody></table></div>`;
+
+        document.getElementById('import-result-body').innerHTML = html;
+        document.getElementById('modal-import-result').classList.remove('hidden');
+    }
+
     function confirmarImportacion() {
         if (!_asientosPendientes || !_asientosPendientes.length) return;
         _asientosPendientes.forEach(a => asientos.push(a));
+
+        // Guardar cuentas nuevas en planCuentas
+        _asientosPendientes.forEach(function(a) {
+            if (a.codigo && !planCuentas[a.codigo]) {
+                planCuentas[a.codigo] = { nombre: a.cuenta, tipo: a.tipo, nivel: 4 };
+            }
+        });
+
         const maxVoucher = Math.max(..._asientosPendientes.map(a=>a.voucher));
         document.getElementById('input-voucher').value = maxVoucher + 1;
         guardarLocalStorage();
         actualizarTablaAsientos(); actualizarUltimosMovimientos();
         actualizarTablaMayor(); calcularReportes();
+        actualizarSelectCuentas(); actualizarSelectCC();
         syncFirebase();
         document.getElementById('modal-import-result').classList.add('hidden');
         _asientosPendientes = [];
@@ -9405,6 +9685,25 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             const inputFecha = document.getElementById('input-fecha');
             if (inputFecha) inputFecha.value = today;
         });
+
+        // ── PLANTILLA LIBRO DIARIO ────────────────────────────
+        function descargarPlantillaLibroDiario() {
+            const wb = XLSX.utils.book_new();
+            const headers = ['FECHA','COMP.','CODIGOS','CUENTA','CONCEPTO','DEBE','HABER'];
+            const ejemplos = [
+                ['2024-01-01','1','1101-03','Banco BCI','Asiento apertura',7524745,0],
+                ['2024-01-01','1','2301-01','Capital Pagado','Asiento apertura',0,7524745],
+                ['2024-01-31','2','1103-01','Clientes','Centralización ventas enero',37744549,0],
+                ['2024-01-31','2','2111-02','IVA Débito Fiscal','Centralización ventas enero',0,6026440],
+                ['2024-01-31','2','3101-01','Ingresos por Ventas','Centralización ventas enero',0,31718109],
+            ];
+            const data = [headers, ...ejemplos];
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            ws['!cols'] = [{wch:12},{wch:8},{wch:12},{wch:30},{wch:40},{wch:14},{wch:14}];
+            XLSX.utils.book_append_sheet(wb, ws, 'DIARIO');
+            XLSX.writeFile(wb, 'plantilla_libro_diario.xlsx');
+            showToast('📥 Plantilla descargada', 'success');
+        }
     </script>
 
     
@@ -9612,18 +9911,19 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
 <!-- MODAL RESULTADO IMPORTACIÓN EXCEL -->
     <div id="modal-import-result" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl mx-4" style="max-height:85vh;display:flex;flex-direction:column;">
-            <div class="section-header rounded-t-2xl flex items-center gap-3 p-4 flex-shrink-0" style="background:linear-gradient(135deg,#047857,#059669)">
-                <span class="text-2xl">📂</span>
+            <div class="section-header rounded-t-2xl flex items-center gap-3 p-4 flex-shrink-0" style="background:linear-gradient(135deg,#0A2463,#3E92CC)">
+                <span class="text-2xl">📒</span>
                 <div>
-                    <div class="font-bold text-white text-lg">Resultado Importación Excel</div>
+                    <div class="font-bold text-white text-lg">Vista Previa — Importar Libro Diario</div>
                     <div class="text-white/70 text-xs" id="import-filename"></div>
                 </div>
                 <button onclick="document.getElementById('modal-import-result').classList.add('hidden')" class="ml-auto text-white/70 hover:text-white text-2xl leading-none">&times;</button>
             </div>
             <div class="p-5 overflow-y-auto flex-1" id="import-result-body"></div>
             <div class="p-5 border-t border-gray-100 flex gap-3 flex-shrink-0">
+                <button onclick="descargarPlantillaLibroDiario()" class="px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50" title="Descargar plantilla Excel de ejemplo">📥 Plantilla</button>
                 <button onclick="document.getElementById('modal-import-result').classList.add('hidden')" class="flex-1 px-4 py-2 border border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-50">Cancelar</button>
-                <button onclick="confirmarImportacion()" id="btn-confirmar-import" class="flex-1 btn-primary justify-center text-sm" style="background:linear-gradient(135deg,#047857,#059669)">✅ Confirmar e Importar</button>
+                <button onclick="confirmarImportacion()" id="btn-confirmar-import" class="flex-1 btn-primary justify-center text-sm" style="background:linear-gradient(135deg,#0A2463,#3E92CC)">✅ Confirmar e Importar</button>
             </div>
         </div>
     </div>
@@ -9764,5 +10064,54 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
     </div>
 </div>
 
+<div id="barra-sel" style="display:none;position:fixed;bottom:24px;left:50%;transform:translateX(-50%);z-index:9999;padding:12px 24px;border-radius:14px;background:#1d4ed8;color:#fff;flex-direction:row;align-items:center;gap:16px;box-shadow:0 8px 32px rgba(0,0,0,0.4);min-width:380px;font-family:sans-serif">
+  <span id="barra-count" style="font-size:14px;font-weight:700">0 seleccionados</span>
+  <div style="flex:1"></div>
+  <button id="btn-del" style="padding:8px 20px;border-radius:8px;font-size:13px;font-weight:700;background:#dc2626;color:#fff;border:none;cursor:pointer">🗑️ Eliminar</button>
+  <button id="btn-can" style="padding:8px 20px;border-radius:8px;font-size:13px;font-weight:600;background:rgba(255,255,255,0.25);color:#fff;border:none;cursor:pointer">✕ Cancelar</button>
+</div>
+
+<script>
+document.addEventListener('click', function(e){
+  var t = e.target;
+  if(!t) return;
+
+  if(t.classList.contains('check-asiento') || t.id==='check-todos'){
+    if(t.id==='check-todos'){
+      document.querySelectorAll('.check-asiento').forEach(function(c){ c.checked=t.checked; });
+    }
+    var all = Array.from(document.querySelectorAll('.check-asiento'));
+    var sel = all.filter(function(c){return c.checked;});
+    var barra = document.getElementById('barra-sel');
+    var count = document.getElementById('barra-count');
+    var todos = document.getElementById('check-todos');
+    all.forEach(function(c){
+      var tr = c.closest('tr');
+      if(tr) tr.style.backgroundColor = c.checked?'#dbeafe':'';
+    });
+    if(barra) barra.style.display = sel.length>0?'flex':'none';
+    if(count) count.textContent = sel.length+(sel.length===1?' seleccionado':' seleccionados');
+    if(todos){ todos.indeterminate=sel.length>0&&sel.length<all.length; todos.checked=sel.length===all.length&&all.length>0; }
+  }
+
+  if(t.id==='btn-del'){
+    var sel2 = Array.from(document.querySelectorAll('.check-asiento:checked'));
+    if(!sel2.length) return;
+    if(!confirm('¿Eliminar '+sel2.length+' movimiento(s)?')) return;
+    var ids = sel2.map(function(c){return parseInt(c.getAttribute('data-idx'));}).sort(function(a,b){return b-a;});
+    ids.forEach(function(i){asientos.splice(i,1);});
+    guardarLocalStorage(); syncFirebase();
+    actualizarTablaAsientos(); actualizarUltimosMovimientos(); actualizarTablaMayor(); calcularReportes();
+    showToast('🗑️ '+ids.length+' eliminado(s)','success');
+  }
+
+  if(t.id==='btn-can'){
+    document.querySelectorAll('.check-asiento').forEach(function(c){c.checked=false;});
+    var tod=document.getElementById('check-todos'); if(tod){tod.checked=false;tod.indeterminate=false;}
+    var b=document.getElementById('barra-sel'); if(b) b.style.display='none';
+    document.querySelectorAll('tbody tr').forEach(function(r){r.style.backgroundColor='';});
+  }
+});
+</script>
 </body>
 </html>
