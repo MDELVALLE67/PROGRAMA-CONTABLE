@@ -1914,8 +1914,8 @@
                     'flujo_' + empresa,
                     'ppto_montos_' + empresa,
                     'plan_cuentas_' + empresa,
-                    'usuarios_claves',
-                    'empresas_config'
+                    'usuarios_claves'
+                    // empresas_config es global, se guarda solo en doc 'global', no por empresa
                 ];
                 const datos = {};
                 keys.forEach(k => {
@@ -1923,16 +1923,8 @@
                     if (v) datos[k] = v;
                 });
                 await db.collection('empresas').doc(empresa).set({datos, updated: new Date().toISOString(), timestamp: Date.now()});
-                // Save global config: ONLY empresas_config, NOT usuarios_claves
-                // (usuarios_claves se guarda por empresa para evitar conflictos de contraseña)
-                const globalConfig = {};
-                ['empresas_config'].forEach(k => {
-                    const v = localStorage.getItem(k);
-                    if (v) globalConfig[k] = v;
-                });
-                if (Object.keys(globalConfig).length) {
-                    await db.collection('empresas').doc('global').set({datos: globalConfig, updated: new Date().toISOString()});
-                }
+                // NOTA: empresas_config se guarda en doc 'global' SOLO desde guardarConfigEmpresas()
+                // No se toca aqui para evitar sobrescribir nombres con versiones antiguas
                 console.log('Firebase guardado OK:', Object.keys(datos));
             } catch(e) { console.warn('Firebase save error:', e); }
         }
@@ -1940,27 +1932,61 @@
         async function cargarDesdeFirebase(empresa) {
             if (!empresa || !db) return false;
             try {
-                // Load global config first (only empresas_config, NOT usuarios_claves)
+                // Load global config first (empresas_config y campos individuales)
                 const globalDoc = await db.collection('empresas').doc('global').get();
                 if (globalDoc.exists && globalDoc.data().datos) {
-                    Object.entries(globalDoc.data().datos).forEach(([k,v]) => {
-                        // Skip usuarios_claves from global — will be loaded from empresa doc
-                        if (k !== 'usuarios_claves') localStorage.setItem(k, v);
+                    const gd = globalDoc.data().datos;
+                    // Guardar empresas_config si viene completo
+                    if (gd.empresas_config) localStorage.setItem('empresas_config', gd.empresas_config);
+                    // Reconstruir desde campos individuales si el JSON no tiene todas las empresas
+                    const empKeys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8'];
+                    let cfgActual = {};
+                    try { cfgActual = JSON.parse(localStorage.getItem('empresas_config')) || {}; } catch(e) {}
+                    let cambiado = false;
+                    empKeys.forEach(k => {
+                        const n = gd['emp_' + k + '_nombre'];
+                        const r = gd['emp_' + k + '_rut'] || '';
+                        if (n && (!cfgActual[k] || cfgActual[k].nombre !== n)) {
+                            cfgActual[k] = {nombre: n, rut: r};
+                            cambiado = true;
+                        }
                     });
+                    if (cambiado) localStorage.setItem('empresas_config', JSON.stringify(cfgActual));
                 }
                 const doc = await db.collection('empresas').doc(empresa).get();
                 if (doc.exists && doc.data().datos) {
-                    // Limpiar datos locales de esta empresa
+                    // Limpiar datos locales de esta empresa (NO borrar empresas_config, es config global)
                     const keysToRemove = Object.keys(localStorage).filter(k => 
-                        k.endsWith('_' + empresa) || k === 'usuarios_claves' || k === 'empresas_config'
+                        k.endsWith('_' + empresa) || k === 'usuarios_claves'
                     );
                     keysToRemove.forEach(k => localStorage.removeItem(k));
-                    // Escribir datos de Firebase (incluye usuarios_claves actualizado)
-                    Object.entries(doc.data().datos).forEach(([k,v]) => localStorage.setItem(k, v));
+                    // Escribir datos de Firebase — NUNCA pisar empresas_config (es global)
+                    Object.entries(doc.data().datos).forEach(([k,v]) => {
+                        if (k !== 'empresas_config') localStorage.setItem(k, v);
+                    });
                     return true;
                 }
             } catch(e) { console.warn('Firebase load error:', e); }
             return false;
+        }
+
+        // Limpia empresas_config de los docs individuales en Firebase (migración única)
+        async function limpiarEmpresasConfigDeFirebase() {
+            if (!window.db) return;
+            if (localStorage.getItem('_migrado_empresas_config')) return; // solo una vez
+            try {
+                const empKeys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8'];
+                for (const emp of empKeys) {
+                    const doc = await window.db.collection('empresas').doc(emp).get();
+                    if (doc.exists && doc.data().datos && doc.data().datos['empresas_config']) {
+                        const datos = {...doc.data().datos};
+                        delete datos['empresas_config'];
+                        await window.db.collection('empresas').doc(emp).set({datos, updated: new Date().toISOString(), timestamp: Date.now()});
+                    }
+                }
+                localStorage.setItem('_migrado_empresas_config', '1');
+                console.log('Migración empresas_config completada');
+            } catch(e) { console.warn('Error migración:', e); }
         }
 
         function syncFirebase() {
@@ -1981,12 +2007,24 @@
             empresa_8:  {nombre: 'Empresa 8',  rut: ''}
         };
         function getEmpresasConfig() {
-            try { return JSON.parse(localStorage.getItem('empresas_config')) || EMPRESAS_DEFAULT; }
-            catch { return EMPRESAS_DEFAULT; }
+            // Leer primero el JSON completo
+            try {
+                const raw = localStorage.getItem('empresas_config');
+                if (raw) {
+                    const parsed = JSON.parse(raw);
+                    // Verificar que tiene todas las empresas, si no completar con defaults
+                    const keys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8'];
+                    let completo = true;
+                    keys.forEach(k => { if (!parsed[k]) completo = false; });
+                    if (completo) return parsed;
+                    // Completar con defaults si faltan
+                    return Object.assign({}, EMPRESAS_DEFAULT, parsed);
+                }
+            } catch(e) {}
+            return {...EMPRESAS_DEFAULT};
         }
         function saveEmpresasConfig(cfg) {
             localStorage.setItem('empresas_config', JSON.stringify(cfg));
-            syncFirebase();
         }
         function getNombreEmpresa(key) {
             const cfg = getEmpresasConfig();
@@ -2286,19 +2324,33 @@
                 const rut    = document.getElementById('cfg-emp-rut-'+k)?.value.trim()    || '';
                 cfg[k] = {nombre, rut};
             });
-            saveEmpresasConfig(cfg);
-            // Update login selector
+            // Guardar en localStorage
+            localStorage.setItem('empresas_config', JSON.stringify(cfg));
+            // Guardar en Firebase: cada empresa como campo separado para evitar truncamiento
+            if (window.db) {
+                const datos = { empresas_config: JSON.stringify(cfg) };
+                // También guardar cada empresa individualmente como respaldo
+                keys.forEach(k => {
+                    datos['emp_' + k + '_nombre'] = cfg[k].nombre;
+                    datos['emp_' + k + '_rut']    = cfg[k].rut;
+                });
+                window.db.collection('empresas').doc('global').set({
+                    datos,
+                    updated: new Date().toISOString()
+                }).then(() => {
+                    showToast('✅ Nombres guardados y sincronizados en la nube', 'success');
+                }).catch(e => {
+                    console.warn('Firebase error:', e);
+                    showToast('✅ Nombres guardados localmente', 'success');
+                });
+            } else {
+                showToast('✅ Nombres guardados localmente', 'success');
+            }
             actualizarSelectorEmpresas();
-            // Update header if logged in
             if (sesionActual.empresa) {
-                const nuevoNombre = getNombreEmpresa(sesionActual.empresa);
-                document.getElementById('empresa-nombre').textContent = nuevoNombre;
-                // Update app title too
-                const appTitle = document.querySelector('.empresa-nombre');
-                if (appTitle) appTitle.textContent = nuevoNombre;
+                document.getElementById('empresa-nombre').textContent = getNombreEmpresa(sesionActual.empresa);
             }
             cerrarConfigEmpresas();
-            showToast('✅ Configuración guardada — recarga si no ves el cambio', 'success');
         }
         function actualizarSelectorEmpresas() {
             const sel = document.getElementById('login-empresa');
@@ -2342,41 +2394,58 @@
 
             const usuarios = getUsuarios();
 
+            // Si la clave no coincide localmente, intentar recargar usuarios desde Firebase
+            if (!usuarios[usuario] || usuarios[usuario].password !== password) {
+                showToast('Verificando credenciales...', 'success');
+                (async () => {
+                    try {
+                        if (window.db) {
+                            const empKeys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8'];
+                            for (const emp of empKeys) {
+                                const doc = await window.db.collection('empresas').doc(emp).get();
+                                if (doc.exists && doc.data().datos && doc.data().datos['usuarios_claves']) {
+                                    localStorage.setItem('usuarios_claves', doc.data().datos['usuarios_claves']);
+                                    break;
+                                }
+                            }
+                        }
+                    } catch(e) {}
+                    const usuariosRecargados = getUsuarios();
+                    if (usuariosRecargados[usuario] && usuariosRecargados[usuario].password === password) {
+                        iniciarSesionConExito(empresa, usuario, usuariosRecargados[usuario].rol);
+                    } else {
+                        showToast('Usuario o contraseña incorrectos', 'error');
+                    }
+                })();
+                return;
+            }
             if (usuarios[usuario] && usuarios[usuario].password === password) {
-                sesionActual = {usuario, rol: usuarios[usuario].rol, empresa};
-                
+                iniciarSesionConExito(empresa, usuario, usuarios[usuario].rol);
+            } else {
+                showToast('Usuario o contraseña incorrectos', 'error');
+            }
+        }
+
+        function iniciarSesionConExito(empresa, usuario, rol) {
+                sesionActual = {usuario, rol, empresa};
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('app-main').classList.remove('hidden');
                 document.getElementById('usuario-nombre').textContent = usuario;
                 document.getElementById('usuario-inicial').textContent = usuario[0].toUpperCase();
-                document.getElementById('usuario-rol').textContent = usuarios[usuario].rol === 'administrador' ? 'Administrador' : 'Solo Lectura';
+                document.getElementById('usuario-rol').textContent = rol === 'administrador' ? 'Administrador' : 'Solo Lectura';
                 document.getElementById('empresa-nombre').textContent = getNombreEmpresa(empresa);
-                
-                if (usuarios[usuario].rol === 'solo_lectura') {
+                if (rol === 'solo_lectura') {
                     document.querySelectorAll('.permisos-admin').forEach(el => el.style.display = 'none');
                 }
-                
-                // Cargar datos desde Firebase primero
                 cargarDesdeFirebase(empresa).then(cargado => {
-                    // Limpiar localStorage local antes de cargar desde Firebase
-                    // para asegurar que siempre se usen los datos más recientes
-                    if (cargado) {
-                        // Firebase tiene datos — borrar keys locales antes de recargar
-                        const keysToClear = [
-                            'asientos_' + empresa,
-                            'flujo_' + empresa,
-                            'ppto_montos_' + empresa,
-                        ];
-                        // No borramos — Firebase ya sobreescribió localStorage en cargarDesdeFirebase
-                    }
                     cargarLocalStorage();
                     actualizarTodo();
                     initLineasDiario();
+                    // Actualizar nombre empresa por si Firebase trajo config actualizada
+                    document.getElementById('empresa-nombre').textContent = getNombreEmpresa(empresa);
+                    actualizarSelectorEmpresas();
                     showToast('¡Bienvenido ' + usuario + (cargado ? ' — datos sincronizados ☁️' : ' — sin conexión, datos locales'), 'success');
                 });
-            } else {
-                showToast('Usuario o contraseña incorrectos', 'error');
-            }
         }
 
         function cerrarSesion() {
@@ -3495,8 +3564,12 @@
                     invActivo = saldoD;   // saldo normal deudor
                     invPasivo = saldoA;   // sobregiro → va a pasivo
                 }
-                if (c.tipo==='Pasivo')     { invPasivo = saldoA; }
-                if (c.tipo==='Patrimonio') { invPasivo = saldoA; }
+                if (c.tipo==='Pasivo')     { invPasivo = saldoA; invActivo = saldoD; }
+                // Patrimonio: saldo acreedor va en Pasivo/Pat (normal), saldo deudor (ej: Pérdidas Acumuladas) va en columna Activo
+                if (c.tipo==='Patrimonio') { 
+                    if (saldoA > 0) { invPasivo = saldoA; }   // Capital, Utilidades → columna Pasivo/Pat
+                    else if (saldoD > 0) { invActivo = saldoD; } // Pérdidas Acumuladas → columna Activo
+                }
                 // Estado Resultados
                 if (c.tipo==='Gasto')      { resPerdida  = saldoD; }
                 if (c.tipo==='Ingreso')    { resGanancia = saldoA; }
@@ -6001,7 +6074,46 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            actualizarSelectorEmpresas();
+            // Precargar config global desde Firebase antes del login
+            async function precargarConfigGlobal() {
+                try {
+                    if (!window.db) { actualizarSelectorEmpresas(); return; }
+                    // Cargar nombres de empresas desde doc global
+                    const globalDoc = await window.db.collection('empresas').doc('global').get();
+                    if (globalDoc.exists && globalDoc.data().datos) {
+                        const gd = globalDoc.data().datos;
+                        if (gd.empresas_config) localStorage.setItem('empresas_config', gd.empresas_config);
+                        // Reconstruir desde campos individuales
+                        const empKeys2 = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8'];
+                        let cfg2 = {};
+                        try { cfg2 = JSON.parse(localStorage.getItem('empresas_config')) || {}; } catch(e) {}
+                        let cambiado2 = false;
+                        empKeys2.forEach(k => {
+                            const n = gd['emp_' + k + '_nombre'];
+                            const r = gd['emp_' + k + '_rut'] || '';
+                            if (n && (!cfg2[k] || cfg2[k].nombre !== n)) {
+                                cfg2[k] = {nombre: n, rut: r};
+                                cambiado2 = true;
+                            }
+                        });
+                        if (cambiado2) localStorage.setItem('empresas_config', JSON.stringify(cfg2));
+                    }
+                    // Cargar usuarios_claves desde la primera empresa que los tenga
+                    const empKeys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8'];
+                    for (const emp of empKeys) {
+                        const doc = await window.db.collection('empresas').doc(emp).get();
+                        if (doc.exists && doc.data().datos && doc.data().datos['usuarios_claves']) {
+                            localStorage.setItem('usuarios_claves', doc.data().datos['usuarios_claves']);
+                            break;
+                        }
+                    }
+                } catch(e) { console.warn('Precarga Firebase:', e); }
+                actualizarSelectorEmpresas();
+                // Limpiar empresas_config de docs individuales (migración única)
+                limpiarEmpresasConfigDeFirebase();
+            }
+            actualizarSelectorEmpresas(); // inmediato con localStorage
+            setTimeout(precargarConfigGlobal, 900); // luego actualiza con Firebase
             ['gf-desde','gf-hasta'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.addEventListener('change', actualizarInfoRango);
