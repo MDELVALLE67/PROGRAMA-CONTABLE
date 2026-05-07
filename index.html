@@ -1893,6 +1893,7 @@
                         firebase.initializeApp(firebaseConfig);
                     }
                     db = firebase.firestore();
+                    window.db = db; // exponer globalmente para guardarConfigEmpresas y otras funciones
                     // Habilitar persistencia offline para que funcione aunque no haya internet momentáneamente
                     db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
                     console.log('✅ Firebase conectado correctamente.');
