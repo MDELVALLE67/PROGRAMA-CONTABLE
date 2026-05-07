@@ -434,16 +434,28 @@
             <div class="space-y-5">
                 <div>
                     <label class="block text-sm font-medium mb-2 text-gray-700">Empresa</label>
-                    <select id="login-empresa" class="form-input">
-                        <option value="anfa_renca">ANFA RENCA</option>
-                        <option value="empresa_2">Empresa 2</option>
-                        <option value="empresa_3">Empresa 3</option>
-                        <option value="empresa_4">Empresa 4</option>
-                        <option value="empresa_5">Empresa 5</option>
-                        <option value="empresa_6">Empresa 6</option>
-                        <option value="empresa_7">Empresa 7</option>
-                        <option value="empresa_8">Empresa 8</option>
-                    </select>
+                    <div class="flex gap-2 items-center">
+                        <select id="login-empresa" class="form-input flex-1">
+                            <option value="anfa_renca">ANFA RENCA</option>
+                            <option value="empresa_2">SERVIT</option>
+                            <option value="empresa_3">R Y R</option>
+                            <option value="empresa_4">MASTER EN ACERO</option>
+                            <option value="empresa_5">ODESI</option>
+                            <option value="empresa_6">FRANCISCA EIRL</option>
+                            <option value="empresa_7">ANTONIA EIRL</option>
+                            <option value="empresa_8">POLLO BARRIGON SPA</option>
+                            <option value="empresa_9">Empresa 9</option>
+                            <option value="empresa_10">Empresa 10</option>
+                            <option value="empresa_11">Empresa 11</option>
+                            <option value="empresa_12">Empresa 12</option>
+                            <option value="empresa_13">Empresa 13</option>
+                            <option value="empresa_14">Empresa 14</option>
+                            <option value="empresa_15">Empresa 15</option>
+                        </select>
+                        <button onclick="abrirConfigEmpresas()" title="Configurar nombres de empresas"
+                            style="padding:8px 10px;background:#e2e8f0;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:16px;flex-shrink:0;"
+                            onmouseover="this.style.background='#cbd5e1'" onmouseout="this.style.background='#e2e8f0'">⚙️</button>
+                    </div>
                 </div>
                 
                 <div>
@@ -1936,22 +1948,23 @@
                 const globalDoc = await db.collection('empresas').doc('global').get();
                 if (globalDoc.exists && globalDoc.data().datos) {
                     const gd = globalDoc.data().datos;
-                    // Guardar empresas_config si viene completo
-                    if (gd.empresas_config) localStorage.setItem('empresas_config', gd.empresas_config);
-                    // Reconstruir desde campos individuales si el JSON no tiene todas las empresas
-                    const empKeys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8'];
-                    let cfgActual = {};
-                    try { cfgActual = JSON.parse(localStorage.getItem('empresas_config')) || {}; } catch(e) {}
-                    let cambiado = false;
+                    // Fusionar nombres: campos individuales > empresas_config JSON > local > default
+                    const empKeys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8','empresa_9','empresa_10','empresa_11','empresa_12','empresa_13','empresa_14','empresa_15'];
+                    let cfgLocal = {};
+                    try { cfgLocal = JSON.parse(localStorage.getItem('empresas_config')) || {}; } catch(e) {}
+                    let cfgFbJson = {};
+                    if (gd.empresas_config) { try { cfgFbJson = JSON.parse(gd.empresas_config) || {}; } catch(e) {} }
+                    const cfgMerged = {};
                     empKeys.forEach(k => {
-                        const n = gd['emp_' + k + '_nombre'];
-                        const r = gd['emp_' + k + '_rut'] || '';
-                        if (n && (!cfgActual[k] || cfgActual[k].nombre !== n)) {
-                            cfgActual[k] = {nombre: n, rut: r};
-                            cambiado = true;
-                        }
+                        const nInd   = gd['emp_' + k + '_nombre'] && gd['emp_' + k + '_nombre'].trim();
+                        const nFb    = cfgFbJson[k] && cfgFbJson[k].nombre && cfgFbJson[k].nombre.trim();
+                        const nLocal = cfgLocal[k] && cfgLocal[k].nombre && cfgLocal[k].nombre.trim();
+                        cfgMerged[k] = {
+                            nombre: nInd || nFb || nLocal || EMPRESAS_DEFAULT[k].nombre,
+                            rut: gd['emp_' + k + '_rut'] || (cfgFbJson[k] && cfgFbJson[k].rut) || (cfgLocal[k] && cfgLocal[k].rut) || ''
+                        };
                     });
-                    if (cambiado) localStorage.setItem('empresas_config', JSON.stringify(cfgActual));
+                    localStorage.setItem('empresas_config', JSON.stringify(cfgMerged));
                 }
                 const doc = await db.collection('empresas').doc(empresa).get();
                 if (doc.exists && doc.data().datos) {
@@ -1975,7 +1988,7 @@
             if (!window.db) return;
             if (localStorage.getItem('_migrado_empresas_config')) return; // solo una vez
             try {
-                const empKeys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8'];
+                const empKeys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8','empresa_9','empresa_10','empresa_11','empresa_12','empresa_13','empresa_14','empresa_15'];
                 for (const emp of empKeys) {
                     const doc = await window.db.collection('empresas').doc(emp).get();
                     if (doc.exists && doc.data().datos && doc.data().datos['empresas_config']) {
@@ -1997,31 +2010,43 @@
 
         // ── CONFIGURACIÓN DE EMPRESAS ─────────────────────────────
         const EMPRESAS_DEFAULT = {
-            anfa_renca: {nombre: 'ANFA RENCA', rut: ''},
-            empresa_2:  {nombre: 'Empresa 2',  rut: ''},
-            empresa_3:  {nombre: 'Empresa 3',  rut: ''},
-            empresa_4:  {nombre: 'Empresa 4',  rut: ''},
-            empresa_5:  {nombre: 'Empresa 5',  rut: ''},
-            empresa_6:  {nombre: 'Empresa 6',  rut: ''},
-            empresa_7:  {nombre: 'Empresa 7',  rut: ''},
-            empresa_8:  {nombre: 'Empresa 8',  rut: ''}
+            anfa_renca: {nombre: 'ANFA RENCA',       rut: ''},
+            empresa_2:  {nombre: 'SERVIT',            rut: ''},
+            empresa_3:  {nombre: 'R Y R',             rut: ''},
+            empresa_4:  {nombre: 'MASTER EN ACERO',   rut: ''},
+            empresa_5:  {nombre: 'ODESI',             rut: ''},
+            empresa_6:  {nombre: 'FRANCISCA EIRL',    rut: ''},
+            empresa_7:  {nombre: 'ANTONIA EIRL',      rut: ''},
+            empresa_8:  {nombre: 'POLLO BARRIGON SPA', rut: ''},
+            empresa_9:  {nombre: 'Empresa 9',  rut: ''},
+            empresa_10: {nombre: 'Empresa 10', rut: ''},
+            empresa_11: {nombre: 'Empresa 11', rut: ''},
+            empresa_12: {nombre: 'Empresa 12', rut: ''},
+            empresa_13: {nombre: 'Empresa 13', rut: ''},
+            empresa_14: {nombre: 'Empresa 14', rut: ''},
+            empresa_15: {nombre: 'Empresa 15', rut: ''}
         };
         function getEmpresasConfig() {
-            // Leer primero el JSON completo
+            const keys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8','empresa_9','empresa_10','empresa_11','empresa_12','empresa_13','empresa_14','empresa_15'];
+            // Nombres genéricos viejos que deben ser reemplazados por los reales
+            const nombresGenericos = ['empresa 2','empresa 3','empresa 4','empresa 5','empresa 6','empresa 7','empresa 8',
+                                      'empresa2','empresa3','empresa4','empresa5','empresa6','empresa7','empresa8'];
+            let parsed = {};
             try {
                 const raw = localStorage.getItem('empresas_config');
-                if (raw) {
-                    const parsed = JSON.parse(raw);
-                    // Verificar que tiene todas las empresas, si no completar con defaults
-                    const keys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8'];
-                    let completo = true;
-                    keys.forEach(k => { if (!parsed[k]) completo = false; });
-                    if (completo) return parsed;
-                    // Completar con defaults si faltan
-                    return Object.assign({}, EMPRESAS_DEFAULT, parsed);
-                }
+                if (raw) parsed = JSON.parse(raw) || {};
             } catch(e) {}
-            return {...EMPRESAS_DEFAULT};
+            const resultado = {};
+            keys.forEach(k => {
+                const n = parsed[k] && parsed[k].nombre && parsed[k].nombre.trim();
+                // Si el nombre guardado es genérico (ej: "Empresa 2"), ignorarlo y usar el default real
+                const esGenerico = n && nombresGenericos.includes(n.toLowerCase());
+                resultado[k] = {
+                    nombre: (n && !esGenerico) ? n : EMPRESAS_DEFAULT[k].nombre,
+                    rut:    (parsed[k] && parsed[k].rut) ? parsed[k].rut : ''
+                };
+            });
+            return resultado;
         }
         function saveEmpresasConfig(cfg) {
             localStorage.setItem('empresas_config', JSON.stringify(cfg));
@@ -2228,10 +2253,7 @@
             const montosData      = localStorage.getItem('ppto_montos_' + key);
             const planData        = localStorage.getItem('plan_cuentas_' + key);
 
-            if (sesionActual.empresa === 'empresa_2' || sesionActual.empresa === 'empresa_3' ||
-                sesionActual.empresa === 'empresa_4' || sesionActual.empresa === 'empresa_5' ||
-                sesionActual.empresa === 'empresa_6' || sesionActual.empresa === 'empresa_7' ||
-                sesionActual.empresa === 'empresa_8') {
+            if (sesionActual.empresa !== 'anfa_renca') {
                 inicializarDatosGenericos();
             } else {
                 inicializarDatos();
@@ -2304,7 +2326,7 @@
                 // ── GESTIÓN CONFIGURACIÓN EMPRESAS ──────────────────────
         function abrirConfigEmpresas() {
             const cfg = getEmpresasConfig();
-            const keys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8'];
+            const keys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8','empresa_9','empresa_10','empresa_11','empresa_12','empresa_13','empresa_14','empresa_15'];
             keys.forEach(k => {
                 const ni = document.getElementById('cfg-emp-nombre-'+k);
                 const ri = document.getElementById('cfg-emp-rut-'+k);
@@ -2317,12 +2339,18 @@
             document.getElementById('modal-config-empresas').classList.add('hidden');
         }
         function guardarConfigEmpresas() {
-            const keys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8'];
+            const keys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8','empresa_9','empresa_10','empresa_11','empresa_12','empresa_13','empresa_14','empresa_15'];
+            // Leer config anterior para no perder nombres que ya estaban guardados
+            const cfgAnterior = getEmpresasConfig();
             const cfg = {};
             keys.forEach(k => {
-                const nombre = document.getElementById('cfg-emp-nombre-'+k)?.value.trim() || k.toUpperCase().replace('_',' ');
-                const rut    = document.getElementById('cfg-emp-rut-'+k)?.value.trim()    || '';
-                cfg[k] = {nombre, rut};
+                const inputNombre = document.getElementById('cfg-emp-nombre-'+k)?.value.trim();
+                const inputRut    = document.getElementById('cfg-emp-rut-'+k)?.value.trim() || '';
+                // Si el input está vacío, preservar el nombre anterior (nunca guardar string vacío)
+                cfg[k] = {
+                    nombre: inputNombre || cfgAnterior[k].nombre || EMPRESAS_DEFAULT[k].nombre,
+                    rut: inputRut
+                };
             });
             // Guardar en localStorage
             localStorage.setItem('empresas_config', JSON.stringify(cfg));
@@ -2356,7 +2384,7 @@
             const sel = document.getElementById('login-empresa');
             if (!sel) return;
             const cfg = getEmpresasConfig();
-            const keys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8'];
+            const keys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8','empresa_9','empresa_10','empresa_11','empresa_12','empresa_13','empresa_14','empresa_15'];
             const val = sel.value;
             sel.innerHTML = keys.map(k => `<option value="${k}">${cfg[k]?.nombre || k}</option>`).join('');
             sel.value = val;
@@ -2400,7 +2428,7 @@
                 (async () => {
                     try {
                         if (window.db) {
-                            const empKeys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8'];
+                            const empKeys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8','empresa_9','empresa_10','empresa_11','empresa_12','empresa_13','empresa_14','empresa_15'];
                             for (const emp of empKeys) {
                                 const doc = await window.db.collection('empresas').doc(emp).get();
                                 if (doc.exists && doc.data().datos && doc.data().datos['usuarios_claves']) {
@@ -6078,42 +6106,84 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             async function precargarConfigGlobal() {
                 try {
                     if (!window.db) { actualizarSelectorEmpresas(); return; }
-                    // Cargar nombres de empresas desde doc global
+                    const empKeys2 = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8','empresa_9','empresa_10','empresa_11','empresa_12','empresa_13','empresa_14','empresa_15'];
+                    let cfgLocal2 = {};
+                    try { cfgLocal2 = JSON.parse(localStorage.getItem('empresas_config')) || {}; } catch(e) {}
+
+                    // Leer doc global de Firebase
                     const globalDoc = await window.db.collection('empresas').doc('global').get();
                     if (globalDoc.exists && globalDoc.data().datos) {
                         const gd = globalDoc.data().datos;
-                        if (gd.empresas_config) localStorage.setItem('empresas_config', gd.empresas_config);
-                        // Reconstruir desde campos individuales
-                        const empKeys2 = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8'];
-                        let cfg2 = {};
-                        try { cfg2 = JSON.parse(localStorage.getItem('empresas_config')) || {}; } catch(e) {}
-                        let cambiado2 = false;
-                        empKeys2.forEach(k => {
-                            const n = gd['emp_' + k + '_nombre'];
-                            const r = gd['emp_' + k + '_rut'] || '';
-                            if (n && (!cfg2[k] || cfg2[k].nombre !== n)) {
-                                cfg2[k] = {nombre: n, rut: r};
-                                cambiado2 = true;
-                            }
-                        });
-                        if (cambiado2) localStorage.setItem('empresas_config', JSON.stringify(cfg2));
-                    }
-                    // Cargar usuarios_claves desde la primera empresa que los tenga
-                    const empKeys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8'];
-                    for (const emp of empKeys) {
-                        const doc = await window.db.collection('empresas').doc(emp).get();
-                        if (doc.exists && doc.data().datos && doc.data().datos['usuarios_claves']) {
-                            localStorage.setItem('usuarios_claves', doc.data().datos['usuarios_claves']);
-                            break;
+                        console.log('[EMPRESAS] Doc global encontrado. Campos:', Object.keys(gd).filter(k=>k.includes('nombre')||k==='empresas_config'));
+
+                        // Intentar leer empresas_config JSON primero
+                        let cfgFbJson = {};
+                        if (gd.empresas_config) {
+                            try { cfgFbJson = JSON.parse(gd.empresas_config) || {}; } catch(e) {}
+                            console.log('[EMPRESAS] empresas_config JSON:', JSON.stringify(cfgFbJson).substring(0,200));
                         }
+
+                        // Construir config final: campos individuales ganan sobre JSON, ambos ganan sobre local
+                        const cfgFinal = {};
+                        empKeys2.forEach(k => {
+                            const nCampo = gd['emp_' + k + '_nombre'] && gd['emp_' + k + '_nombre'].trim();
+                            const nJson  = cfgFbJson[k] && cfgFbJson[k].nombre && cfgFbJson[k].nombre.trim();
+                            const nLocal = cfgLocal2[k] && cfgLocal2[k].nombre && cfgLocal2[k].nombre.trim();
+                            const nombre = nCampo || nJson || nLocal || EMPRESAS_DEFAULT[k].nombre;
+                            const rut    = gd['emp_' + k + '_rut'] || (cfgFbJson[k] && cfgFbJson[k].rut) || (cfgLocal2[k] && cfgLocal2[k].rut) || '';
+                            cfgFinal[k]  = {nombre, rut};
+                            console.log('[EMPRESAS]', k, '=> campo:', nCampo, '| json:', nJson, '| local:', nLocal, '=> FINAL:', nombre);
+                        });
+                        localStorage.setItem('empresas_config', JSON.stringify(cfgFinal));
+                    } else {
+                        console.log('[EMPRESAS] Doc global NO existe en Firebase');
                     }
-                } catch(e) { console.warn('Precarga Firebase:', e); }
+
+                    // Cargar usuarios_claves
+                    for (const emp of empKeys2) {
+                        try {
+                            const doc = await window.db.collection('empresas').doc(emp).get();
+                            if (doc.exists && doc.data().datos && doc.data().datos['usuarios_claves']) {
+                                localStorage.setItem('usuarios_claves', doc.data().datos['usuarios_claves']);
+                                break;
+                            }
+                        } catch(e) {}
+                    }
+
+                } catch(e) { console.warn('[EMPRESAS] Error precarga Firebase:', e); }
                 actualizarSelectorEmpresas();
-                // Limpiar empresas_config de docs individuales (migración única)
                 limpiarEmpresasConfigDeFirebase();
             }
+            // Limpiar nombres genéricos viejos del localStorage para que usen los defaults reales
+            try {
+                const _rawCfg = localStorage.getItem('empresas_config');
+                if (_rawCfg) {
+                    const _cfg = JSON.parse(_rawCfg);
+                    const _genericos = ['empresa 2','empresa 3','empresa 4','empresa 5','empresa 6','empresa 7','empresa 8'];
+                    let _cambio = false;
+                    ['empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8','empresa_9','empresa_10','empresa_11','empresa_12','empresa_13','empresa_14','empresa_15'].forEach(k => {
+                        if (_cfg[k] && _genericos.includes((_cfg[k].nombre||'').toLowerCase())) {
+                            delete _cfg[k];
+                            _cambio = true;
+                        }
+                    });
+                    if (_cambio) localStorage.setItem('empresas_config', JSON.stringify(_cfg));
+                }
+            } catch(e) {}
             actualizarSelectorEmpresas(); // inmediato con localStorage
-            setTimeout(precargarConfigGlobal, 900); // luego actualiza con Firebase
+            // Intentar con Firebase - reintenta hasta 3 veces si db no está lista aún
+            let _precargaIntentos = 0;
+            function intentarPrecargar() {
+                _precargaIntentos++;
+                if (window.db) {
+                    precargarConfigGlobal();
+                } else if (_precargaIntentos < 6) {
+                    setTimeout(intentarPrecargar, 800);
+                } else {
+                    actualizarSelectorEmpresas(); // al menos usar localStorage
+                }
+            }
+            setTimeout(intentarPrecargar, 500);
             ['gf-desde','gf-hasta'].forEach(id => {
                 const el = document.getElementById(id);
                 if (el) el.addEventListener('change', actualizarInfoRango);
@@ -9931,6 +10001,69 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                         <input type="text" id="cfg-emp-nombre-empresa_8" class="form-input text-sm w-full" placeholder="Nombre empresa"></div>
                         <div><label class="block text-xs font-medium text-gray-600 mb-1">RUT</label>
                         <input type="text" id="cfg-emp-rut-empresa_8" class="form-input text-sm w-full" placeholder="12.345.678-9"></div>
+                    </div>
+                </div>
+                <div class="border border-gray-200 rounded-xl p-4">
+                    <div class="text-xs font-bold text-gray-500 uppercase mb-3">Empresa 9</div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Nombre</label>
+                        <input type="text" id="cfg-emp-nombre-empresa_9" class="form-input text-sm w-full" placeholder="Nombre empresa"></div>
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">RUT</label>
+                        <input type="text" id="cfg-emp-rut-empresa_9" class="form-input text-sm w-full" placeholder="12.345.678-9"></div>
+                    </div>
+                </div>
+                <div class="border border-gray-200 rounded-xl p-4">
+                    <div class="text-xs font-bold text-gray-500 uppercase mb-3">Empresa 10</div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Nombre</label>
+                        <input type="text" id="cfg-emp-nombre-empresa_10" class="form-input text-sm w-full" placeholder="Nombre empresa"></div>
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">RUT</label>
+                        <input type="text" id="cfg-emp-rut-empresa_10" class="form-input text-sm w-full" placeholder="12.345.678-9"></div>
+                    </div>
+                </div>
+                <div class="border border-gray-200 rounded-xl p-4">
+                    <div class="text-xs font-bold text-gray-500 uppercase mb-3">Empresa 11</div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Nombre</label>
+                        <input type="text" id="cfg-emp-nombre-empresa_11" class="form-input text-sm w-full" placeholder="Nombre empresa"></div>
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">RUT</label>
+                        <input type="text" id="cfg-emp-rut-empresa_11" class="form-input text-sm w-full" placeholder="12.345.678-9"></div>
+                    </div>
+                </div>
+                <div class="border border-gray-200 rounded-xl p-4">
+                    <div class="text-xs font-bold text-gray-500 uppercase mb-3">Empresa 12</div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Nombre</label>
+                        <input type="text" id="cfg-emp-nombre-empresa_12" class="form-input text-sm w-full" placeholder="Nombre empresa"></div>
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">RUT</label>
+                        <input type="text" id="cfg-emp-rut-empresa_12" class="form-input text-sm w-full" placeholder="12.345.678-9"></div>
+                    </div>
+                </div>
+                <div class="border border-gray-200 rounded-xl p-4">
+                    <div class="text-xs font-bold text-gray-500 uppercase mb-3">Empresa 13</div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Nombre</label>
+                        <input type="text" id="cfg-emp-nombre-empresa_13" class="form-input text-sm w-full" placeholder="Nombre empresa"></div>
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">RUT</label>
+                        <input type="text" id="cfg-emp-rut-empresa_13" class="form-input text-sm w-full" placeholder="12.345.678-9"></div>
+                    </div>
+                </div>
+                <div class="border border-gray-200 rounded-xl p-4">
+                    <div class="text-xs font-bold text-gray-500 uppercase mb-3">Empresa 14</div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Nombre</label>
+                        <input type="text" id="cfg-emp-nombre-empresa_14" class="form-input text-sm w-full" placeholder="Nombre empresa"></div>
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">RUT</label>
+                        <input type="text" id="cfg-emp-rut-empresa_14" class="form-input text-sm w-full" placeholder="12.345.678-9"></div>
+                    </div>
+                </div>
+                <div class="border border-gray-200 rounded-xl p-4">
+                    <div class="text-xs font-bold text-gray-500 uppercase mb-3">Empresa 15</div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">Nombre</label>
+                        <input type="text" id="cfg-emp-nombre-empresa_15" class="form-input text-sm w-full" placeholder="Nombre empresa"></div>
+                        <div><label class="block text-xs font-medium text-gray-600 mb-1">RUT</label>
+                        <input type="text" id="cfg-emp-rut-empresa_15" class="form-input text-sm w-full" placeholder="12.345.678-9"></div>
                     </div>
                 </div>
                 <div class="flex gap-3 pt-2">
