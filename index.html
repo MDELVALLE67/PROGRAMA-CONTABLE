@@ -2030,7 +2030,9 @@
             const keys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8','empresa_9','empresa_10','empresa_11','empresa_12','empresa_13','empresa_14','empresa_15'];
             // Nombres genéricos viejos que deben ser reemplazados por los reales
             const nombresGenericos = ['empresa 2','empresa 3','empresa 4','empresa 5','empresa 6','empresa 7','empresa 8',
-                                      'empresa2','empresa3','empresa4','empresa5','empresa6','empresa7','empresa8'];
+                                      'empresa 9','empresa 10','empresa 11','empresa 12','empresa 13','empresa 14','empresa 15',
+                                      'empresa2','empresa3','empresa4','empresa5','empresa6','empresa7','empresa8',
+                                      'empresa9','empresa10','empresa11','empresa12','empresa13','empresa14','empresa15'];
             let parsed = {};
             try {
                 const raw = localStorage.getItem('empresas_config');
@@ -2352,28 +2354,37 @@
                     rut: inputRut
                 };
             });
-            // Guardar en localStorage
+            // Guardar en localStorage siempre
             localStorage.setItem('empresas_config', JSON.stringify(cfg));
-            // Guardar en Firebase: cada empresa como campo separado para evitar truncamiento
-            if (window.db) {
+
+            // Función que hace el guardado en Firebase
+            async function _guardarNombresFirebase(db) {
                 const datos = { empresas_config: JSON.stringify(cfg) };
-                // También guardar cada empresa individualmente como respaldo
                 keys.forEach(k => {
                     datos['emp_' + k + '_nombre'] = cfg[k].nombre;
                     datos['emp_' + k + '_rut']    = cfg[k].rut;
                 });
-                window.db.collection('empresas').doc('global').set({
-                    datos,
-                    updated: new Date().toISOString()
-                }).then(() => {
-                    showToast('✅ Nombres guardados y sincronizados en la nube', 'success');
-                }).catch(e => {
-                    console.warn('Firebase error:', e);
-                    showToast('✅ Nombres guardados localmente', 'success');
-                });
-            } else {
-                showToast('✅ Nombres guardados localmente', 'success');
+                await db.collection('empresas').doc('global').set({ datos, updated: new Date().toISOString() }, { merge: true });
+                console.log('[EMPRESAS] Guardado en Firebase doc global OK');
+                showToast('✅ Nombres guardados y sincronizados en la nube', 'success');
             }
+
+            // Intentar guardar en Firebase — si db no está lista, reintentar hasta 5 veces
+            let _fbIntentos = 0;
+            function _intentarGuardarFirebase() {
+                if (window.db) {
+                    _guardarNombresFirebase(window.db).catch(e => {
+                        console.error('[EMPRESAS] ERROR Firebase:', e);
+                        showToast('⚠️ Solo guardado localmente — reintenta en unos segundos', 'warning');
+                    });
+                } else if (_fbIntentos < 8) {
+                    _fbIntentos++;
+                    setTimeout(_intentarGuardarFirebase, 600);
+                } else {
+                    showToast('⚠️ Sin conexión a Firebase — guardado solo localmente', 'warning');
+                }
+            }
+            _intentarGuardarFirebase();
             actualizarSelectorEmpresas();
             if (sesionActual.empresa) {
                 document.getElementById('empresa-nombre').textContent = getNombreEmpresa(sesionActual.empresa);
@@ -6125,14 +6136,24 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
 
                         // Construir config final: campos individuales ganan sobre JSON, ambos ganan sobre local
                         const cfgFinal = {};
+                        const _genericos = ['empresa 2','empresa 3','empresa 4','empresa 5','empresa 6','empresa 7','empresa 8',
+                            'empresa 9','empresa 10','empresa 11','empresa 12','empresa 13','empresa 14','empresa 15',
+                            'empresa2','empresa3','empresa4','empresa5','empresa6','empresa7','empresa8',
+                            'empresa9','empresa10','empresa11','empresa12','empresa13','empresa14','empresa15'];
                         empKeys2.forEach(k => {
+                            const _esGen = n => !n || _genericos.includes(n.toLowerCase());
                             const nCampo = gd['emp_' + k + '_nombre'] && gd['emp_' + k + '_nombre'].trim();
                             const nJson  = cfgFbJson[k] && cfgFbJson[k].nombre && cfgFbJson[k].nombre.trim();
                             const nLocal = cfgLocal2[k] && cfgLocal2[k].nombre && cfgLocal2[k].nombre.trim();
-                            const nombre = nCampo || nJson || nLocal || EMPRESAS_DEFAULT[k].nombre;
-                            const rut    = gd['emp_' + k + '_rut'] || (cfgFbJson[k] && cfgFbJson[k].rut) || (cfgLocal2[k] && cfgLocal2[k].rut) || '';
+                            // Prioridad: local real > Firebase real > default
+                            // Nunca pisar un nombre real de localStorage con uno genérico de Firebase
+                            const nombre = (!_esGen(nLocal) ? nLocal : null) ||
+                                           (!_esGen(nCampo) ? nCampo : null) ||
+                                           (!_esGen(nJson)  ? nJson  : null) ||
+                                           EMPRESAS_DEFAULT[k].nombre;
+                            const rut    = (cfgLocal2[k] && cfgLocal2[k].rut) || gd['emp_' + k + '_rut'] || (cfgFbJson[k] && cfgFbJson[k].rut) || '';
                             cfgFinal[k]  = {nombre, rut};
-                            console.log('[EMPRESAS]', k, '=> campo:', nCampo, '| json:', nJson, '| local:', nLocal, '=> FINAL:', nombre);
+                            console.log('[EMPRESAS]', k, '=> local:', nLocal, '| fb:', nCampo, '=> FINAL:', nombre);
                         });
                         localStorage.setItem('empresas_config', JSON.stringify(cfgFinal));
                     } else {
