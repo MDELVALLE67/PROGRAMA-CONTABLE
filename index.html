@@ -2262,43 +2262,48 @@
                 inicializarDatos();
             }
 
-            // Restaurar plan de cuentas guardado — fusiona el plan base con las cuentas del usuario
+            // ── 1. Restaurar plan de cuentas PRIMERO (incluye cuentas personalizadas) ──
+            // El plan base del código es la fuente de verdad para cuentas conocidas.
+            // Las cuentas del usuario (nuevas, no en el plan base) se agregan encima.
             if (planData) {
                 try {
                     const savedPlan = JSON.parse(planData);
-                    // Merge: las cuentas guardadas sobreescriben/agregan al plan base
+                    const planBase  = Object.keys(planCuentas); // códigos del plan hardcodeado
                     Object.entries(savedPlan).forEach(([cod, cuenta]) => {
-                        planCuentas[cod] = cuenta;
+                        if (planBase.includes(cod)) {
+                            // Cuenta conocida: respetar nombre del usuario pero usar tipo del plan base
+                            planCuentas[cod].nombre = cuenta.nombre || planCuentas[cod].nombre;
+                            // NO sobreescribir tipo — el plan base es correcto para cuentas conocidas
+                        } else {
+                            // Cuenta nueva creada por el usuario: agregar completa
+                            planCuentas[cod] = cuenta;
+                        }
                     });
                 } catch(e) { console.warn('Error cargando plan de cuentas:', e); }
             }
 
-            // Restaurar asientos y enriquecer con tipo si falta
+            // ── 2. Restaurar asientos y enriquecer con tipo USANDO el plan ya completo ──
             if (asientosData) {
                 asientos = JSON.parse(asientosData);
-                // Build reverse lookup by name for fallback
-                var planPorNombre = {};
-                var planPorCodigo = {};
-                Object.entries(planCuentas).forEach(function(entry) {
-                    planPorNombre[entry[1].nombre.toLowerCase().trim()] = entry[1];
-                    planPorCodigo[entry[0].trim()] = entry[1];
+                const tipoPrefix = {'1':'Activo','2':'Pasivo','3':'Patrimonio','4':'Ingreso','5':'Gasto'};
+                const planPorNombre = {};
+                const planPorCodigo = {};
+                Object.entries(planCuentas).forEach(([k, v]) => {
+                    planPorNombre[v.nombre.toLowerCase().trim()] = { ...v, cod: k };
+                    planPorCodigo[k.trim()] = v;
                 });
                 asientos.forEach(function(a) {
-                    // Fix codigo if it has whitespace
                     if (a.codigo) a.codigo = String(a.codigo).trim();
-                    var cta = planPorCodigo[a.codigo];
-                    // Fallback: lookup by account name
+                    let cta = planPorCodigo[a.codigo];
                     if (!cta && a.cuenta) cta = planPorNombre[a.cuenta.toLowerCase().trim()];
                     if (cta) {
-                        if (!a.tipo) a.tipo = cta.tipo;
-                        // Fix codigo to match planCuentas key
-                        if (!planPorCodigo[a.codigo]) {
-                            // Find the code for this cuenta
-                            var correctedCod = Object.keys(planCuentas).find(function(k) {
-                                return planCuentas[k].nombre.toLowerCase().trim() === (a.cuenta||'').toLowerCase().trim();
-                            });
-                            if (correctedCod) { a.codigo = correctedCod; }
-                        }
+                        // Siempre sobreescribir tipo desde planCuentas — puede estar desactualizado en el asiento
+                        a.tipo   = cta.tipo;
+                        a.cuenta = cta.nombre;
+                    }
+                    // Último recurso: inferir tipo por primer dígito
+                    if (!a.tipo && a.codigo) {
+                        a.tipo = tipoPrefix[a.codigo.charAt(0)] || '';
                     }
                 });
             }
@@ -6232,18 +6237,21 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
         }
 
         function calcularMayorCompleto(desde='', hasta='') {
-            // Shared helper — ALL accounts, no level filter, from Libro Diario
+            const tipoPrefix = {'1':'Activo','2':'Pasivo','3':'Patrimonio','4':'Ingreso','5':'Gasto'};
             const mayor = {};
             const src = desde||hasta ? asientosFiltrados(desde, hasta) : asientos;
             src.forEach(a => {
                 const cod    = String(a.codigo||'').trim();
-                const cuenta = planCuentas[cod] || planCuentas[a.codigo];
-                const tipo   = (cuenta && cuenta.tipo)   ? cuenta.tipo   : (a.tipo   || '');
-                const nombre = (cuenta && cuenta.nombre)  ? cuenta.nombre : (a.cuenta || cod);
+                // SIEMPRE buscar en planCuentas primero — el tipo del asiento puede estar desactualizado
+                const cuenta = planCuentas[cod] || null;
+                const tipo   = (cuenta?.tipo) || (a.tipo || '') || tipoPrefix[cod.charAt(0)] || '';
+                const nombre = (cuenta?.nombre) || (a.cuenta || cod);
                 if (!tipo) return;
-                if (!mayor[cod]) mayor[cod] = {nombre, tipo, nivel: cuenta?.nivel||0, debe: 0, haber: 0, movs: []};
-                mayor[cod].debe  += (a.debe  || 0);
-                mayor[cod].haber += (a.haber || 0);
+                if (!mayor[cod]) mayor[cod] = {nombre, tipo, nivel: cuenta?.nivel||0, debe:0, haber:0, movs:[]};
+                // Si el mayor ya existe pero tenía tipo inferido y ahora encontramos planCuentas, corregir
+                if (cuenta?.tipo && mayor[cod].tipo !== cuenta.tipo) mayor[cod].tipo = cuenta.tipo;
+                mayor[cod].debe  += (parseFloat(a.debe)  || 0);
+                mayor[cod].haber += (parseFloat(a.haber) || 0);
                 mayor[cod].movs.push(a);
             });
             return mayor;
@@ -9128,7 +9136,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             });
 
             // ── 2. BALANCE COMPLETO ──────────────────────────────
-            const mayor = calcularMayorCompleto ? calcularMayorCompleto() : {};
+            const mayor = calcularMayorCompleto ? calcularMayorCompleto(desde, hasta) : {};
             let activo=0, pasivo=0, patrimonio=0, ingresos=0, gastos=0;
             const activoItems=[], pasivoItems=[], patItems=[], ingItems=[], gasItems=[];
 
