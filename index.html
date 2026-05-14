@@ -607,6 +607,11 @@
                         <span>Exportar</span>
                         <div class="nav-indicator"></div>
                     </button>
+                    <button onclick="changeTab('informe')" class="nav-item" id="tab-informe">
+                        <span>📊</span>
+                        <span>Informe</span>
+                        <div class="nav-indicator"></div>
+                    </button>
                     
                 </div>
             </div>
@@ -1428,38 +1433,7 @@
                 </div>
             </div>
 
-            <div id="content-auditoria" class="tab-content hidden">
-                <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4">
-                    <div class="section-header" style="background:linear-gradient(135deg,#1e3a5f,#7c3aed)">
-                        <span class="text-xl">🔍</span>
-                        <span>Informe de Auditoría</span>
-                        <div class="ml-auto flex gap-2">
-                            <button onclick="generarAuditoria()" class="btn-download" style="background:linear-gradient(135deg,#7c3aed,#a855f7)">🔄 Generar Análisis</button>
-                            <button onclick="imprimirAuditoria()" class="btn-download">🖨️ Imprimir</button>
-                        </div>
-                    </div>
-                    <div class="p-4 bg-purple-50 border-b border-purple-100 flex flex-wrap gap-4 items-center">
-                        <div>
-                            <label class="text-xs font-semibold text-gray-500 uppercase block mb-1">Período</label>
-                            <div class="flex gap-2 items-center">
-                                <input type="date" id="aud-desde" class="form-input py-1.5 text-sm">
-                                <span class="text-gray-400 text-sm">al</span>
-                                <input type="date" id="aud-hasta" class="form-input py-1.5 text-sm">
-                            </div>
-                        </div>
-                        <button onclick="generarAuditoria()" class="ml-auto btn-primary text-sm px-5 py-2">🔍 Analizar</button>
-                    </div>
-                </div>
-                <!-- KPIs auditoría -->
-                <div id="aud-kpis" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4"></div>
-                <!-- Contenido auditoría -->
-                <div id="aud-contenido">
-                    <div class="bg-white rounded-2xl p-12 text-center text-gray-400">
-                        <div class="text-5xl mb-3">🔍</div>
-                        <div class="font-medium">Haz clic en "Analizar" para generar el informe de auditoría</div>
-                    </div>
-                </div>
-            </div>
+            
 
             <!-- CONCILIACIÓN BANCARIA TAB -->
             <div id="content-conciliacion" class="tab-content hidden">
@@ -1830,43 +1804,108 @@
                 </div>
             <
 
+            <!-- INFORME PERÍODO -->
+            
+
             <!-- AUDITORÍA -->
-            <div id="content-auditoria" class="tab-content hidden">
-                <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4">
-                    <div class="section-header" style="background:linear-gradient(135deg,#1e3a5f,#4f46e5)">
-                        <span class="text-xl">🔍</span>
-                        <span>Informe de Auditoría Contable</span>
+            /div>
+
+        </div>
+
+<div id="content-informe" class="tab-content hidden">
+
+                <!-- Filtros -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
+                    <div class="section-header" style="background:linear-gradient(135deg,#1e3a5f,#0f766e)">
+                        <span class="text-xl">📊</span>
+                        <span class="font-bold text-lg">Informe por Período</span>
                         <div class="ml-auto flex gap-2">
-                            <button onclick="ejecutarAuditoria()" class="btn-download" style="background:linear-gradient(135deg,#4f46e5,#7c3aed)">🔄 Ejecutar Análisis</button>
-                            <button onclick="imprimirAuditoria()" class="btn-download" style="background:linear-gradient(135deg,#991b1b,#dc2626)">🖨️ Imprimir PDF</button>
+                            <button onclick="exportarInformePDF()" class="btn-download" style="background:linear-gradient(135deg,#991b1b,#dc2626)">📄 PDF</button>
+                            <button onclick="exportarInformeExcel()" class="btn-download" style="background:linear-gradient(135deg,#065f46,#047857)">📊 Excel</button>
                         </div>
-                    <div class="p-4 bg-indigo-50 border-b border-indigo-100">
-                        <button onclick="exportarTodoExcel()" class="btn-download flex items-center gap-2" style="background:linear-gradient(135deg,#1d4ed8,#4f46e5)">📊 Exportar TODO a Excel (5 hojas)</button>
-                        <p class="text-xs text-gray-500 mt-2">Genera un archivo Excel con: Libro Diario, Libro Mayor, Estado de Cuenta, Presupuesto y Antigüedad de Deuda.</p>
                     </div>
-                    </div>
-                    <div class="p-4 bg-indigo-50 border-b border-indigo-100 flex flex-wrap gap-4 items-center">
+                    <div class="p-4 bg-slate-50 border-b flex flex-wrap gap-4 items-end">
                         <div>
                             <label class="text-xs font-semibold text-gray-500 uppercase block mb-1">Desde</label>
-                            <input type="date" id="aud-desde" class="form-input py-1.5 text-sm">
+                            <input type="date" id="inf-desde" onchange="ejecutarInforme()" class="form-input py-1.5 text-sm">
                         </div>
                         <div>
                             <label class="text-xs font-semibold text-gray-500 uppercase block mb-1">Hasta</label>
-                            <input type="date" id="aud-hasta" class="form-input py-1.5 text-sm">
+                            <input type="date" id="inf-hasta" onchange="ejecutarInforme()" class="form-input py-1.5 text-sm">
                         </div>
-                        <div class="ml-auto flex gap-3 flex-wrap" id="aud-kpis"></div>
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase block mb-1">Centro de Costo</label>
+                            <select id="inf-cc" onchange="ejecutarInforme()" class="form-input py-1.5 text-sm min-w-[180px]">
+                                <option value="">Todos los centros</option>
+                            </select>
+                        </div>
+                        <button onclick="ejecutarInforme()" class="btn-primary py-1.5 text-sm">🔄 Generar</button>
                     </div>
                 </div>
-                <div id="auditoria-contenido">
-                    <div class="bg-white rounded-2xl p-12 text-center text-gray-400">
-                        <div class="text-5xl mb-3">🔍</div>
-                        <div class="text-lg font-medium mb-2">Análisis de Auditoría</div>
-                        <div class="text-sm">Haz clic en <strong>Ejecutar Análisis</strong> para generar el informe</div>
-                    </div>
-                </div>
-            </div>/div>
 
-        </div>
+                <!-- KPIs resumen -->
+                <div id="inf-kpis" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6"></div>
+
+                <!-- Estado de Resultados -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
+                    <div class="px-6 py-3 font-bold text-white flex items-center gap-2" style="background:linear-gradient(135deg,#7c3aed,#4f46e5)">
+                        <span>📈</span> Estado de Resultados
+                    </div>
+                    <div id="inf-resultado-content" class="p-4"></div>
+                </div>
+
+                <!-- Detalle mensual Estado Resultados -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
+                    <div class="px-6 py-3 font-bold text-white flex items-center gap-2" style="background:linear-gradient(135deg,#0891b2,#0e7490)">
+                        <span>📅</span> Detalle Mensual — Estado de Resultados
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table w-full" id="inf-mensual-table">
+                            <thead id="inf-mensual-head"></thead>
+                            <tbody id="inf-mensual-body"></tbody>
+                            <tfoot id="inf-mensual-foot"></tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Balance General -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
+                    <div class="px-6 py-3 font-bold text-white flex items-center gap-2" style="background:linear-gradient(135deg,#047857,#065f46)">
+                        <span>⚖️</span> Balance General
+                    </div>
+                    <div id="inf-balance-content" class="p-4"></div>
+                </div>
+
+                <!-- Centros de Costo -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
+                    <div class="px-6 py-3 font-bold text-white flex items-center gap-2" style="background:linear-gradient(135deg,#b45309,#92400e)">
+                        <span>🏷️</span> Resumen por Centro de Costo
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="data-table w-full">
+                            <thead>
+                                <tr>
+                                    <th>Centro de Costo</th>
+                                    <th class="text-right">Ingresos</th>
+                                    <th class="text-right">Gastos</th>
+                                    <th class="text-right">Resultado</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inf-cc-body"></tbody>
+                            <tfoot id="inf-cc-foot"></tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Auditoría rápida -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
+                    <div class="px-6 py-3 font-bold text-white flex items-center gap-2" style="background:linear-gradient(135deg,#4f46e5,#7c3aed)">
+                        <span>🔍</span> Auditoría del Período
+                    </div>
+                    <div id="inf-auditoria-content" class="p-4"></div>
+                </div>
+
+            </div>
     </div>
 
     <script>
@@ -9872,6 +9911,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             if (tabName === 'rptcc')       iniciarRptCC();
             if (tabName === 'edclub')     iniciarEstadoCuenta();
             if (tabName === 'auditoria')  { iniciarFechasAuditoria(); ejecutarAuditoria(); }
+            if (tabName === 'informe')    iniciarInforme();
             if (tabName === 'auditoria') iniciarAuditoria();
             if (tabName === 'auditoria') iniciarAuditoria();
         }
@@ -9889,6 +9929,330 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             calcularReportes();
             actualizarTop5Deudores();
             renderGraficoIngresosGastos();
+        }
+
+        // ═══════════════════════════════════════════════════════════
+        //  MÓDULO: INFORME POR PERÍODO
+        // ═══════════════════════════════════════════════════════════
+
+        function iniciarInforme() {
+            try {
+            const hoy  = new Date();
+            const ini  = new Date(hoy.getFullYear(), 0, 1);
+            const toS  = d => d.toISOString().split('T')[0];
+            document.getElementById('inf-desde').value = toS(ini);
+            document.getElementById('inf-hasta').value = toS(hoy);
+            const sel = document.getElementById('inf-cc');
+            sel.innerHTML = '<option value="">Todos los centros</option>';
+            try {
+                Object.entries(centrosCosto || {})
+                    .sort((a,b) => (a[1].nombre||'').localeCompare(b[1].nombre||''))
+                    .forEach(([k,v]) => {
+                        const o = document.createElement('option');
+                        o.value = k; o.textContent = v.nombre || k;
+                        sel.appendChild(o);
+                    });
+            } catch(e) {}
+            ejecutarInforme();
+            } catch(err) {
+                console.error('iniciarInforme error:', err);
+                document.getElementById('inf-kpis').innerHTML =
+                    '<div class="col-span-4 bg-red-100 border border-red-300 rounded-xl p-4 text-red-800 font-mono text-sm">ERROR: ' + err.message + '</div>';
+            }
+        }
+
+        function fmtI(n) { return '$' + Math.round(Math.abs(n)).toLocaleString('es-CL'); }
+        function fmtIS(n) { return (n<0?'-':'') + fmtI(n); }
+
+        function ejecutarInforme() {
+            var desde  = document.getElementById('inf-desde').value;
+            var hasta  = document.getElementById('inf-hasta').value;
+            var ccFilt = document.getElementById('inf-cc').value;
+            var fmt = function(n) { return '$' + Math.round(Math.abs(n)).toLocaleString('es-CL'); };
+
+            // Filtrar asientos igual que calcularReportes pero con fechas — LOGICA IDENTICA
+            var mayor = {};
+            asientos.forEach(function(a) {
+                if (desde && (a.fecha||'') < desde) return;
+                if (hasta && (a.fecha||'') > hasta) return;
+                if (ccFilt && a.cc !== ccFilt) return;
+                var cuenta = planCuentas[a.codigo];
+                var tipo   = (cuenta && cuenta.tipo)   ? cuenta.tipo   : (a.tipo   || '');
+                var nombre = (cuenta && cuenta.nombre) ? cuenta.nombre : (a.cuenta || a.codigo);
+                if (!tipo) return;
+                if (!mayor[a.codigo]) mayor[a.codigo] = {nombre:nombre, tipo:tipo, debe:0, haber:0};
+                mayor[a.codigo].debe  += a.debe  || 0;
+                mayor[a.codigo].haber += a.haber || 0;
+            });
+
+            var activos=0, pasivos=0, patrimonio=0, ingresos=0, gastos=0;
+            var detActivos=[], detPasivos=[], detPatrimonio=[], detIngresos=[], detGastos=[];
+            var nMovs = 0;
+
+            Object.entries(mayor).sort(function(a,b){return a[0].localeCompare(b[0]);}).forEach(function(entry) {
+                var cod=entry[0], d=entry[1];
+                if (d.tipo==='Activo')     { var s=d.debe-d.haber;  activos    +=s; if(Math.round(s)!==0) detActivos.push({cod:cod,nombre:d.nombre,monto:s}); }
+                if (d.tipo==='Pasivo')     { var s=d.haber-d.debe;  pasivos    +=s; if(Math.round(s)!==0) detPasivos.push({cod:cod,nombre:d.nombre,monto:s}); }
+                if (d.tipo==='Patrimonio') { var s=d.haber-d.debe;  patrimonio +=s; if(Math.round(s)!==0) detPatrimonio.push({cod:cod,nombre:d.nombre,monto:s}); }
+                if (d.tipo==='Ingreso')    { var s=d.haber-d.debe;  ingresos   +=s; if(Math.round(s)!==0) detIngresos.push({cod:cod,nombre:d.nombre,monto:s}); }
+                if (d.tipo==='Gasto')      { var s=d.debe-d.haber;  gastos     +=s; if(Math.round(s)!==0) detGastos.push({cod:cod,nombre:d.nombre,monto:s}); }
+                nMovs += (d.debe>0||d.haber>0) ? 1 : 0;
+            });
+
+            var resultado = ingresos - gastos;
+
+            // ── KPIs ──────────────────────────────────────────────
+            document.getElementById('inf-kpis').innerHTML =
+                '<div class="bg-white rounded-2xl shadow-md p-5 border-l-4 border-purple-500">' +
+                '<div class="text-xs font-semibold text-gray-400 uppercase mb-1">Total Ingresos</div>' +
+                '<div class="text-xl font-bold text-purple-700">' + fmt(ingresos) + '</div></div>' +
+                '<div class="bg-white rounded-2xl shadow-md p-5 border-l-4 border-orange-500">' +
+                '<div class="text-xs font-semibold text-gray-400 uppercase mb-1">Total Gastos</div>' +
+                '<div class="text-xl font-bold text-orange-700">' + fmt(gastos) + '</div></div>' +
+                '<div class="bg-white rounded-2xl shadow-md p-5 border-l-4 ' + (resultado>=0?'border-green-500':'border-red-500') + '">' +
+                '<div class="text-xs font-semibold text-gray-400 uppercase mb-1">' + (resultado>=0?'Super\u00e1vit':'D\u00e9ficit') + '</div>' +
+                '<div class="text-xl font-bold ' + (resultado>=0?'text-green-700':'text-red-600') + '">' + fmt(resultado) + '</div></div>' +
+                '<div class="bg-white rounded-2xl shadow-md p-5 border-l-4 border-blue-500">' +
+                '<div class="text-xs font-semibold text-gray-400 uppercase mb-1">Cuentas con movimiento</div>' +
+                '<div class="text-xl font-bold text-blue-700">' + nMovs + '</div></div>';
+
+            // ── FILAS helper ──────────────────────────────────────
+            function mkRows(arr, color) {
+                if (!arr.length) return '<div class="text-xs text-gray-400 px-3 py-2">Sin movimientos</div>';
+                return arr.map(function(r) {
+                    return '<div class="flex justify-between items-center py-1.5 px-3 text-sm border-b border-gray-50">' +
+                        '<span class="text-gray-500 font-mono text-xs mr-2">' + r.cod + '</span>' +
+                        '<span class="flex-1 text-gray-700">' + r.nombre + '</span>' +
+                        '<span class="font-mono font-semibold ' + color + '">' + fmt(r.monto) + '</span></div>';
+                }).join('');
+            }
+
+            // ── ESTADO DE RESULTADOS ──────────────────────────────
+            document.getElementById('inf-resultado-content').innerHTML =
+                '<div class="grid grid-cols-1 md:grid-cols-2 gap-6">' +
+                '<div><div class="text-xs font-bold text-gray-500 uppercase tracking-wider px-3 py-2 bg-purple-50 rounded-t-lg">INGRESOS</div>' +
+                mkRows(detIngresos, 'text-green-700') +
+                '<div class="flex justify-between items-center p-3 bg-purple-100 rounded-b-lg font-bold">' +
+                '<span>Total Ingresos</span><span class="font-mono text-purple-800">' + fmt(ingresos) + '</span></div></div>' +
+                '<div><div class="text-xs font-bold text-gray-500 uppercase tracking-wider px-3 py-2 bg-orange-50 rounded-t-lg">GASTOS</div>' +
+                mkRows(detGastos, 'text-red-700') +
+                '<div class="flex justify-between items-center p-3 bg-orange-100 rounded-b-lg font-bold">' +
+                '<span>Total Gastos</span><span class="font-mono text-orange-800">' + fmt(gastos) + '</span></div></div></div>' +
+                '<div class="mt-4 p-4 rounded-xl text-center font-bold text-lg ' + (resultado>=0?'bg-green-50 text-green-700 border border-green-300':'bg-red-50 text-red-700 border border-red-300') + '">' +
+                (resultado>=0?'\u2705 SUPER\u00c1VIT: ':'\u274c D\u00c9FICIT: ') + fmt(resultado) + '</div>';
+
+            // ── BALANCE GENERAL ───────────────────────────────────
+            var totalPasPat = pasivos + patrimonio + resultado;
+            var dif = activos - totalPasPat;
+            var cuadra = Math.abs(dif) < 1;
+            document.getElementById('inf-balance-content').innerHTML =
+                '<div class="grid grid-cols-1 md:grid-cols-3 gap-4">' +
+                '<div><div class="text-xs font-bold text-gray-500 uppercase tracking-wider px-3 py-2 bg-green-50 rounded-t-lg">ACTIVO</div>' +
+                mkRows(detActivos, 'text-green-700') +
+                '<div class="flex justify-between items-center p-3 bg-green-100 rounded-b-lg font-bold"><span>Total Activo</span><span class="font-mono text-green-800">' + fmt(activos) + '</span></div></div>' +
+                '<div><div class="text-xs font-bold text-gray-500 uppercase tracking-wider px-3 py-2 bg-red-50 rounded-t-lg">PASIVO</div>' +
+                mkRows(detPasivos, 'text-red-700') +
+                '<div class="flex justify-between items-center p-3 bg-red-100 rounded-b-lg font-bold"><span>Total Pasivo</span><span class="font-mono text-red-800">' + fmt(pasivos) + '</span></div></div>' +
+                '<div><div class="text-xs font-bold text-gray-500 uppercase tracking-wider px-3 py-2 bg-blue-50 rounded-t-lg">PATRIMONIO</div>' +
+                mkRows(detPatrimonio, 'text-blue-700') +
+                '<div class="flex justify-between items-center py-1.5 px-3 text-sm border-b border-gray-50">' +
+                '<span class="text-gray-500 text-xs mr-2">—</span><span class="flex-1 text-gray-700">Resultado del Per\u00edodo</span>' +
+                '<span class="font-mono font-semibold ' + (resultado>=0?'text-blue-700':'text-red-700') + '">' + fmt(resultado) + '</span></div>' +
+                '<div class="flex justify-between items-center p-3 bg-blue-100 rounded-b-lg font-bold"><span>Total Patrimonio + Resultado</span><span class="font-mono text-blue-800">' + fmt(patrimonio+resultado) + '</span></div></div></div>' +
+                '<div class="mt-3 flex justify-between items-center p-3 rounded-lg font-bold ' + (cuadra?'bg-green-50 text-green-800':'bg-red-50 text-red-800') + '">' +
+                '<span>' + (cuadra?'\u2705 Balance cuadra':'\u26a0\ufe0f Diferencia ') + '</span>' +
+                '<span class="font-mono">' + (cuadra?'':fmt(dif)) + '</span></div>';
+
+            // ── DETALLE MENSUAL ───────────────────────────────────
+            renderInformeMensual(desde, hasta, ccFilt);
+
+            // ── CENTROS DE COSTO ──────────────────────────────────
+            renderInformeCC(desde, hasta);
+
+            // ── AUDITORIA RAPIDA ──────────────────────────────────
+            renderInformeAuditoria(desde, hasta, ccFilt, resultado, ingresos, gastos);
+        }
+        function renderInformeMensual(desde, hasta, ccFilt) {
+            var fmt = function(n){return '$'+Math.round(Math.abs(n)).toLocaleString('es-CL');};
+            var fmtS= function(n){return (n<0?'-':'')+fmt(n);};
+            var meses = {};
+            asientos.forEach(function(a) {
+                if (desde && (a.fecha||'') < desde) return;
+                if (hasta && (a.fecha||'') > hasta) return;
+                if (ccFilt && a.cc !== ccFilt) return;
+                var mes = (a.fecha||'0000-00').substring(0,7);
+                var cuenta = planCuentas[a.codigo];
+                var tipo = (cuenta&&cuenta.tipo)?cuenta.tipo:(a.tipo||'');
+                if (!meses[mes]) meses[mes] = {ing:0,gas:0};
+                if (tipo==='Ingreso') meses[mes].ing += (a.haber||0)-(a.debe||0);
+                if (tipo==='Gasto')   meses[mes].gas += (a.debe||0)-(a.haber||0);
+            });
+            var keys = Object.keys(meses).sort();
+            var mesNom = function(m){var d=new Date(m+'-01T12:00:00');return d.toLocaleString('es-CL',{month:'long',year:'numeric'});};
+            var totIng=0,totGas=0,totRes=0;
+            var rows = keys.map(function(m){
+                var d=meses[m]; var res=d.ing-d.gas;
+                totIng+=d.ing; totGas+=d.gas; totRes+=res;
+                return '<tr class="border-b hover:bg-gray-50">' +
+                    '<td class="px-4 py-2.5 font-medium capitalize">'+mesNom(m)+'</td>' +
+                    '<td class="px-4 py-2.5 text-right font-mono text-green-700">'+fmt(d.ing)+'</td>' +
+                    '<td class="px-4 py-2.5 text-right font-mono text-orange-700">'+fmt(d.gas)+'</td>' +
+                    '<td class="px-4 py-2.5 text-right font-mono font-bold '+(res>=0?'text-blue-700':'text-red-600')+'">'+fmtS(res)+'</td></tr>';
+            }).join('');
+            document.getElementById('inf-mensual-head').innerHTML =
+                '<tr class="bg-gray-50 text-xs uppercase text-gray-500 border-b-2">'+
+                '<th class="px-4 py-2.5 text-left">Mes</th>'+
+                '<th class="px-4 py-2.5 text-right">Ingresos</th>'+
+                '<th class="px-4 py-2.5 text-right">Gastos</th>'+
+                '<th class="px-4 py-2.5 text-right">Resultado</th></tr>';
+            document.getElementById('inf-mensual-body').innerHTML = rows||'<tr><td colspan="4" class="text-center text-gray-400 py-6">Sin datos</td></tr>';
+            document.getElementById('inf-mensual-foot').innerHTML =
+                '<tr class="bg-slate-700 text-white font-bold">'+
+                '<td class="px-4 py-2.5">TOTAL PER\u00cdODO</td>'+
+                '<td class="px-4 py-2.5 text-right font-mono">'+fmt(totIng)+'</td>'+
+                '<td class="px-4 py-2.5 text-right font-mono">'+fmt(totGas)+'</td>'+
+                '<td class="px-4 py-2.5 text-right font-mono '+(totRes>=0?'text-green-300':'text-red-300')+'">'+fmtS(totRes)+'</td></tr>';
+        }
+
+        function renderInformeCC(desde, hasta) {
+            var fmt = function(n){return '$'+Math.round(Math.abs(n)).toLocaleString('es-CL');};
+            var fmtS= function(n){return (n<0?'-':'')+fmt(n);};
+            var ccs = {};
+            asientos.forEach(function(a) {
+                if (desde && (a.fecha||'') < desde) return;
+                if (hasta && (a.fecha||'') > hasta) return;
+                var cc = a.cc || 'SIN CC';
+                var ccNom = (centrosCosto[cc]&&centrosCosto[cc].nombre) ? centrosCosto[cc].nombre : cc;
+                var cuenta = planCuentas[a.codigo];
+                var tipo = (cuenta&&cuenta.tipo)?cuenta.tipo:(a.tipo||'');
+                if (!ccs[cc]) ccs[cc]={nom:ccNom,ing:0,gas:0};
+                if (tipo==='Ingreso') ccs[cc].ing += (a.haber||0)-(a.debe||0);
+                if (tipo==='Gasto')   ccs[cc].gas += (a.debe||0)-(a.haber||0);
+            });
+            var tIng=0,tGas=0;
+            var rows = Object.entries(ccs).sort(function(a,b){return a[1].nom.localeCompare(b[1].nom);}).map(function(entry){
+                var d=entry[1]; var res=d.ing-d.gas; tIng+=d.ing; tGas+=d.gas;
+                return '<tr class="border-b hover:bg-gray-50">'+
+                    '<td class="px-4 py-2.5 font-medium">'+d.nom+'</td>'+
+                    '<td class="px-4 py-2.5 text-right font-mono text-green-700">'+fmt(d.ing)+'</td>'+
+                    '<td class="px-4 py-2.5 text-right font-mono text-orange-700">'+fmt(d.gas)+'</td>'+
+                    '<td class="px-4 py-2.5 text-right font-mono font-bold '+(res>=0?'text-blue-700':'text-red-600')+'">'+fmtS(res)+'</td></tr>';
+            }).join('');
+            document.getElementById('inf-cc-body').innerHTML = rows||'<tr><td colspan="4" class="text-center text-gray-400 py-6">Sin centros de costo</td></tr>';
+            document.getElementById('inf-cc-foot').innerHTML =
+                '<tr class="bg-amber-700 text-white font-bold">'+
+                '<td class="px-4 py-2.5">TOTAL</td>'+
+                '<td class="px-4 py-2.5 text-right font-mono">'+fmt(tIng)+'</td>'+
+                '<td class="px-4 py-2.5 text-right font-mono">'+fmt(tGas)+'</td>'+
+                '<td class="px-4 py-2.5 text-right font-mono '+(tIng-tGas>=0?'text-green-200':'text-red-200')+'">'+fmtS(tIng-tGas)+'</td></tr>';
+        }
+
+        function renderInformeAuditoria(desde, hasta, ccFilt, resultado, totalIng, totalGas) {
+            var fmt = function(n){return '$'+Math.round(Math.abs(n)).toLocaleString('es-CL');};
+            var src = asientos.filter(function(a){
+                if (desde && (a.fecha||'') < desde) return false;
+                if (hasta && (a.fecha||'') > hasta) return false;
+                if (ccFilt && a.cc !== ccFilt) return false;
+                return true;
+            });
+            var voucherMap = {};
+            src.forEach(function(a){
+                var k=String(a.voucher||'');
+                if(!voucherMap[k]) voucherMap[k]=[];
+                voucherMap[k].push(a);
+            });
+            var descuadrados = Object.entries(voucherMap).filter(function(entry){
+                var lines=entry[1];
+                var d=lines.reduce(function(s,l){return s+(parseFloat(l.debe)||0);},0);
+                var h=lines.reduce(function(s,l){return s+(parseFloat(l.haber)||0);},0);
+                return Math.abs(d-h)>1;
+            });
+            function semaforo(ok, txt) {
+                return '<div class="flex items-center gap-2 py-1"><span class="text-lg">'+(ok?'\u2705':'\u274c')+'</span>'+
+                    '<span class="text-sm">'+(ok?'':'<strong>')+txt+(ok?'':'</strong>')+'</span></div>';
+            }
+            document.getElementById('inf-auditoria-content').innerHTML =
+                '<div class="grid grid-cols-1 md:grid-cols-2 gap-6">'+
+                '<div class="space-y-1">'+
+                '<div class="font-semibold text-gray-600 mb-2 text-sm uppercase">Hallazgos</div>'+
+                semaforo(descuadrados.length===0, descuadrados.length===0?'Sin asientos descuadrados':descuadrados.length+' asientos descuadrados')+
+                semaforo(src.length>0, src.length>0?src.length+' movimientos en el per\u00edodo':'Sin movimientos')+
+                '</div>'+
+                '<div class="space-y-1">'+
+                '<div class="font-semibold text-gray-600 mb-2 text-sm uppercase">Resultado</div>'+
+                '<div class="p-3 rounded-xl '+(resultado>=0?'bg-green-50 border border-green-200':'bg-red-50 border border-red-200')+'">'+
+                '<div class="text-xs text-gray-500">Ingresos: '+fmt(totalIng)+'</div>'+
+                '<div class="text-xs text-gray-500">Gastos: '+fmt(totalGas)+'</div>'+
+                '<div class="font-bold text-lg '+(resultado>=0?'text-green-700':'text-red-600')+' mt-1">'+(resultado>=0?'Super\u00e1vit':'D\u00e9ficit')+': '+fmt(resultado)+'</div>'+
+                '</div></div></div>';
+        }
+        function exportarInformePDF() {
+            if (!window.jspdf) { showToast('PDF no disponible','error'); return; }
+            const { jsPDF } = window.jspdf;
+            const desde = document.getElementById('inf-desde').value;
+            const hasta = document.getElementById('inf-hasta').value;
+            const emp = getEmpresasConfig ? (getEmpresasConfig()[sesionActual?.empresa]?.nombre || sesionActual?.empresa || '') : '';
+            const doc = new jsPDF('p','mm','a4');
+            doc.setFontSize(14); doc.setFont(undefined,'bold');
+            doc.text('Informe por Período — '+emp, 14, 16);
+            doc.setFontSize(9); doc.setFont(undefined,'normal');
+            doc.text('Período: '+(desde||'inicio')+' al '+(hasta||'hoy'), 14, 23);
+            let y = 30;
+            ['inf-resultado-content','inf-balance-content','inf-auditoria-content'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el && typeof doc.autoTable === 'function') {
+                    const tbls = el.querySelectorAll('table');
+                    tbls.forEach(tbl => {
+                        doc.autoTable({ html: tbl, startY: y, styles:{fontSize:7},
+                            headStyles:{fillColor:[30,58,95],textColor:255} });
+                        y = doc.lastAutoTable.finalY + 6;
+                    });
+                }
+            });
+            doc.save('informe_periodo_'+desde+'_'+hasta+'.pdf');
+        }
+
+        function exportarInformeExcel() {
+            if (typeof XLSX === 'undefined') { showToast('Excel no disponible','error'); return; }
+            const desde = document.getElementById('inf-desde').value;
+            const hasta = document.getElementById('inf-hasta').value;
+            const ccFilt = document.getElementById('inf-cc').value;
+            const src = asientos.filter(a => {
+                if (desde && (a.fecha||'') < desde) return false;
+                if (hasta && (a.fecha||'') > hasta) return false;
+                if (ccFilt && a.cc !== ccFilt) return false;
+                return true;
+            });
+            const tipoPrefix = {'1':'Activo','2':'Pasivo','3':'Patrimonio','4':'Ingreso','5':'Gasto'};
+
+            // Hoja 1: Detalle
+            const detRows = [['Fecha','Voucher','Código','Cuenta','Tipo','CC','Debe','Haber','Glosa']];
+            src.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).forEach(a => {
+                const cod=String(a.codigo||'').trim();
+                const cta=planCuentas[cod];
+                detRows.push([a.fecha,a.voucher,cod,cta?.nombre||a.cuenta||'',cta?.tipo||a.tipo||tipoPrefix[cod.charAt(0)]||'',
+                    centrosCosto[a.cc]?.nombre||a.cc||'',a.debe||0,a.haber||0,a.glosa||'']);
+            });
+
+            // Hoja 2: Mensual
+            const mesMap = {};
+            src.forEach(a => {
+                const mes=(a.fecha||'0000-00').substring(0,7);
+                const cod=String(a.codigo||'').trim();
+                const tipo=planCuentas[cod]?.tipo||a.tipo||tipoPrefix[cod.charAt(0)]||'';
+                if (!mesMap[mes]) mesMap[mes]={ing:0,gas:0};
+                if (tipo==='Ingreso') mesMap[mes].ing += parseFloat(a.haber)||0;
+                if (tipo==='Gasto')   mesMap[mes].gas += parseFloat(a.debe)||0;
+            });
+            const mesRows = [['Mes','Ingresos','Gastos','Resultado']];
+            Object.keys(mesMap).sort().forEach(m => {
+                const d=mesMap[m]; mesRows.push([m, d.ing, d.gas, d.ing-d.gas]);
+            });
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(detRows), 'Detalle');
+            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(mesRows), 'Resumen Mensual');
+            XLSX.writeFile(wb, 'informe_periodo_'+desde+'_'+hasta+'.xlsx');
         }
 
         // Inicializar fecha al cargar
