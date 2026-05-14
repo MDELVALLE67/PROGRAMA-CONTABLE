@@ -1386,20 +1386,20 @@
                     <button onclick="edclubTab('cartola')" id="btn-tab-cartola" class="px-5 py-2.5 rounded-xl font-semibold text-sm bg-white text-gray-600 border border-gray-200">📄 Cartola por Club</button>
                     <button onclick="edclubTab('antiguedad')" id="btn-tab-antiguedad" class="px-5 py-2.5 rounded-xl font-semibold text-sm bg-white text-gray-600 border border-gray-200">📅 Antigüedad de Deuda</button>
                 </div>
-                <div id="panel-estado"><div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4"><div class="section-header" style="background:linear-gradient(135deg,#1e3a5f,#2563eb)"><span class="text-xl">📋</span><span id="edclub-panel-titulo">Estado de Cuenta por Club</span><div class="ml-auto flex gap-2"><button onclick="abrirFiltroFecha('Estado de Cuenta','🖨️',(d,h)=>imprimirEstadoCuenta(d,h))" class="btn-download">🖨️ Imprimir</button><button onclick="abrirFiltroFecha('Estado de Cuenta','📄',(d,h)=>pdfEstadoCuenta(d,h))" class="btn-download" style="background:linear-gradient(135deg,#991b1b,#dc2626)">📄 PDF</button><button onclick="abrirFiltroFecha('Todos','📄',(d,h)=>pdfTodosClubs(d,h))" class="btn-download" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c)">📄 PDF TODOS</button></div></div><div class="p-4 bg-blue-50 border-b border-blue-100 flex flex-wrap gap-4 items-center"><div><label class="text-xs font-semibold text-gray-500 uppercase block mb-1" id="edclub-filtro-label">Club</label><select id="edclub-filtro" onchange="renderEstadoCuenta()" class="form-input py-1.5 text-sm"><option value="">Todos</option></select></div><div class="ml-auto flex gap-3 text-sm text-blue-700 font-medium" id="edclub-resumen-kpis"></div></div></div><div id="edclub-contenido"></div></div>
-                <div id="panel-deuda" class="hidden"><div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4"><div class="section-header" style="background:linear-gradient(135deg,#7c2d12,#dc2626)"><span class="text-xl">📊</span><span id="edclub-deuda-titulo">Resumen Deuda y Saldos a Favor</span><div class="ml-auto"><button onclick="imprimirResumenDeuda()" class="btn-download">🖨️ Imprimir</button></div></div><div id="resumen-deuda-kpis" class="p-4 bg-red-50 border-b border-red-100 flex flex-wrap gap-4"></div></div><div id="resumen-deuda-contenido"></div></div>
+                <div id="panel-estado"><div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4"><div class="section-header" style="background:linear-gradient(135deg,#1e3a5f,#2563eb)"><span class="text-xl">📋</span><span id="edclub-panel-titulo">Estado de Cuenta por Club</span><div class="ml-auto flex gap-2"><button onclick="abrirFiltroFecha('Estado de Cuenta','🖨️',(d,h)=>imprimirEstadoCuenta(d,h))" class="btn-download">🖨️ Imprimir</button><button onclick="abrirFiltroFecha('Estado de Cuenta','📊',(d,h)=>excelEstadoCuenta(d,h))" class="btn-download" style="background:linear-gradient(135deg,#166534,#15803d)">📊 Excel</button><button onclick="abrirFiltroFecha('Estado de Cuenta','📄',(d,h)=>pdfEstadoCuenta(d,h))" class="btn-download" style="background:linear-gradient(135deg,#991b1b,#dc2626)">📄 PDF</button><button onclick="abrirFiltroFecha('Todos','📄',(d,h)=>pdfTodosClubs(d,h))" class="btn-download" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c)">📄 PDF TODOS</button></div></div><div class="p-4 bg-blue-50 border-b border-blue-100 flex flex-wrap gap-4 items-center"><div><label class="text-xs font-semibold text-gray-500 uppercase block mb-1" id="edclub-filtro-label">Club</label><select id="edclub-filtro" onchange="renderEstadoCuenta()" class="form-input py-1.5 text-sm"><option value="">Todos</option></select></div><div class="ml-auto flex gap-3 text-sm text-blue-700 font-medium" id="edclub-resumen-kpis"></div></div></div><div id="edclub-contenido"></div></div>
+                <div id="panel-deuda" class="hidden"><div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4"><div class="section-header" style="background:linear-gradient(135deg,#7c2d12,#dc2626)"><span class="text-xl">📊</span><span id="edclub-deuda-titulo">Resumen Deuda y Saldos a Favor</span><div class="ml-auto flex gap-2"><button onclick="imprimirResumenDeuda()" class="btn-download">🖨️ Imprimir</button><button onclick="excelResumenDeuda()" class="btn-download" style="background:linear-gradient(135deg,#166534,#15803d)">📊 Excel</button><button onclick="pdfResumenDeuda()" class="btn-download" style="background:linear-gradient(135deg,#991b1b,#dc2626)">📄 PDF</button></div></div><div id="resumen-deuda-kpis" class="p-4 bg-red-50 border-b border-red-100 flex flex-wrap gap-4"></div></div><div id="resumen-deuda-contenido"></div></div>
                 <div id="panel-antiguedad" class="hidden">
                     <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4">
                         <div class="section-header" style="background:linear-gradient(135deg,#7c2d12,#ea580c)">
                             <span class="text-xl">📅</span><span>Antigüedad de Deuda por Club</span>
-                            <div class="ml-auto"><button onclick="imprimirAntiguedad()" class="btn-download">🖨️ Imprimir</button></div>
+                            <div class="ml-auto flex gap-2"><button onclick="imprimirAntiguedad()" class="btn-download">🖨️ Imprimir</button><button onclick="excelAntiguedad()" class="btn-download" style="background:linear-gradient(135deg,#166534,#15803d)">📊 Excel</button><button onclick="pdfAntiguedad()" class="btn-download" style="background:linear-gradient(135deg,#991b1b,#dc2626)">📄 PDF</button></div>
                         </div>
                         <div class="p-4 bg-orange-50 border-b border-orange-100 flex flex-wrap gap-4" id="antiguedad-kpis"></div>
                     </div>
                     <div id="antiguedad-contenido"></div>
                 </div>
 
-                <div id="panel-cartola" class="hidden"><div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4"><div class="section-header" style="background:linear-gradient(135deg,#065f46,#047857)"><span class="text-xl">📄</span><span id="edclub-cartola-titulo">Cartola Individual por Club</span><div class="ml-auto flex gap-2"><button onclick="imprimirCartola()" class="btn-download">🖨️ Imprimir Cartola</button><button onclick="imprimirTodasCartolas()" class="btn-download" style="background:linear-gradient(135deg,#065f46,#047857)">🖨️ Todas</button></div></div><div class="p-4 bg-green-50 border-b border-green-100 flex flex-wrap gap-4 items-center"><div><label class="text-xs font-semibold text-gray-500 uppercase block mb-1" id="cartola-filtro-label">Seleccionar Club</label><select id="cartola-filtro" onchange="renderCartola()" class="form-input py-1.5 text-sm"><option value="" id="cartola-empty-opt">-- Seleccione --</option></select></div><div class="ml-auto text-sm text-green-700 font-medium" id="cartola-kpi"></div></div></div><div id="cartola-contenido"></div></div>
+                <div id="panel-cartola" class="hidden"><div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4"><div class="section-header" style="background:linear-gradient(135deg,#065f46,#047857)"><span class="text-xl">📄</span><span id="edclub-cartola-titulo">Cartola Individual por Club</span><div class="ml-auto flex gap-2"><button onclick="imprimirCartola()" class="btn-download">🖨️ Imprimir Cartola</button><button onclick="imprimirTodasCartolas()" class="btn-download" style="background:linear-gradient(135deg,#065f46,#047857)">🖨️ Todas</button><button onclick="excelCartola()" class="btn-download" style="background:linear-gradient(135deg,#166534,#15803d)">📊 Excel</button><button onclick="pdfCartola()" class="btn-download" style="background:linear-gradient(135deg,#991b1b,#dc2626)">📄 PDF</button></div></div><div class="p-4 bg-green-50 border-b border-green-100 flex flex-wrap gap-4 items-center"><div><label class="text-xs font-semibold text-gray-500 uppercase block mb-1" id="cartola-filtro-label">Seleccionar Club</label><select id="cartola-filtro" onchange="renderCartola()" class="form-input py-1.5 text-sm"><option value="" id="cartola-empty-opt">-- Seleccione --</option></select></div><div class="ml-auto text-sm text-green-700 font-medium" id="cartola-kpi"></div></div></div><div id="cartola-contenido"></div></div>
             </div>
 
             <div id="content-auditoria" class="tab-content hidden">
@@ -1409,6 +1409,8 @@
                         <span>Informe de Auditoría Contable</span>
                         <div class="ml-auto flex gap-2">
                             <button onclick="imprimirAuditoria()" class="btn-download">🖨️ Imprimir</button>
+                            <button onclick="excelAuditoria()" class="btn-download" style="background:linear-gradient(135deg,#166534,#15803d)">📊 Excel</button>
+                            <button onclick="pdfAuditoria()" class="btn-download" style="background:linear-gradient(135deg,#991b1b,#dc2626)">📄 PDF</button>
                             <button onclick="generarAuditoria()" class="btn-download" style="background:linear-gradient(135deg,#047857,#059669)">🔄 Actualizar</button>
                         </div>
                     </div>
@@ -1820,6 +1822,7 @@
                         <span class="text-xl">📊</span>
                         <span class="font-bold text-lg">Informe por Período</span>
                         <div class="ml-auto flex gap-2">
+                            <button onclick="imprimirInformeGeneral()" class="btn-download">🖨️ Imprimir</button>
                             <button onclick="exportarInformePDF()" class="btn-download" style="background:linear-gradient(135deg,#991b1b,#dc2626)">📄 PDF</button>
                             <button onclick="exportarInformeExcel()" class="btn-download" style="background:linear-gradient(135deg,#065f46,#047857)">📊 Excel</button>
                         </div>
@@ -1881,19 +1884,22 @@
                     <div class="px-6 py-3 font-bold text-white flex items-center gap-2" style="background:linear-gradient(135deg,#b45309,#92400e)">
                         <span>🏷️</span> Resumen por Centro de Costo
                     </div>
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto" id="inf-cc-wrapper">
                         <table class="data-table w-full">
-                            <thead>
-                                <tr>
-                                    <th>Centro de Costo</th>
-                                    <th class="text-right">Ingresos</th>
-                                    <th class="text-right">Gastos</th>
-                                    <th class="text-right">Resultado</th>
-                                </tr>
-                            </thead>
+                            <thead></thead>
                             <tbody id="inf-cc-body"></tbody>
                             <tfoot id="inf-cc-foot"></tfoot>
                         </table>
+                    </div>
+                </div>
+
+                <!-- Balance por Mes -->
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-6">
+                    <div class="px-6 py-3 font-bold text-white flex items-center gap-2" style="background:linear-gradient(135deg,#0f4c81,#1d6fa4)">
+                        <span>📆</span> Balance General por Mes
+                    </div>
+                    <div class="overflow-x-auto">
+                        <div id="inf-balance-mes-content" class="p-4"></div>
                     </div>
                 </div>
 
@@ -10069,18 +10075,87 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             // ── CENTROS DE COSTO ──────────────────────────────────
             renderInformeCC(desde, hasta);
 
+            // ── BALANCE POR MES ───────────────────────────────────
+            renderInformeBalanceMes(desde, hasta);
+
             // ── AUDITORIA RAPIDA ──────────────────────────────────
             renderInformeAuditoria(desde, hasta, ccFilt, resultado, ingresos, gastos);
         }
+        function renderInformeBalanceMes(desde, hasta) {
+            var fmt = function(n){return '$'+Math.round(Math.abs(n)).toLocaleString('es-CL');};
+            var fmtS= function(n){return (n<0?'-':'')+fmt(n);};
+            var mesNom = function(m){var d=new Date(m+'-01T12:00:00');return d.toLocaleString('es-CL',{month:'short',year:'2-digit'}).replace(' ','\u00a0');};
+
+            var meses = {};
+            asientos.forEach(function(a) {
+                var fecha = (a.fecha||'').substring(0,10);
+                if (desde && fecha < desde) return;
+                if (hasta && fecha > hasta) return;
+                var mes = fecha.substring(0,7);
+                if (!mes || mes === '0000-00') return;
+                var cuenta = planCuentas[a.codigo];
+                var tipo = (cuenta&&cuenta.tipo)?cuenta.tipo:(a.tipo||'');
+                if (!tipo) return;
+                if (!meses[mes]) meses[mes]={act:0,pas:0,pat:0,ing:0,gas:0};
+                var d=meses[mes], debe=a.debe||0, haber=a.haber||0;
+                if (tipo==='Activo')     meses[mes].act += debe-haber;
+                if (tipo==='Pasivo')     meses[mes].pas += haber-debe;
+                if (tipo==='Patrimonio') meses[mes].pat += haber-debe;
+                if (tipo==='Ingreso')    meses[mes].ing += haber-debe;
+                if (tipo==='Gasto')      meses[mes].gas += debe-haber;
+            });
+
+            var keys = Object.keys(meses).sort();
+            // Verificar que haya al menos un valor distinto de cero
+            var hayDatos = keys.some(function(m){
+                var d=meses[m]; return d.act||d.pas||d.pat||d.ing||d.gas;
+            });
+            if (!keys.length || !hayDatos) {
+                document.getElementById('inf-balance-mes-content').innerHTML = '<div class="text-gray-400 text-center py-6">Sin movimientos en el período</div>';
+                return;
+            }
+
+            var conceptos = [
+                {label:'Activo',     key:'act', color:'text-green-700', bg:'#f0fdf4'},
+                {label:'Pasivo',     key:'pas', color:'text-red-700',   bg:'#fff1f2'},
+                {label:'Patrimonio', key:'pat', color:'text-blue-700',  bg:'#eff6ff'},
+                {label:'Ingresos',   key:'ing', color:'text-purple-700',bg:'#faf5ff'},
+                {label:'Gastos',     key:'gas', color:'text-orange-700',bg:'#fff7ed'},
+                {label:'Resultado',  key:'res', color:'text-indigo-700',bg:'#eef2ff'},
+            ];
+
+            var thMeses = keys.map(function(m){return '<th style="padding:6px 10px;text-align:right;font-size:11px;min-width:85px">'+mesNom(m)+'</th>';}).join('');
+            var thead = '<thead><tr style="background:#0f4c81;color:#fff"><th style="padding:8px 14px;text-align:left;min-width:120px">Concepto</th>'+thMeses+'<th style="padding:8px 10px;text-align:right;background:#0a3560">Total</th></tr></thead>';
+
+            var tbody = '<tbody>' + conceptos.map(function(c){
+                var total = 0;
+                var tds = keys.map(function(m){
+                    var v = c.key==='res' ? (meses[m].ing-meses[m].gas) : (meses[m][c.key]||0);
+                    total += v;
+                    return '<td style="padding:6px 10px;text-align:right;font-family:monospace;font-size:12px;color:'+(v<0?'#dc2626':'inherit')+'">'+(v===0?'—':fmtS(v))+'</td>';
+                }).join('');
+                return '<tr style="background:'+c.bg+';border-bottom:1px solid #e5e7eb">'+
+                    '<td style="padding:7px 14px;font-weight:600;font-size:13px;color:#374151">'+c.label+'</td>'+
+                    tds+
+                    '<td style="padding:7px 10px;text-align:right;font-family:monospace;font-weight:700;font-size:12px;background:#f8fafc;border-left:2px solid #e2e8f0;color:'+(total<0?'#dc2626':'#1e3a5f')+'">'+fmtS(total)+'</td>'+
+                    '</tr>';
+            }).join('') + '</tbody>';
+
+            document.getElementById('inf-balance-mes-content').innerHTML =
+                '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:12px">'+thead+tbody+'</table></div>';
+        }
+
         function renderInformeMensual(desde, hasta, ccFilt) {
             var fmt = function(n){return '$'+Math.round(Math.abs(n)).toLocaleString('es-CL');};
             var fmtS= function(n){return (n<0?'-':'')+fmt(n);};
             var meses = {};
             asientos.forEach(function(a) {
-                if (desde && (a.fecha||'') < desde) return;
-                if (hasta && (a.fecha||'') > hasta) return;
+                var fecha = (a.fecha||'').substring(0,10);
+                if (desde && fecha < desde) return;
+                if (hasta && fecha > hasta) return;
                 if (ccFilt && a.cc !== ccFilt) return;
-                var mes = (a.fecha||'0000-00').substring(0,7);
+                var mes = fecha.substring(0,7);
+                if (!mes) return;
                 var cuenta = planCuentas[a.codigo];
                 var tipo = (cuenta&&cuenta.tipo)?cuenta.tipo:(a.tipo||'');
                 if (!meses[mes]) meses[mes] = {ing:0,gas:0};
@@ -10088,63 +10163,98 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 if (tipo==='Gasto')   meses[mes].gas += (a.debe||0)-(a.haber||0);
             });
             var keys = Object.keys(meses).sort();
-            var mesNom = function(m){var d=new Date(m+'-01T12:00:00');return d.toLocaleString('es-CL',{month:'long',year:'numeric'});};
+            var mesNom = function(m){var d=new Date(m+'-01T12:00:00');return d.toLocaleString('es-CL',{month:'short',year:'2-digit'}).replace(' ','\u00a0');};
             var totIng=0,totGas=0,totRes=0;
-            var rows = keys.map(function(m){
-                var d=meses[m]; var res=d.ing-d.gas;
-                totIng+=d.ing; totGas+=d.gas; totRes+=res;
-                return '<tr class="border-b hover:bg-gray-50">' +
-                    '<td class="px-4 py-2.5 font-medium capitalize">'+mesNom(m)+'</td>' +
-                    '<td class="px-4 py-2.5 text-right font-mono text-green-700">'+fmt(d.ing)+'</td>' +
-                    '<td class="px-4 py-2.5 text-right font-mono text-orange-700">'+fmt(d.gas)+'</td>' +
-                    '<td class="px-4 py-2.5 text-right font-mono font-bold '+(res>=0?'text-blue-700':'text-red-600')+'">'+fmtS(res)+'</td></tr>';
-            }).join('');
+            keys.forEach(function(m){var d=meses[m];totIng+=d.ing;totGas+=d.gas;totRes+=d.ing-d.gas;});
+
+            // HORIZONTAL: filas = Ingresos/Gastos/Resultado, columnas = meses
+            var thMeses = keys.map(function(m){return '<th class="px-3 py-2.5 text-right text-xs capitalize" style="min-width:90px">'+mesNom(m)+'</th>';}).join('');
+            var thTotal = '<th class="px-3 py-2.5 text-right text-xs" style="background:#334155;color:#fff">TOTAL</th>';
+
+            var tdIng = keys.map(function(m){return '<td class="px-3 py-2.5 text-right font-mono text-green-700 text-sm">'+fmt(meses[m].ing)+'</td>';}).join('');
+            var tdGas = keys.map(function(m){return '<td class="px-3 py-2.5 text-right font-mono text-orange-700 text-sm">'+fmt(meses[m].gas)+'</td>';}).join('');
+            var tdRes = keys.map(function(m){var r=meses[m].ing-meses[m].gas;return '<td class="px-3 py-2.5 text-right font-mono font-bold text-sm '+(r>=0?'text-blue-700':'text-red-600')+'">'+fmtS(r)+'</td>';}).join('');
+
             document.getElementById('inf-mensual-head').innerHTML =
-                '<tr class="bg-gray-50 text-xs uppercase text-gray-500 border-b-2">'+
-                '<th class="px-4 py-2.5 text-left">Mes</th>'+
-                '<th class="px-4 py-2.5 text-right">Ingresos</th>'+
-                '<th class="px-4 py-2.5 text-right">Gastos</th>'+
-                '<th class="px-4 py-2.5 text-right">Resultado</th></tr>';
-            document.getElementById('inf-mensual-body').innerHTML = rows||'<tr><td colspan="4" class="text-center text-gray-400 py-6">Sin datos</td></tr>';
-            document.getElementById('inf-mensual-foot').innerHTML =
-                '<tr class="bg-slate-700 text-white font-bold">'+
-                '<td class="px-4 py-2.5">TOTAL PER\u00cdODO</td>'+
-                '<td class="px-4 py-2.5 text-right font-mono">'+fmt(totIng)+'</td>'+
-                '<td class="px-4 py-2.5 text-right font-mono">'+fmt(totGas)+'</td>'+
-                '<td class="px-4 py-2.5 text-right font-mono '+(totRes>=0?'text-green-300':'text-red-300')+'">'+fmtS(totRes)+'</td></tr>';
+                '<tr class="bg-gray-100 text-xs uppercase text-gray-500 border-b-2">'+
+                '<th class="px-4 py-2.5 text-left" style="min-width:110px">Concepto</th>'+
+                thMeses + thTotal + '</tr>';
+            document.getElementById('inf-mensual-body').innerHTML = keys.length ? (
+                '<tr class="border-b bg-green-50"><td class="px-4 py-2.5 font-semibold text-green-800">Ingresos</td>'+tdIng+'<td class="px-3 py-2.5 text-right font-mono font-bold text-green-800" style="background:#dcfce7">'+fmt(totIng)+'</td></tr>'+
+                '<tr class="border-b bg-orange-50"><td class="px-4 py-2.5 font-semibold text-orange-800">Gastos</td>'+tdGas+'<td class="px-3 py-2.5 text-right font-mono font-bold text-orange-800" style="background:#ffedd5">'+fmt(totGas)+'</td></tr>'+
+                '<tr class="border-b"><td class="px-4 py-2.5 font-bold text-gray-800">Resultado</td>'+tdRes+'<td class="px-3 py-2.5 text-right font-mono font-bold '+(totRes>=0?'text-blue-700':'text-red-600')+'" style="background:#eff6ff">'+fmtS(totRes)+'</td></tr>'
+            ) : '<tr><td colspan="99" class="text-center text-gray-400 py-6">Sin datos</td></tr>';
+            document.getElementById('inf-mensual-foot').innerHTML = '';
         }
 
         function renderInformeCC(desde, hasta) {
             var fmt = function(n){return '$'+Math.round(Math.abs(n)).toLocaleString('es-CL');};
             var fmtS= function(n){return (n<0?'-':'')+fmt(n);};
-            var ccs = {};
+            var mesNom = function(m){var d=new Date(m+'-01T12:00:00');return d.toLocaleString('es-CL',{month:'short',year:'2-digit'}).replace(' ','\u00a0');};
+            var wrapper = document.getElementById('inf-cc-wrapper');
+            if (!wrapper) return;
+
+            // Recopilar CCs y meses — solo asientos dentro del rango
+            var ccs = {}, mesesSet = {};
             asientos.forEach(function(a) {
-                if (desde && (a.fecha||'') < desde) return;
-                if (hasta && (a.fecha||'') > hasta) return;
-                var cc = a.cc || 'SIN CC';
-                var ccNom = (centrosCosto[cc]&&centrosCosto[cc].nombre) ? centrosCosto[cc].nombre : cc;
+                var fecha = (a.fecha||'').substring(0,10);
+                if (!fecha) return;
+                if (desde && fecha < desde) return;
+                if (hasta && fecha > hasta) return;
                 var cuenta = planCuentas[a.codigo];
                 var tipo = (cuenta&&cuenta.tipo)?cuenta.tipo:(a.tipo||'');
-                if (!ccs[cc]) ccs[cc]={nom:ccNom,ing:0,gas:0};
-                if (tipo==='Ingreso') ccs[cc].ing += (a.haber||0)-(a.debe||0);
-                if (tipo==='Gasto')   ccs[cc].gas += (a.debe||0)-(a.haber||0);
+                if (tipo !== 'Ingreso' && tipo !== 'Gasto') return; // solo ing/gas para CC
+                var cc = a.cc || 'SIN CC';
+                var ccNom = (centrosCosto[cc]&&centrosCosto[cc].nombre) ? centrosCosto[cc].nombre : cc;
+                var mes = fecha.substring(0,7);
+                if (!ccs[cc]) ccs[cc]={nom:ccNom,ing:0,gas:0,meses:{}};
+                if (!ccs[cc].meses[mes]) ccs[cc].meses[mes]={ing:0,gas:0};
+                mesesSet[mes]=1;
+                if (tipo==='Ingreso') { ccs[cc].ing += (a.haber||0)-(a.debe||0); ccs[cc].meses[mes].ing += (a.haber||0)-(a.debe||0); }
+                if (tipo==='Gasto')   { ccs[cc].gas += (a.debe||0)-(a.haber||0); ccs[cc].meses[mes].gas += (a.debe||0)-(a.haber||0); }
             });
-            var tIng=0,tGas=0;
+
+            // Sin datos — mostrar vacío
+            if (!Object.keys(ccs).length) {
+                wrapper.innerHTML = '<div class="text-center text-gray-400 py-8">Sin movimientos en el período</div>';
+                return;
+            }
+
+            var meses = Object.keys(mesesSet).sort();
+            var tIng=0, tGas=0;
+            var thMeses = meses.length>1 ? meses.map(function(m){return '<th class="px-2 py-2 text-right text-xs" style="min-width:80px">'+mesNom(m)+'</th>';}).join('') : '';
+            var thead = '<tr class="bg-gray-100 text-xs uppercase text-gray-500 border-b-2">'+
+                '<th class="px-4 py-2.5 text-left" style="min-width:140px">Centro de Costo</th>'+
+                '<th class="px-3 py-2 text-right">Ingresos</th>'+
+                '<th class="px-3 py-2 text-right">Gastos</th>'+
+                '<th class="px-3 py-2 text-right">Resultado</th>'+
+                (meses.length>1 ? '<th class="px-2 py-2 text-center" colspan="'+meses.length+'" style="background:#1e3a5f;color:#fff">Detalle por Mes</th>' : '')+
+                '</tr>';
+            if (meses.length>1) {
+                thead += '<tr class="bg-gray-50 text-xs text-gray-400 border-b"><td></td><td></td><td></td><td></td>'+thMeses+'</tr>';
+            }
             var rows = Object.entries(ccs).sort(function(a,b){return a[1].nom.localeCompare(b[1].nom);}).map(function(entry){
                 var d=entry[1]; var res=d.ing-d.gas; tIng+=d.ing; tGas+=d.gas;
+                var tdMeses = meses.length>1 ? meses.map(function(m){
+                    var r=d.meses[m]||{ing:0,gas:0}; var mr=r.ing-r.gas;
+                    return '<td class="px-2 py-2 text-right font-mono text-xs '+(mr>=0?'text-blue-600':'text-red-500')+'">'+fmtS(mr)+'</td>';
+                }).join('') : '';
                 return '<tr class="border-b hover:bg-gray-50">'+
-                    '<td class="px-4 py-2.5 font-medium">'+d.nom+'</td>'+
-                    '<td class="px-4 py-2.5 text-right font-mono text-green-700">'+fmt(d.ing)+'</td>'+
-                    '<td class="px-4 py-2.5 text-right font-mono text-orange-700">'+fmt(d.gas)+'</td>'+
-                    '<td class="px-4 py-2.5 text-right font-mono font-bold '+(res>=0?'text-blue-700':'text-red-600')+'">'+fmtS(res)+'</td></tr>';
+                    '<td class="px-4 py-2.5 font-medium text-sm">'+d.nom+'</td>'+
+                    '<td class="px-3 py-2.5 text-right font-mono text-green-700 text-sm">'+fmt(d.ing)+'</td>'+
+                    '<td class="px-3 py-2.5 text-right font-mono text-orange-700 text-sm">'+fmt(d.gas)+'</td>'+
+                    '<td class="px-3 py-2.5 text-right font-mono font-bold text-sm '+(res>=0?'text-blue-700':'text-red-600')+'">'+fmtS(res)+'</td>'+
+                    tdMeses+'</tr>';
             }).join('');
-            document.getElementById('inf-cc-body').innerHTML = rows||'<tr><td colspan="4" class="text-center text-gray-400 py-6">Sin centros de costo</td></tr>';
-            document.getElementById('inf-cc-foot').innerHTML =
-                '<tr class="bg-amber-700 text-white font-bold">'+
-                '<td class="px-4 py-2.5">TOTAL</td>'+
-                '<td class="px-4 py-2.5 text-right font-mono">'+fmt(tIng)+'</td>'+
-                '<td class="px-4 py-2.5 text-right font-mono">'+fmt(tGas)+'</td>'+
-                '<td class="px-4 py-2.5 text-right font-mono '+(tIng-tGas>=0?'text-green-200':'text-red-200')+'">'+fmtS(tIng-tGas)+'</td></tr>';
+            var colTotal = 4 + meses.length;
+            wrapper.innerHTML = '<table class="data-table w-full"><thead>'+thead+'</thead><tbody>'+rows+
+                '</tbody><tfoot><tr style="background:#92400e;color:#fff">'+
+                '<td class="px-4 py-2.5 font-bold">TOTAL</td>'+
+                '<td class="px-3 py-2.5 text-right font-mono font-bold">'+fmt(tIng)+'</td>'+
+                '<td class="px-3 py-2.5 text-right font-mono font-bold">'+fmt(tGas)+'</td>'+
+                '<td class="px-3 py-2.5 text-right font-mono font-bold">'+fmtS(tIng-tGas)+'</td>'+
+                (meses.length>1?meses.map(function(){return '<td></td>';}).join(''):'')+
+                '</tr></tfoot></table>';
         }
 
         function renderInformeAuditoria(desde, hasta, ccFilt, resultado, totalIng, totalGas) {
@@ -10186,31 +10296,247 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 '<div class="font-bold text-lg '+(resultado>=0?'text-green-700':'text-red-600')+' mt-1">'+(resultado>=0?'Super\u00e1vit':'D\u00e9ficit')+': '+fmt(resultado)+'</div>'+
                 '</div></div></div>';
         }
-        function exportarInformePDF() {
-            if (!window.jspdf) { showToast('PDF no disponible','error'); return; }
-            const { jsPDF } = window.jspdf;
+
+        // ── FUNCIONES NUEVAS EXPORT ──────────────────────────────────
+
+        function abrirVentanaInforme() {
             const desde = document.getElementById('inf-desde').value;
             const hasta = document.getElementById('inf-hasta').value;
-            const emp = getEmpresasConfig ? (getEmpresasConfig()[sesionActual?.empresa]?.nombre || sesionActual?.empresa || '') : '';
-            const doc = new jsPDF('p','mm','a4');
-            doc.setFontSize(14); doc.setFont(undefined,'bold');
-            doc.text('Informe por Período — '+emp, 14, 16);
-            doc.setFontSize(9); doc.setFont(undefined,'normal');
-            doc.text('Período: '+(desde||'inicio')+' al '+(hasta||'hoy'), 14, 23);
-            let y = 30;
-            ['inf-resultado-content','inf-balance-content','inf-auditoria-content'].forEach(id => {
-                const el = document.getElementById(id);
-                if (el && typeof doc.autoTable === 'function') {
-                    const tbls = el.querySelectorAll('table');
-                    tbls.forEach(tbl => {
-                        doc.autoTable({ html: tbl, startY: y, styles:{fontSize:7},
-                            headStyles:{fillColor:[30,58,95],textColor:255} });
-                        y = doc.lastAutoTable.finalY + 6;
+            const emp   = getNombreEmpresa(sesionActual?.empresa || '');
+
+            // Helper: serializa un elemento con sus estilos computados inlineados
+            function inlinearEstilos(el) {
+                const clone = el.cloneNode(true);
+                const srcEls = el.querySelectorAll('*');
+                const dstEls = clone.querySelectorAll('*');
+                // También inline el propio elemento raíz
+                const srcList = [el, ...srcEls];
+                const dstList = [clone, ...dstEls];
+                srcList.forEach((src, i) => {
+                    const dst = dstList[i];
+                    const cs  = window.getComputedStyle(src);
+                    // Solo copiar propiedades relevantes para no inflar demasiado
+                    const props = [
+                        'display','flex-direction','flex-wrap','align-items','justify-content',
+                        'gap','grid-template-columns','grid-template-rows',
+                        'background','background-color','background-image',
+                        'color','font-size','font-weight','font-family',
+                        'padding','padding-top','padding-bottom','padding-left','padding-right',
+                        'margin','margin-top','margin-bottom','margin-left','margin-right',
+                        'border','border-radius','border-bottom','border-collapse',
+                        'width','min-width','max-width','box-sizing',
+                        'text-align','vertical-align','white-space','overflow',
+                        'box-shadow','opacity'
+                    ];
+                    let style = '';
+                    props.forEach(p => {
+                        const v = cs.getPropertyValue(p);
+                        if (v && v !== 'none' && v !== 'normal' && v !== 'auto' && v !== '0px' && v !== 'rgba(0, 0, 0, 0)' && v !== 'initial') {
+                            style += p + ':' + v + ';';
+                        }
                     });
+                    dst.setAttribute('style', style);
+                    // Limpiar class para que no interfiera
+                    dst.removeAttribute('class');
+                });
+                return clone.outerHTML;
+            }
+
+            // Secciones a capturar
+            const secciones = [
+                { id: 'inf-kpis',             titulo: null },
+                { id: 'inf-resultado-content', titulo: '📈 Estado de Resultados',                   color: 'linear-gradient(135deg,#7c3aed,#4f46e5)' },
+                { id: 'inf-mensual-table',     titulo: '📅 Detalle Mensual — Estado de Resultados', color: 'linear-gradient(135deg,#0891b2,#0e7490)',  wrap: 'table' },
+                { id: 'inf-balance-content',   titulo: '⚖️ Balance General',                         color: 'linear-gradient(135deg,#047857,#065f46)' },
+                { id: 'inf-cc-wrapper',        titulo: '🏷️ Resumen por Centro de Costo',             color: 'linear-gradient(135deg,#b45309,#92400e)' },
+                { id: 'inf-balance-mes-content', titulo: '📆 Balance General por Mes',               color: 'linear-gradient(135deg,#0f4c81,#1d6fa4)' },
+                { id: 'inf-auditoria-content', titulo: '🔍 Auditoría del Período',                   color: 'linear-gradient(135deg,#4f46e5,#7c3aed)' },
+            ];
+
+            let bloques = '';
+            secciones.forEach(s => {
+                let el = document.getElementById(s.id);
+                if (!el || !el.innerHTML.trim()) return;
+                if (s.wrap === 'table') el = el.closest('table') || el;
+                const inner = inlinearEstilos(el);
+                if (s.titulo) {
+                    bloques += `<div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.1);overflow:hidden;margin-bottom:18px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+                        <div style="background:${s.color};color:#fff;font-weight:700;font-size:14px;padding:10px 18px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">${s.titulo}</div>
+                        <div style="padding:14px 16px;overflow-x:auto;">${inner}</div>
+                    </div>`;
+                } else {
+                    bloques += `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;">${inner}</div>`;
                 }
             });
-            doc.save('informe_periodo_'+desde+'_'+hasta+'.pdf');
+
+            const w = window.open('', '_blank', 'width=1100,height=860');
+            w.document.write(`<!DOCTYPE html><html><head>
+                <meta charset="UTF-8">
+                <title>Informe — ${emp}</title>
+                <style>
+                    * { box-sizing: border-box; }
+                    @media print {
+                        body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        .no-print { display: none !important; }
+                    }
+                    body { font-family: Arial, sans-serif; background: #f1f5f9; padding: 24px; margin: 0; font-size: 12px; }
+                    table { width: 100% !important; border-collapse: collapse !important; font-size: 11px; }
+                    th { background: #1e3a5f !important; color: #fff !important; padding: 6px 8px !important; text-align: left; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    td { padding: 5px 8px !important; border-bottom: 1px solid #e5e7eb !important; }
+                    tfoot td { font-weight: 700 !important; background: #f8fafc !important; }
+                    tr:nth-child(even) td { background: #f9fafb !important; }
+                </style>
+            </head><body>
+                <div style="background:linear-gradient(135deg,#1e3a5f,#0f766e);color:#fff;border-radius:12px;padding:18px 24px;margin-bottom:20px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+                    <div style="font-size:18px;font-weight:700;margin:0;">Informe por Período — ${emp}</div>
+                    <div style="font-size:12px;margin-top:4px;opacity:.85;">Período: ${desde || 'inicio'} al ${hasta || 'hoy'}</div>
+                </div>
+                <div class="no-print" style="display:flex;gap:10px;margin-bottom:20px;">
+                    <button onclick="window.print()" style="padding:8px 20px;background:linear-gradient(135deg,#1e3a5f,#2563eb);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">🖨️ Imprimir / Guardar PDF</button>
+                    <button onclick="window.close()" style="padding:8px 20px;background:#6b7280;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;">✕ Cerrar</button>
+                </div>
+                ${bloques}
+            </body></html>`);
+            w.document.close();
         }
+
+        function imprimirInformeGeneral() { abrirVentanaInforme(); }
+
+        function excelAuditoria() {
+            if (typeof XLSX === 'undefined') { showToast('Excel no disponible','error'); return; }
+            const emp = getNombreEmpresa(sesionActual?.empresa || '');
+            const rows = [['Empresa: '+emp],['Informe de Auditoría Contable'],[]];
+            const tbl = document.querySelector('#auditoria-contenido table');
+            if (tbl) { tbl.querySelectorAll('tr').forEach(tr => { rows.push([...tr.querySelectorAll('th,td')].map(c=>c.innerText)); }); }
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Auditoría');
+            XLSX.writeFile(wb, 'auditoria_contable.xlsx');
+        }
+
+        function pdfAuditoria() {
+            if (!window.jspdf) { showToast('PDF no disponible','error'); return; }
+            const { jsPDF } = window.jspdf;
+            const emp = getNombreEmpresa(sesionActual?.empresa || '');
+            const doc = new jsPDF('p','mm','a4');
+            doc.setFontSize(13); doc.setFont(undefined,'bold');
+            doc.text('Auditoría Contable — '+emp, 14, 16);
+            doc.setFontSize(9); doc.setFont(undefined,'normal');
+            doc.text('Generado: '+new Date().toLocaleDateString('es-CL'), 14, 23);
+            let y = 30;
+            document.querySelectorAll('#auditoria-contenido table').forEach(tbl => {
+                if (typeof doc.autoTable === 'function') {
+                    doc.autoTable({ html: tbl, startY: y, styles:{fontSize:7}, headStyles:{fillColor:[30,58,95],textColor:255} });
+                    y = doc.lastAutoTable.finalY + 6;
+                }
+            });
+            doc.save('auditoria_contable.pdf');
+        }
+
+        function excelResumenDeuda() {
+            if (typeof XLSX === 'undefined') { showToast('Excel no disponible','error'); return; }
+            const emp = getNombreEmpresa(sesionActual?.empresa || '');
+            const rows = [['Empresa: '+emp],['Resumen Deuda y Saldos a Favor'],[]];
+            const tbl = document.querySelector('#resumen-deuda-contenido table');
+            if (tbl) { tbl.querySelectorAll('tr').forEach(tr => { rows.push([...tr.querySelectorAll('th,td')].map(c=>c.innerText)); }); }
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Deuda');
+            XLSX.writeFile(wb, 'resumen_deuda.xlsx');
+        }
+
+        function pdfResumenDeuda() {
+            if (!window.jspdf) { showToast('PDF no disponible','error'); return; }
+            const { jsPDF } = window.jspdf;
+            const emp = getNombreEmpresa(sesionActual?.empresa || '');
+            const doc = new jsPDF('p','mm','a4');
+            doc.setFontSize(13); doc.setFont(undefined,'bold');
+            doc.text('Resumen Deuda y Saldos a Favor — '+emp, 14, 16);
+            doc.setFontSize(9); doc.setFont(undefined,'normal');
+            doc.text('Generado: '+new Date().toLocaleDateString('es-CL'), 14, 23);
+            let y = 30;
+            document.querySelectorAll('#resumen-deuda-contenido table').forEach(tbl => {
+                if (typeof doc.autoTable === 'function') {
+                    doc.autoTable({ html: tbl, startY: y, styles:{fontSize:7}, headStyles:{fillColor:[30,58,95],textColor:255} });
+                    y = doc.lastAutoTable.finalY + 6;
+                }
+            });
+            doc.save('resumen_deuda.pdf');
+        }
+
+        function excelAntiguedad() {
+            if (typeof XLSX === 'undefined') { showToast('Excel no disponible','error'); return; }
+            const emp = getNombreEmpresa(sesionActual?.empresa || '');
+            const rows = [['Empresa: '+emp],['Antigüedad de Deuda por Club'],[]];
+            const tbl = document.querySelector('#antiguedad-contenido table');
+            if (tbl) { tbl.querySelectorAll('tr').forEach(tr => { rows.push([...tr.querySelectorAll('th,td')].map(c=>c.innerText)); }); }
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Antigüedad');
+            XLSX.writeFile(wb, 'antiguedad_deuda.xlsx');
+        }
+
+        function pdfAntiguedad() {
+            if (!window.jspdf) { showToast('PDF no disponible','error'); return; }
+            const { jsPDF } = window.jspdf;
+            const emp = getNombreEmpresa(sesionActual?.empresa || '');
+            const doc = new jsPDF('l','mm','a4');
+            doc.setFontSize(13); doc.setFont(undefined,'bold');
+            doc.text('Antigüedad de Deuda — '+emp, 14, 16);
+            doc.setFontSize(9); doc.setFont(undefined,'normal');
+            doc.text('Generado: '+new Date().toLocaleDateString('es-CL'), 14, 23);
+            let y = 30;
+            document.querySelectorAll('#antiguedad-contenido table').forEach(tbl => {
+                if (typeof doc.autoTable === 'function') {
+                    doc.autoTable({ html: tbl, startY: y, styles:{fontSize:7}, headStyles:{fillColor:[30,58,95],textColor:255} });
+                    y = doc.lastAutoTable.finalY + 6;
+                }
+            });
+            doc.save('antiguedad_deuda.pdf');
+        }
+
+        function excelCartola() {
+            if (typeof XLSX === 'undefined') { showToast('Excel no disponible','error'); return; }
+            const emp = getNombreEmpresa(sesionActual?.empresa || '');
+            const club = document.getElementById('cartola-filtro')?.selectedOptions[0]?.text || '';
+            const rows = [['Empresa: '+emp],['Cartola Individual — '+club],[]];
+            const tbl = document.querySelector('#cartola-contenido table');
+            if (tbl) { tbl.querySelectorAll('tr').forEach(tr => { rows.push([...tr.querySelectorAll('th,td')].map(c=>c.innerText)); }); }
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Cartola');
+            XLSX.writeFile(wb, 'cartola_club.xlsx');
+        }
+
+        function pdfCartola() {
+            if (!window.jspdf) { showToast('PDF no disponible','error'); return; }
+            const { jsPDF } = window.jspdf;
+            const emp = getNombreEmpresa(sesionActual?.empresa || '');
+            const club = document.getElementById('cartola-filtro')?.selectedOptions[0]?.text || '';
+            const doc = new jsPDF('p','mm','a4');
+            doc.setFontSize(13); doc.setFont(undefined,'bold');
+            doc.text('Cartola — '+club+' — '+emp, 14, 16);
+            doc.setFontSize(9); doc.setFont(undefined,'normal');
+            doc.text('Generado: '+new Date().toLocaleDateString('es-CL'), 14, 23);
+            let y = 30;
+            document.querySelectorAll('#cartola-contenido table').forEach(tbl => {
+                if (typeof doc.autoTable === 'function') {
+                    doc.autoTable({ html: tbl, startY: y, styles:{fontSize:7}, headStyles:{fillColor:[30,58,95],textColor:255} });
+                    y = doc.lastAutoTable.finalY + 6;
+                }
+            });
+            doc.save('cartola_club.pdf');
+        }
+
+        function excelEstadoCuenta(desde, hasta) {
+            if (typeof XLSX === 'undefined') { showToast('Excel no disponible','error'); return; }
+            const emp = getNombreEmpresa(sesionActual?.empresa || '');
+            const club = document.getElementById('edclub-filtro')?.selectedOptions[0]?.text || 'Todos';
+            const rows = [['Empresa: '+emp],['Estado de Cuenta por Club — '+club],['Período: '+(desde||'inicio')+' al '+(hasta||'hoy')],[]];
+            const tbl = document.querySelector('#edclub-contenido table');
+            if (tbl) { tbl.querySelectorAll('tr').forEach(tr => { rows.push([...tr.querySelectorAll('th,td')].map(c=>c.innerText)); }); }
+            const ws = XLSX.utils.aoa_to_sheet(rows);
+            const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Estado de Cuenta');
+            XLSX.writeFile(wb, 'estado_cuenta_'+club+'.xlsx');
+        }
+
+        function exportarInformePDF() { abrirVentanaInforme(); }
 
         function exportarInformeExcel() {
             if (typeof XLSX === 'undefined') { showToast('Excel no disponible','error'); return; }
