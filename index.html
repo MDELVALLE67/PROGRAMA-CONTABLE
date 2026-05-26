@@ -8690,11 +8690,13 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                     if (!club || club.toLowerCase().includes('total')) continue;
                     const info = CLUB_MAP[club];
                     if (!info) { errores.push(`Hoja "Centralización Ingresos": club "${club}" no encontrado`); continue; }
+                    // Col J (índice 9) = glosa individual por club
+                    const glosaClub = String(row[9]||'').trim();
                     serieMap.forEach(({col, cod, nombre}) => {
                         const monto = parseInt(row[col]) || 0;
                         if (monto <= 0) return;
                         const ctaInfo = planCuentas[info.cta];
-                        const glosa = `Centralización ${nombre} - ${club}`;
+                        const glosa = glosaClub || `Centralización ${nombre} - ${club}`;
                         asientosHoja.push({ fecha, voucher:voucherActual, codigo:info.cta, cuenta:ctaInfo?.nombre||'Por Cobrar '+club, tipo:'Activo', cc:info.cc, debe:monto, haber:0, glosa });
                         asientosHoja.push({ fecha, voucher:voucherActual, codigo:cod, cuenta:nombre, tipo:'Ingreso', cc:info.cc, debe:0, haber:monto, glosa });
                         voucherActual++;
