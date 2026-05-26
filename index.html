@@ -8710,8 +8710,11 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                     '51101':'Mantención Canchas','51103':'Equipamiento Deportivo',
                     '51201':'Remuneraciones Directiva','51202':'Servicios Básicos',
                     '51203':'Materiales de Oficina','51204':'Arriendo',
-                    '52101':'Intereses Pagados','52102':'Gastos Varios','51102':'Cuerpo Arbitral'
+                    '52101':'Intereses Pagados','52102':'Gastos Varios',
+                    '51102':'Cuerpo Arbitral','51104':'Cuota Mortuoria','51107':'Gastos Por Turno'
                 };
+                // Códigos que van con CC por club (igual que arbitral)
+                const ctasPorClub = new Set(['51102','51104','51107']);
                 for (let ri = 5; ri < rows.length; ri++) {
                     const row = rows[ri];
                     const codCuenta = String(row[2]||'').trim();
@@ -8719,9 +8722,9 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                     const monto = parseInt(row[3]) || 0;
                     if (monto <= 0) continue;
                     const glosa = String(row[4]||ctasGasto[codCuenta]).trim();
-                    // Si es cuerpo arbitral, buscar club en col B
+                    // Si es gasto por club, buscar CC en col B
                     let ccCod = 'CC000';
-                    if (codCuenta === '51102') {
+                    if (ctasPorClub.has(codCuenta)) {
                         const club = String(row[1]||'').trim();
                         const info = CLUB_MAP[club];
                         if (info) ccCod = info.cc;
