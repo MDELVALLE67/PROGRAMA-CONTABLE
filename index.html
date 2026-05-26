@@ -8675,13 +8675,14 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
 
             // ── CENTRALIZACIÓN INGRESOS ──────────────────────────
             else if (tipoHoja === 'CENTRALIZACION_INGRESOS') {
-                // Cols: A=N°(0), B=Club(1), C=Borderos(2), D=Multas(3), E=Inscripciones(4), F=CuotasSocios(5), G=IngresosVarios(6), H=Total(7)
+                // Cols: A=N°(0), B=Club(1), C=Borderos(2), D=Multas(3), E=Inscripciones(4), F=CuotasSocios(5), G=CuotaMortuoria(6), H=IngresosVarios(7), I=Total(8)
                 const serieMap = [
                     {col:2, cod:'41101', nombre:'Borderos'},
                     {col:3, cod:'41103', nombre:'Multas'},
                     {col:4, cod:'41102', nombre:'Inscripciones'},
                     {col:5, cod:'41104', nombre:'Cuotas Socios'},
-                    {col:6, cod:'42102', nombre:'Ingresos Varios'},
+                    {col:6, cod:'41105', nombre:'Cuota Mortuoria'},
+                    {col:7, cod:'42102', nombre:'Ingresos Varios'},
                 ];
                 for (let ri = 5; ri < rows.length; ri++) {
                     const row = rows[ri];
