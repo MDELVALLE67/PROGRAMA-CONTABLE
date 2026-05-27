@@ -8708,31 +8708,45 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             else if (tipoHoja === 'CENTRALIZACION_GASTOS') {
                 // Sección gastos generales: A=N°(0), B=NombreCuenta(1), C=Cod(2), D=Monto(3), E=Glosa(4)
                 // Sección cuerpo arbitral: A=N°(0), B=Club(1), C=Cod(2)=51102, D=Monto(3), E=Glosa(4)
+                // GASTOS GENERALES: A=N°(0), B=Nombre(1), C=Cod(2), D=Monto(3), E=Glosa(4)
+                // GASTOS POR CLUB (horizontal): A=N°(0), B=Club(1), C=51102(2), D=51104(3), E=51107(4), F=51108(5), G=Total(6), H=Glosa(7)
                 const ctasGasto = {
                     '51101':'Mantención Canchas','51103':'Equipamiento Deportivo',
                     '51201':'Remuneraciones Directiva','51202':'Servicios Básicos',
                     '51203':'Materiales de Oficina','51204':'Arriendo',
                     '52101':'Intereses Pagados','52102':'Gastos Varios',
-                    '51102':'Cuerpo Arbitral','51104':'Cuota Mortuoria','51107':'Gastos Por Turno'
+                    '51102':'Cuerpo Arbitral','51104':'Cuota Mortuoria',
+                    '51107':'Gastos por Consultas, Inscripciones, Pases','51108':'Gastos Por Turno'
                 };
-                // Códigos que van con CC por club (igual que arbitral)
-                const ctasPorClub = new Set(['51102','51104','51107']);
-                for (let ri = 5; ri < rows.length; ri++) {
+                const colClubGasto = [{col:2,cod:'51102'},{col:3,cod:'51104'},{col:4,cod:'51107'},{col:5,cod:'51108'}];
+
+                for (let ri = 0; ri < rows.length; ri++) {
                     const row = rows[ri];
-                    const codCuenta = String(row[2]||'').trim();
-                    if (!ctasGasto[codCuenta]) continue;
+                    const colB = String(row[1]||'').trim();
+                    const colC = String(row[2]||'').trim();
+
+                    // SECCIÓN HORIZONTAL: col B = club conocido
+                    const infoClub = colB ? CLUB_MAP[colB] : null;
+                    if (infoClub) {
+                        const glosaBase = String(row[7]||'').trim(); // col H = glosa
+                        colClubGasto.forEach(function({col, cod}) {
+                            const monto = parseInt(row[col]) || 0;
+                            if (monto <= 0) return;
+                            const glosa = glosaBase || (ctasGasto[cod] + ' - ' + colB);
+                            asientosHoja.push({ fecha, voucher:voucherActual, codigo:cod, cuenta:ctasGasto[cod], tipo:'Gasto', cc:infoClub.cc, debe:monto, haber:0, glosa });
+                            asientosHoja.push({ fecha, voucher:voucherActual, codigo:'21103', cuenta:'Por Pagar Asociacion', tipo:'Pasivo', cc:infoClub.cc, debe:0, haber:monto, glosa });
+                            voucherActual++;
+                        });
+                        continue;
+                    }
+
+                    // SECCIÓN GASTOS GENERALES: col C = código conocido
+                    if (!ctasGasto[colC]) continue;
                     const monto = parseInt(row[3]) || 0;
                     if (monto <= 0) continue;
-                    const glosa = String(row[4]||ctasGasto[codCuenta]).trim();
-                    // Si es gasto por club, buscar CC en col B
-                    let ccCod = 'CC000';
-                    if (ctasPorClub.has(codCuenta)) {
-                        const club = String(row[1]||'').trim();
-                        const info = CLUB_MAP[club];
-                        if (info) ccCod = info.cc;
-                    }
-                    asientosHoja.push({ fecha, voucher:voucherActual, codigo:codCuenta, cuenta:ctasGasto[codCuenta], tipo:'Gasto', cc:ccCod, debe:monto, haber:0, glosa });
-                    asientosHoja.push({ fecha, voucher:voucherActual, codigo:'21103', cuenta:'Por Pagar Asociacion', tipo:'Pasivo', cc:ccCod, debe:0, haber:monto, glosa });
+                    const glosa = String(row[4]||ctasGasto[colC]).trim();
+                    asientosHoja.push({ fecha, voucher:voucherActual, codigo:colC, cuenta:ctasGasto[colC], tipo:'Gasto', cc:'CC000', debe:monto, haber:0, glosa });
+                    asientosHoja.push({ fecha, voucher:voucherActual, codigo:'21103', cuenta:'Por Pagar Asociacion', tipo:'Pasivo', cc:'CC000', debe:0, haber:monto, glosa });
                     voucherActual++;
                 }
             }
