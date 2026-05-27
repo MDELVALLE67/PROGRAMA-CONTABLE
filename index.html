@@ -2192,7 +2192,7 @@
                 "41":      {nombre: "Ingresos Operacionales",    tipo: "Ingreso",    nivel: 2},
                 "411":     {nombre: "Ingresos por Actividades",  tipo: "Ingreso",    nivel: 3},
                 "41101":   {nombre: "Borderos",                  tipo: "Ingreso",    nivel: 4},
-                "41102":   {nombre: "Inscripciones",             tipo: "Ingreso",    nivel: 4},
+                "41102":   {nombre: "Consultas Pases e Inscripciones",             tipo: "Ingreso",    nivel: 4},
                 "41103":   {nombre: "Multas",                    tipo: "Ingreso",    nivel: 4},
                 "41104":   {nombre: "Cuotas Socios",             tipo: "Ingreso",    nivel: 4},
                 "41105":   {nombre: "Cuota Mortuoria",           tipo: "Ingreso",    nivel: 4},
@@ -7725,7 +7725,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
         const HOJA_TIPO = {
             'Borderos':                  'BORDEROS',
             'Multas':                    'INGRESO|41103|Multas',
-            'Inscripciones':             'INGRESO|41102|Inscripciones',
+            'Consultas Pases e Inscripciones': 'INGRESO|41102|Consultas Pases e Inscripciones',
             'Cuotas Socios':             'INGRESO|41104|Cuotas Socios',
             'Ingresos Varios':           'INGRESO|42102|Ingresos Varios',
             'Pagos':                     'PAGO',
@@ -8388,7 +8388,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
     const TIPO_CARGA = {
         bordero:     { cod:'41101', nombre:'Borderos',       cta_debe:'112XX', cta_haber:'41101', label:'Bordero' },
         multa:       { cod:'41103', nombre:'Multas',         cta_debe:'112XX', cta_haber:'41103', label:'Multa' },
-        inscripcion: { cod:'41102', nombre:'Inscripciones',  cta_debe:'112XX', cta_haber:'41102', label:'Inscripción' },
+        inscripcion: { cod:'41102', nombre:'Consultas Pases e Inscripciones', cta_debe:'112XX', cta_haber:'41102', label:'Consultas Pases e Inscripciones' },
         cuota:       { cod:'41104', nombre:'Cuotas Socios',  cta_debe:'112XX', cta_haber:'41104', label:'Cuota' },
         ingvarios:   { cod:'42102', nombre:'Ingresos Varios',cta_debe:'112XX', cta_haber:'42102', label:'Ingreso Varios' },
         pago:        { cod:'11101', nombre:'Pago a Caja',    cta_debe:'111XX', cta_haber:'112XX', label:'Pago' },
@@ -8679,7 +8679,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 const serieMap = [
                     {col:2, cod:'41101', nombre:'Borderos'},
                     {col:3, cod:'41103', nombre:'Multas'},
-                    {col:4, cod:'41102', nombre:'Inscripciones'},
+                    {col:4, cod:'41102', nombre:'Consultas Pases e Inscripciones'},
                     {col:5, cod:'41104', nombre:'Cuotas Socios'},
                     {col:6, cod:'41105', nombre:'Cuota Mortuoria'},
                     {col:7, cod:'42102', nombre:'Ingresos Varios'},
@@ -10819,7 +10819,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                         <select id="bord-tipo" onchange="cambiarTipoCarga()" class="form-input text-sm w-full">
                             <option value="bordero">Borderos</option>
                             <option value="multa">Multas</option>
-                            <option value="inscripcion">Inscripciones</option>
+                            <option value="inscripcion">Consultas Pases e Inscripciones</option>
                             <option value="cuota">Cuotas Socios</option>
                             <option value="ingvarios">Ingresos Varios</option>
                             <option value="pago">Ingreso a Caja (Pago)</option>
