@@ -10380,9 +10380,10 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 if (s.wrap === 'table') el = el.closest('table') || el;
                 const inner = inlinearEstilos(el);
                 if (s.titulo) {
-                    bloques += `<div style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.1);overflow:hidden;margin-bottom:18px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
-                        <div style="background:${s.color};color:#fff;font-weight:700;font-size:14px;padding:10px 18px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">${s.titulo}</div>
-                        <div style="padding:14px 16px;overflow-x:auto;">${inner}</div>
+                    const esCc = s.id === 'inf-cc-wrapper';
+                    bloques += `<div class="${esCc ? 'bloque-cc' : 'bloque'}" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.1);overflow:hidden;margin-bottom:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+                        <div style="background:${s.color};color:#fff;font-weight:700;font-size:13px;padding:8px 16px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">${s.titulo}</div>
+                        <div style="padding:10px 14px;overflow-x:auto;">${inner}</div>
                     </div>`;
                 } else {
                     bloques += `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;">${inner}</div>`;
@@ -10396,18 +10397,27 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 <style>
                     * { box-sizing: border-box; }
                     @media print {
-                        body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+                        @page { margin: 8mm 6mm; size: A4; }
+                        body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: #fff !important; padding: 0 !important; }
                         .no-print { display: none !important; }
+                        .bloque { page-break-inside: avoid; break-inside: avoid; margin-bottom: 10px !important; }
+                        .bloque-cc { page-break-inside: auto; break-inside: auto; }
+                        table { page-break-inside: auto; font-size: 9px !important; }
+                        tr { page-break-inside: avoid; break-inside: avoid; }
+                        thead { display: table-header-group; }
+                        tfoot { display: table-footer-group; }
+                        .header-principal { border-radius: 0 !important; margin: 0 0 10px 0 !important; padding: 10px 14px !important; }
+                        .header-principal div:first-child { font-size: 14px !important; }
                     }
-                    body { font-family: Arial, sans-serif; background: #f1f5f9; padding: 24px; margin: 0; font-size: 12px; }
-                    table { width: 100% !important; border-collapse: collapse !important; font-size: 11px; }
-                    th { background: #1e3a5f !important; color: #fff !important; padding: 6px 8px !important; text-align: left; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-                    td { padding: 5px 8px !important; border-bottom: 1px solid #e5e7eb !important; }
+                    body { font-family: Arial, sans-serif; background: #f1f5f9; padding: 16px; margin: 0; font-size: 11px; }
+                    table { width: 100% !important; border-collapse: collapse !important; font-size: 10px; }
+                    th { background: #1e3a5f !important; color: #fff !important; padding: 4px 6px !important; text-align: left; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+                    td { padding: 3px 6px !important; border-bottom: 1px solid #e5e7eb !important; }
                     tfoot td { font-weight: 700 !important; background: #f8fafc !important; }
                     tr:nth-child(even) td { background: #f9fafb !important; }
                 </style>
             </head><body>
-                <div style="background:linear-gradient(135deg,#1e3a5f,#0f766e);color:#fff;border-radius:12px;padding:18px 24px;margin-bottom:20px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
+                <div class="header-principal" style="background:linear-gradient(135deg,#1e3a5f,#0f766e);color:#fff;border-radius:12px;padding:18px 24px;margin-bottom:20px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
                     <div style="font-size:18px;font-weight:700;margin:0;">Informe por Período — ${emp}</div>
                     <div style="font-size:12px;margin-top:4px;opacity:.85;">Período: ${desde || 'inicio'} al ${hasta || 'hoy'}</div>
                 </div>
