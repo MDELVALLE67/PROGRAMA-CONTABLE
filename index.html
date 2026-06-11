@@ -1064,7 +1064,14 @@
                             </div>
                     </div>
                     <div class="p-6">
-                        <input type="text" id="buscar-mayor" onkeyup="filtrarMayor()" class="form-input mb-4" placeholder="🔍 Buscar por código o nombre...">
+                        <div class="flex flex-wrap gap-3 mb-4 items-end">
+                            <div><label class="block text-xs text-gray-500 mb-1">Desde</label>
+                                <input type="date" id="mayor-desde" onchange="actualizarTablaMayor()" class="form-input" style="width:150px"></div>
+                            <div><label class="block text-xs text-gray-500 mb-1">Hasta</label>
+                                <input type="date" id="mayor-hasta" onchange="actualizarTablaMayor()" class="form-input" style="width:150px"></div>
+                            <div style="flex:1;min-width:180px"><label class="block text-xs text-gray-500 mb-1">Buscar</label>
+                                <input type="text" id="buscar-mayor" onkeyup="filtrarMayor()" class="form-input" placeholder="🔍 Buscar por código o nombre..."></div>
+                        </div>
                         <div class="overflow-x-auto">
                             <table class="data-table">
                                 <thead>
@@ -1086,6 +1093,12 @@
 
             <!-- REPORTES TAB -->
             <div id="content-reportes" class="tab-content hidden">
+                <div class="bg-white rounded-2xl shadow p-4 mb-4 flex flex-wrap gap-4 items-end">
+                    <div><label class="block text-xs text-gray-500 mb-1">Desde</label>
+                        <input type="date" id="reportes-desde" onchange="calcularReportes()" class="form-input" style="width:160px"></div>
+                    <div><label class="block text-xs text-gray-500 mb-1">Hasta</label>
+                        <input type="date" id="reportes-hasta" onchange="calcularReportes()" class="form-input" style="width:160px"></div>
+                </div>
                 <!-- Fila 1: Balance General + Estado Resultados -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
@@ -1356,6 +1369,10 @@
                     </div>
                     <!-- Filtro por CC -->
                     <div class="p-4 bg-gray-50 border-b border-gray-100 flex flex-wrap gap-3 items-center">
+                        <div><label class="text-xs font-semibold text-gray-500 uppercase block mb-1">Desde</label>
+                            <input type="date" id="rptcc-desde" onchange="renderRptCC()" class="form-input py-1.5 text-sm" style="width:145px"></div>
+                        <div><label class="text-xs font-semibold text-gray-500 uppercase block mb-1">Hasta</label>
+                            <input type="date" id="rptcc-hasta" onchange="renderRptCC()" class="form-input py-1.5 text-sm" style="width:145px"></div>
                         <div>
                             <label class="text-xs font-semibold text-gray-500 uppercase block mb-1">Centro de Costo</label>
                             <select id="rptcc-filtro" onchange="renderRptCC()" class="form-input py-1.5 text-sm">
@@ -1386,7 +1403,7 @@
                     <button onclick="edclubTab('cartola')" id="btn-tab-cartola" class="px-5 py-2.5 rounded-xl font-semibold text-sm bg-white text-gray-600 border border-gray-200">📄 Cartola por Club</button>
                     <button onclick="edclubTab('antiguedad')" id="btn-tab-antiguedad" class="px-5 py-2.5 rounded-xl font-semibold text-sm bg-white text-gray-600 border border-gray-200">📅 Antigüedad de Deuda</button>
                 </div>
-                <div id="panel-estado"><div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4"><div class="section-header" style="background:linear-gradient(135deg,#1e3a5f,#2563eb)"><span class="text-xl">📋</span><span id="edclub-panel-titulo">Estado de Cuenta por Club</span><div class="ml-auto flex gap-2"><button onclick="abrirFiltroFecha('Estado de Cuenta','🖨️',(d,h)=>imprimirEstadoCuenta(d,h))" class="btn-download">🖨️ Imprimir</button><button onclick="abrirFiltroFecha('Estado de Cuenta','📊',(d,h)=>excelEstadoCuenta(d,h))" class="btn-download" style="background:linear-gradient(135deg,#166534,#15803d)">📊 Excel</button><button onclick="abrirFiltroFecha('Estado de Cuenta','📄',(d,h)=>pdfEstadoCuenta(d,h))" class="btn-download" style="background:linear-gradient(135deg,#991b1b,#dc2626)">📄 PDF</button><button onclick="abrirFiltroFecha('Todos','📄',(d,h)=>pdfTodosClubs(d,h))" class="btn-download" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c)">📄 PDF TODOS</button></div></div><div class="p-4 bg-blue-50 border-b border-blue-100 flex flex-wrap gap-4 items-center"><div><label class="text-xs font-semibold text-gray-500 uppercase block mb-1" id="edclub-filtro-label">Club</label><select id="edclub-filtro" onchange="renderEstadoCuenta()" class="form-input py-1.5 text-sm"><option value="">Todos</option></select></div><div class="ml-auto flex gap-3 text-sm text-blue-700 font-medium" id="edclub-resumen-kpis"></div></div></div><div id="edclub-contenido"></div></div>
+                <div id="panel-estado"><div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4"><div class="section-header" style="background:linear-gradient(135deg,#1e3a5f,#2563eb)"><span class="text-xl">📋</span><span id="edclub-panel-titulo">Estado de Cuenta por Club</span><div class="ml-auto flex gap-2"><button onclick="abrirFiltroFecha('Estado de Cuenta','🖨️',(d,h)=>imprimirEstadoCuenta(d,h))" class="btn-download">🖨️ Imprimir</button><button onclick="abrirFiltroFecha('Estado de Cuenta','📊',(d,h)=>excelEstadoCuenta(d,h))" class="btn-download" style="background:linear-gradient(135deg,#166534,#15803d)">📊 Excel</button><button onclick="abrirFiltroFecha('Estado de Cuenta','📄',(d,h)=>pdfEstadoCuenta(d,h))" class="btn-download" style="background:linear-gradient(135deg,#991b1b,#dc2626)">📄 PDF</button><button onclick="abrirFiltroFecha('Todos','📄',(d,h)=>pdfTodosClubs(d,h))" class="btn-download" style="background:linear-gradient(135deg,#7f1d1d,#b91c1c)">📄 PDF TODOS</button></div></div><div class="p-4 bg-blue-50 border-b border-blue-100 flex flex-wrap gap-4 items-center"><div><label class="text-xs font-semibold text-gray-500 uppercase block mb-1">Desde</label><input type="date" id="edclub-desde" onchange="renderEstadoCuenta()" class="form-input py-1.5 text-sm" style="width:145px"></div><div><label class="text-xs font-semibold text-gray-500 uppercase block mb-1">Hasta</label><input type="date" id="edclub-hasta" onchange="renderEstadoCuenta()" class="form-input py-1.5 text-sm" style="width:145px"></div><div><label class="text-xs font-semibold text-gray-500 uppercase block mb-1" id="edclub-filtro-label">Club</label><select id="edclub-filtro" onchange="renderEstadoCuenta()" class="form-input py-1.5 text-sm"><option value="">Todos</option></select></div><div class="ml-auto flex gap-3 text-sm text-blue-700 font-medium" id="edclub-resumen-kpis"></div></div></div><div id="edclub-contenido"></div></div>
                 <div id="panel-deuda" class="hidden"><div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4"><div class="section-header" style="background:linear-gradient(135deg,#7c2d12,#dc2626)"><span class="text-xl">📊</span><span id="edclub-deuda-titulo">Resumen Deuda y Saldos a Favor</span><div class="ml-auto flex gap-2"><button onclick="imprimirResumenDeuda()" class="btn-download">🖨️ Imprimir</button><button onclick="excelResumenDeuda()" class="btn-download" style="background:linear-gradient(135deg,#166534,#15803d)">📊 Excel</button><button onclick="pdfResumenDeuda()" class="btn-download" style="background:linear-gradient(135deg,#991b1b,#dc2626)">📄 PDF</button></div></div><div id="resumen-deuda-kpis" class="p-4 bg-red-50 border-b border-red-100 flex flex-wrap gap-4"></div></div><div id="resumen-deuda-contenido"></div></div>
                 <div id="panel-antiguedad" class="hidden">
                     <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4">
@@ -3206,9 +3223,12 @@
         }
 
         // Libro Mayor
-        function calcularMayor() {
+        function calcularMayor(desde='', hasta='') {
             const mayor = {};
             asientos.forEach(a => {
+                const _f = (a.fecha||'').substring(0,10);
+                if (desde && _f < desde) return;
+                if (hasta && _f > hasta) return;
                 if (!mayor[a.codigo]) {
                     mayor[a.codigo] = {
                         nombre: a.cuenta,
@@ -3224,7 +3244,9 @@
         }
 
         function actualizarTablaMayor() {
-            const mayor = calcularMayor();
+            const desde = (document.getElementById('mayor-desde')||{}).value||'';
+            const hasta = (document.getElementById('mayor-hasta')||{}).value||'';
+            const mayor = calcularMayor(desde, hasta);
             const tabla = document.getElementById('tabla-mayor');
             
             tabla.innerHTML = Object.entries(mayor)
@@ -3261,10 +3283,15 @@
         // Reportes
         function calcularReportes() {
             const fmt = n => '$' + Math.round(n).toLocaleString('es-CL');
+            const desde = (document.getElementById('reportes-desde')||{}).value||'';
+            const hasta = (document.getElementById('reportes-hasta')||{}).value||'';
 
-            // Aggregate by cuenta codigo
+            // Aggregate by cuenta codigo con filtro fecha
             const mayor = {};
             asientos.forEach(a => {
+                const _f = (a.fecha||'').substring(0,10);
+                if (desde && _f < desde) return;
+                if (hasta && _f > hasta) return;
                 const cuenta = planCuentas[a.codigo];
                 const tipo   = (cuenta && cuenta.tipo)   ? cuenta.tipo   : (a.tipo   || '');
                 const nombre = (cuenta && cuenta.nombre)  ? cuenta.nombre : (a.cuenta || a.codigo);
@@ -3369,9 +3396,9 @@
                     </div>
                 </div>`;
 
-            // Calcular tributario también
-            calcularBalanceTributario();
-            calcularBalance8col();
+            // Calcular tributario también con el mismo filtro
+            calcularBalanceTributario(desde, hasta);
+            calcularBalance8col(desde, hasta);
         }
 
         // ── BALANCE TRIBUTARIO NORMA CHILENA ─────────────────────
@@ -5081,8 +5108,10 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             if (!el) return;
             const filtrCC = document.getElementById('rptcc-filtro')?.value || '';
             const filtrTipo = document.getElementById('rptcc-tipo')?.value || '';
+            const desde = (document.getElementById('rptcc-desde')||{}).value||'';
+            const hasta = (document.getElementById('rptcc-hasta')||{}).value||'';
             const fmt = n => '$' + Math.round(n).toLocaleString('es-CL');
-            const data = buildRptCC('', '');  // screen shows all
+            const data = buildRptCC(desde, hasta);
 
             const tipoColor = t => t==='Activo'?'bg-green-100 text-green-800':t==='Pasivo'?'bg-red-100 text-red-800':t==='Patrimonio'?'bg-blue-100 text-blue-800':t==='Ingreso'?'bg-purple-100 text-purple-800':'bg-orange-100 text-orange-800';
 
@@ -5496,9 +5525,11 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             const kpi = document.getElementById('edclub-resumen-kpis');
             if (!el) return;
             const filtro = document.getElementById('edclub-filtro')?.value || '';
+            const desde  = (document.getElementById('edclub-desde')||{}).value||'';
+            const hasta  = (document.getElementById('edclub-hasta')||{}).value||'';
             const fmt = n => '$' + Math.round(Math.abs(n)).toLocaleString('es-CL');
 
-            // Agrupar TODOS los movimientos por club (CC)
+            // Agrupar movimientos por club (CC) con filtro de fecha
             const clubData = {};
             Object.entries(centrosCosto).forEach(([cod, c]) => {
                 if (cod === 'CC000') return;
@@ -5506,6 +5537,9 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             });
 
             asientos.forEach(a => {
+                const _f = (a.fecha||'').substring(0,10);
+                if (desde && _f < desde) return;
+                if (hasta && _f > hasta) return;
                 const cc = a.cc || 'CC000';
                 if (!clubData[cc]) return;
                 const cuenta = planCuentas[a.codigo];
@@ -9221,7 +9255,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             // ── KPIs ─────────────────────────────────────────────
             const kpis = [
                 { label:'Asientos', val: asts.length, color:'bg-blue-600' },
-                { label:'Hallazgos', val: descuadrados.length + vouchersDuplicados.length + faltantes.length, color: (descuadrados.length + vouchersDuplicados.length) > 0 ? 'bg-red-600' : 'bg-green-600' },
+                { label:'Hallazgos', val: descuadrados.length + vouchersDuplicados.length, color: (descuadrados.length + vouchersDuplicados.length) > 0 ? 'bg-red-600' : 'bg-green-600' },
                 { label:'Resultado', val: fmtS(resultado), color: resultado >= 0 ? 'bg-green-600' : 'bg-red-600' },
                 { label:'Balance', val: Math.abs(ecuacion) < 1 ? '✅ Cuadrado' : '❌ Descuadrado', color: Math.abs(ecuacion) < 1 ? 'bg-green-600' : 'bg-red-600' },
             ];
@@ -9252,7 +9286,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             let html = '';
 
             // ── SECCIÓN 1: HALLAZGOS ─────────────────────────────
-            const totalHallazgos = descuadrados.length + vouchersDuplicados.length + faltantes.length + sinCC.length;
+            const totalHallazgos = descuadrados.length + vouchersDuplicados.length + sinCC.length;
             let hallBody = '';
 
             // Resumen hallazgos
@@ -9260,7 +9294,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             [
                 ['⚖️ Descuadrados', descuadrados.length, 'error'],
                 ['🔁 V. Duplicados', vouchersDuplicados.length, 'warning'],
-                ['🕳️ V. Faltantes', faltantes.length, 'warning'],
+                // Faltantes removido — no es relevante para este sistema
                 ['📍 Sin CC', sinCC.length, 'info'],
             ].forEach(([lbl, cnt, tipo]) => {
                 const bg = cnt > 0 ? (tipo==='error'?'bg-red-50 border-red-200':'bg-yellow-50 border-yellow-200') : 'bg-green-50 border-green-200';
@@ -9301,12 +9335,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 hallBody += '</div>';
             }
 
-            if (faltantes.length > 0) {
-                hallBody += '<div class="mb-4"><div class="text-sm font-bold text-yellow-700 mb-2">🕳️ Vouchers Faltantes en la Secuencia</div>';
-                hallBody += '<p class="text-xs text-gray-500 mb-2">Los siguientes números de voucher no tienen registro. Pueden haber sido eliminados o nunca registrados.</p>';
-                hallBody += '<div class="flex flex-wrap gap-2">'+faltantes.map(v=>'<span class="font-mono text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">V'+v+'</span>').join('')+'</div>';
-                hallBody += '</div>';
-            }
+            // Vouchers faltantes removido
 
             if (sinCC.length > 0) {
                 hallBody += '<div class="mb-2"><div class="text-sm font-bold text-blue-700 mb-2">📍 Movimientos sin Centro de Costo</div>';
@@ -9456,6 +9485,80 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
 
             html += mkCard('FLUJO DE CAJA', 'bg-gradient-to-r from-teal-700 to-cyan-700', '💧', flujoBody);
 
+            // ── SECCIÓN 4b: ANÁLISIS DE CONCENTRACIÓN ───────────────
+            let concenBody = '';
+
+            // Top 5 gastos
+            const topGastos = gasItems.slice().sort((a,b)=>b.saldo-a.saldo).slice(0,5);
+            const totalGastosSum = gasItems.reduce((s,i)=>s+i.saldo,0);
+            concenBody += '<div class="grid grid-cols-1 md:grid-cols-2 gap-5">';
+
+            // Top gastos
+            concenBody += '<div>';
+            concenBody += '<div class="text-sm font-bold text-orange-700 mb-3">📤 Top Gastos del Período</div>';
+            if (topGastos.length > 0) {
+                concenBody += '<div class="space-y-2">';
+                topGastos.forEach((g,i) => {
+                    const pct = totalGastosSum > 0 ? Math.round(g.saldo/totalGastosSum*100) : 0;
+                    const colores = ['bg-red-500','bg-orange-500','bg-amber-500','bg-yellow-500','bg-lime-500'];
+                    concenBody += '<div class="bg-gray-50 rounded-xl p-3">' +
+                        '<div class="flex justify-between text-sm mb-1"><span class="font-medium text-gray-700">'+(i+1)+'. '+g.nom+'</span><span class="font-mono font-bold text-orange-700">'+fmt(g.saldo)+'</span></div>' +
+                        '<div class="flex items-center gap-2"><div class="flex-1 bg-gray-200 rounded-full h-2"><div class="'+colores[i]+' h-2 rounded-full" style="width:'+pct+'%"></div></div><span class="text-xs text-gray-500">'+pct+'%</span></div>' +
+                        '</div>';
+                });
+                concenBody += '</div>';
+            } else {
+                concenBody += '<div class="text-gray-400 text-center py-4">Sin gastos en el período</div>';
+            }
+            concenBody += '</div>';
+
+            // Top ingresos por club (CC)
+            concenBody += '<div>';
+            concenBody += '<div class="text-sm font-bold text-green-700 mb-3">📥 Top Clubs por Ingresos</div>';
+            const ingClub = {};
+            asts.forEach(a => {
+                const cta = planCuentas[a.codigo];
+                if (!cta || cta.tipo !== 'Ingreso') return;
+                const cc = a.cc || 'CC000';
+                const nom = centrosCosto[cc]?.nombre || cc;
+                if (!ingClub[cc]) ingClub[cc] = {nom, total:0};
+                ingClub[cc].total += (a.haber||0)-(a.debe||0);
+            });
+            const topClubs = Object.values(ingClub).filter(c=>c.total>0).sort((a,b)=>b.total-a.total).slice(0,5);
+            const totalIngClub = Object.values(ingClub).reduce((s,c)=>s+c.total,0);
+            if (topClubs.length > 0) {
+                concenBody += '<div class="space-y-2">';
+                topClubs.forEach((c,i) => {
+                    const pct = totalIngClub > 0 ? Math.round(c.total/totalIngClub*100) : 0;
+                    const colores = ['bg-green-500','bg-emerald-500','bg-teal-500','bg-cyan-500','bg-sky-500'];
+                    concenBody += '<div class="bg-gray-50 rounded-xl p-3">' +
+                        '<div class="flex justify-between text-sm mb-1"><span class="font-medium text-gray-700">'+(i+1)+'. '+c.nom+'</span><span class="font-mono font-bold text-green-700">'+fmt(c.total)+'</span></div>' +
+                        '<div class="flex items-center gap-2"><div class="flex-1 bg-gray-200 rounded-full h-2"><div class="'+colores[i]+' h-2 rounded-full" style="width:'+pct+'%"></div></div><span class="text-xs text-gray-500">'+pct+'%</span></div>' +
+                        '</div>';
+                });
+                concenBody += '</div>';
+            } else {
+                concenBody += '<div class="text-gray-400 text-center py-4">Sin ingresos por club en el período</div>';
+            }
+            concenBody += '</div>';
+            concenBody += '</div>';
+
+            // Cuentas sin movimiento en el período
+            const codsConMov = new Set(asts.map(a=>a.codigo));
+            const sinMov = Object.entries(planCuentas)
+                .filter(([cod,c]) => c.nivel===4 && !codsConMov.has(cod))
+                .sort((a,b)=>a[0].localeCompare(b[0]));
+            if (sinMov.length > 0) {
+                concenBody += '<div class="mt-5"><div class="text-sm font-bold text-gray-500 mb-2">💤 Cuentas Sin Movimiento en el Período ('+sinMov.length+')</div>';
+                concenBody += '<div class="flex flex-wrap gap-2">';
+                sinMov.forEach(([cod,c]) => {
+                    concenBody += '<span class="text-xs bg-gray-100 text-gray-500 px-2 py-1 rounded font-mono">'+cod+' '+c.nombre+'</span>';
+                });
+                concenBody += '</div></div>';
+            }
+
+            html += mkCard('ANÁLISIS DE CONCENTRACIÓN', 'bg-gradient-to-r from-blue-700 to-indigo-700', '📊', concenBody);
+
             // ── SECCIÓN 5: CONCLUSIÓN ────────────────────────────
             let concBody = '';
             const semaforo = (ok, msg) => '<div class="flex items-center gap-2 mb-2"><span class="text-lg">'+(ok?'🟢':'🔴')+'</span><span class="text-sm '+(ok?'text-green-700':'text-red-700')+'">'+msg+'</span></div>';
@@ -9463,7 +9566,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             concBody += '<div>';
             concBody += semaforo(descuadrados.length===0, 'Asientos correctamente cuadrados');
             concBody += semaforo(vouchersDuplicados.length===0, 'Sin vouchers con líneas duplicadas');
-            concBody += semaforo(faltantes.length===0, 'Secuencia de vouchers sin faltantes');
+            // faltantes removido de conclusión
             concBody += semaforo(sinCC.length===0, 'Todos los movimientos con centro de costo');
             concBody += semaforo(eqOk, 'Ecuación contable balanceada');
             concBody += '</div><div>';
@@ -9471,8 +9574,8 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             concBody += semaforo(activo > 0, 'Activos registrados: '+fmt(activo));
             concBody += semaforo(totalEntradas >= totalSalidas, totalEntradas>=totalSalidas?'Flujo de caja positivo':'Flujo de caja negativo');
             concBody += '</div></div>';
-            const puntaje = [descuadrados.length===0, vouchersDuplicados.length===0, faltantes.length===0, sinCC.length===0, eqOk, resultado>=0, totalEntradas>=totalSalidas].filter(Boolean).length;
-            const pct = Math.round(puntaje/7*100);
+            const puntaje = [descuadrados.length===0, vouchersDuplicados.length===0, sinCC.length===0, eqOk, resultado>=0, totalEntradas>=totalSalidas].filter(Boolean).length;
+            const pct = Math.round(puntaje/6*100);
             const pctColor = pct>=80?'bg-green-600':pct>=60?'bg-yellow-500':'bg-red-600';
             concBody += '<div class="mt-4 p-4 bg-gray-50 rounded-xl border"><div class="flex justify-between items-center mb-2"><span class="font-bold text-gray-700">Índice de Salud Contable</span><span class="font-bold text-lg '+pctColor.replace('bg-','text-')+'">'+pct+'%</span></div>';
             concBody += '<div class="w-full bg-gray-200 rounded-full h-3"><div class="'+pctColor+' h-3 rounded-full" style="width:'+pct+'%"></div></div>';
@@ -9490,8 +9593,8 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             let tipoOpinion, colorOpinion, iconoOpinion, parrafoOpinion, parrafoSalvedades = '';
 
             const tieneErroresGraves = descuadrados.length > 0 || !eqOk;
-            const tieneAdvertencias  = vouchersDuplicados.length > 0 || faltantes.length > 5;
-            const tieneObservaciones = sinCC.length > 0 || faltantes.length > 0;
+            const tieneAdvertencias  = vouchersDuplicados.length > 0;
+            const tieneObservaciones = sinCC.length > 0;
 
             if (tieneErroresGraves) {
                 tipoOpinion   = 'OPINIÓN ADVERSA (CON SALVEDADES SIGNIFICATIVAS)';
@@ -9509,7 +9612,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 parrafoOpinion = 'En nuestra opinión, excepto por los asuntos descritos en el párrafo de fundamento de la opinión con salvedades, los estados financieros de ' + empNom + ' correspondientes al período ' + periodo + ' <strong>presentan razonablemente</strong>, en todos los aspectos materiales, la situación financiera de la entidad, de conformidad con los principios de contabilidad generalmente aceptados.';
                 parrafoSalvedades = '<div class="mt-3 p-3 bg-yellow-50 rounded-xl border border-yellow-200"><div class="font-bold text-yellow-700 mb-2 text-sm">📌 Fundamento de la Opinión con Salvedades:</div><ul class="text-sm text-yellow-700 space-y-1">' +
                     (vouchersDuplicados.length > 0 ? '<li>• Se identificaron <strong>'+vouchersDuplicados.length+' vouchers con líneas duplicadas</strong>, lo que podría indicar una doble contabilización de operaciones.</li>' : '') +
-                    (faltantes.length > 5 ? '<li>• Existen <strong>'+faltantes.length+' números de voucher faltantes</strong> en la secuencia, lo que dificulta el seguimiento de la trazabilidad de las operaciones.</li>' : '') +
+                    // faltantes removido +
                     '</ul></div>';
             } else if (tieneObservaciones) {
                 tipoOpinion   = 'OPINIÓN LIMPIA CON OBSERVACIONES';
@@ -9518,7 +9621,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 parrafoOpinion = 'En nuestra opinión, los estados financieros de ' + empNom + ' correspondientes al período ' + periodo + ' <strong>presentan razonablemente</strong>, en todos los aspectos materiales, la situación financiera de la entidad, de conformidad con los principios de contabilidad generalmente aceptados. Sin perjuicio de lo anterior, se han identificado observaciones que se detallan a continuación.';
                 parrafoSalvedades = '<div class="mt-3 p-3 bg-blue-50 rounded-xl border border-blue-200"><div class="font-bold text-blue-700 mb-2 text-sm">📌 Observaciones:</div><ul class="text-sm text-blue-700 space-y-1">' +
                     (sinCC.length > 0 ? '<li>• Se detectaron <strong>'+sinCC.length+' movimientos sin centro de costo</strong>. Se recomienda completar esta información para mejorar el control presupuestal.</li>' : '') +
-                    (faltantes.length > 0 ? '<li>• Existen <strong>'+faltantes.length+' vouchers faltantes</strong> en la secuencia numérica. Se recomienda verificar si corresponden a documentos anulados o no registrados.</li>' : '') +
+                    // faltantes removido +
                     '</ul></div>';
             } else {
                 tipoOpinion   = 'OPINIÓN LIMPIA (SIN SALVEDADES)';
