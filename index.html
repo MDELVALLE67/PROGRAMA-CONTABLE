@@ -597,6 +597,11 @@
                         <span>Auditoría</span>
                         <div class="nav-indicator"></div>
                     </button>
+                    <button onclick="changeTab('cierre')" class="nav-item" id="tab-cierre">
+                        <span>🔒</span>
+                        <span>Cierre Anual</span>
+                        <div class="nav-indicator"></div>
+                    </button>
                     <button onclick="changeTab('conciliacion')" class="nav-item permisos-admin" id="tab-conciliacion">
                         <span>🏦</span>
                         <span>Conciliación</span>
@@ -1455,6 +1460,27 @@
             
 
             <!-- CONCILIACIÓN BANCARIA TAB -->
+     
+            <div id="content-cierre" class="tab-content hidden">
+                <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4">
+                    <div class="section-header" style="background:linear-gradient(135deg,#581c87,#9333ea)">
+                        <span class="text-xl">🔒</span><span>Cierre Anual de Ejercicio</span>
+                    </div>
+                    <div class="p-4 bg-purple-50 border-b border-purple-100 flex flex-wrap gap-4 items-center">
+                        <div>
+                            <label class="text-xs font-semibold text-gray-500 uppercase block mb-1">Año a Cerrar</label>
+                            <select id="cierre-anio" onchange="calcularCierreAnual()" class="form-input py-1.5 text-sm"></select>
+                        </div>
+                        <button onclick="calcularCierreAnual()" class="btn-download" style="background:linear-gradient(135deg,#581c87,#9333ea)">🔄 Calcular</button>
+                    </div>
+                </div>
+                <div id="cierre-contenido">
+                    <div class="bg-white rounded-2xl p-12 text-center text-gray-400">
+                        <div class="text-5xl mb-3">🔒</div>
+                        <div class="text-sm">Selecciona un año y haz clic en Calcular</div>
+                    </div>
+                </div>
+            </div>
             <div id="content-conciliacion" class="tab-content hidden">
 
                 <!-- Header -->
@@ -10016,6 +10042,177 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             showToast('✅ Excel completo generado con 5 hojas', 'success');
         }
 
+
+        function iniciarCierreAnual() {
+            const sel = document.getElementById('cierre-anio');
+            const el = document.getElementById('cierre-contenido');
+            if (!sel) return;
+            const years = new Set();
+            (asientos||[]).forEach(a => { if (a&&a.fecha) years.add(String(a.fecha).substring(0,4)); });
+            const yearsArr = Array.from(years).sort((a,b)=>b.localeCompare(a));
+            sel.innerHTML = '';
+            if (!yearsArr.length) {
+                sel.innerHTML = '<option>Sin datos</option>';
+                if (el) el.innerHTML = '<div class="bg-white rounded-2xl p-12 text-center text-gray-400"><div class="text-5xl mb-3">🔒</div><div class="text-sm">No hay asientos registrados en esta empresa</div></div>';
+                return;
+            }
+            yearsArr.forEach(y => { const o=document.createElement('option'); o.value=o.textContent=y; sel.appendChild(o); });
+            calcularCierreAnual();
+        }
+
+        function calcularCierreAnual() {
+            try {
+            const anio = document.getElementById('cierre-anio')?.value;
+            const el = document.getElementById('cierre-contenido');
+            if (!anio||!el) return;
+            const fmt = n=>'$'+Math.round(Math.abs(n)).toLocaleString('es-CL');
+            const fmtS = n=>(n<0?'-':'')+fmt(n);
+            const colorN = n=>n>=0?'text-green-600':'text-red-600';
+
+            const anioSig = String(parseInt(anio)+1);
+            const hasta = anio+'-12-31';
+
+            // Verificar si ya existe asiento de apertura para el año siguiente
+            const yaExiste = (asientos||[]).some(a=>
+                a.fecha===anioSig+'-01-01' && a.glosa && a.glosa.includes('APERTURA '+anioSig)
+            );
+
+            // Calcular mayor acumulado hasta 31-dic del año a cerrar
+            const may={};
+            (asientos||[]).filter(a=>a.fecha<=hasta).forEach(a=>{
+                const cod=String(a.codigo||'').trim(); if(!cod)return;
+                if(!may[cod]){const cta=planCuentas[cod]||{}; may[cod]={nombre:a.cuenta||cta.nombre||cod,tipo:a.tipo||cta.tipo,debe:0,haber:0};}
+                may[cod].debe+=parseFloat(a.debe)||0;
+                may[cod].haber+=parseFloat(a.haber)||0;
+            });
+
+            // Separar por tipo y calcular saldos
+            let totActivo=0,totPasivo=0,totPatrimonio=0,totIng=0,totGas=0;
+            const activos=[],pasivos=[],patrimonios=[];
+
+            Object.entries(may).forEach(([cod,d])=>{
+                const cta=planCuentas[cod]; if(!cta||cta.nivel!==4)return;
+                const tipo=cta.tipo||d.tipo;
+                if(tipo==='Activo'){
+                    const s=d.debe-d.haber;
+                    if(Math.round(s)!==0){totActivo+=s;activos.push({cod,nom:cta.nombre||d.nombre,saldo:s});}
+                } else if(tipo==='Pasivo'){
+                    const s=d.haber-d.debe;
+                    if(Math.round(s)!==0){totPasivo+=s;pasivos.push({cod,nom:cta.nombre||d.nombre,saldo:s});}
+                } else if(tipo==='Patrimonio'){
+                    const s=d.haber-d.debe;
+                    if(Math.round(s)!==0){totPatrimonio+=s;patrimonios.push({cod,nom:cta.nombre||d.nombre,saldo:s});}
+                } else if(tipo==='Ingreso'){
+                    totIng+=d.haber-d.debe;
+                } else if(tipo==='Gasto'){
+                    totGas+=d.debe-d.haber;
+                }
+            });
+
+            const resultado=totIng-totGas;
+            const totalPasPatRes=totPasivo+totPatrimonio+resultado;
+
+            window._cierreData={anio,anioSig,activos,pasivos,patrimonios,resultado,totActivo,totPasivo,totPatrimonio,yaExiste};
+
+            let html='';
+
+            if(yaExiste){
+                html+='<div class="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-4 mb-4"><span class="font-bold text-yellow-800">⚠️ Ya existe un asiento de apertura para el '+anioSig+'</span></div>';
+            }
+
+            // KPIs
+            html+='<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-5">';
+            html+='<div class="bg-gradient-to-br from-green-600 to-green-800 text-white rounded-2xl p-4 text-center"><div class="text-xs opacity-80 mb-1">Total Activo al 31-12-'+anio+'</div><div class="text-lg font-bold font-mono">'+fmt(totActivo)+'</div></div>';
+            html+='<div class="bg-gradient-to-br from-red-600 to-red-800 text-white rounded-2xl p-4 text-center"><div class="text-xs opacity-80 mb-1">Total Pasivo al 31-12-'+anio+'</div><div class="text-lg font-bold font-mono">'+fmt(totPasivo)+'</div></div>';
+            html+='<div class="bg-gradient-to-br from-blue-600 to-blue-800 text-white rounded-2xl p-4 text-center"><div class="text-xs opacity-80 mb-1">Patrimonio al 31-12-'+anio+'</div><div class="text-lg font-bold font-mono">'+fmt(totPatrimonio)+'</div></div>';
+            html+='<div class="bg-gradient-to-br '+(resultado>=0?'from-purple-600 to-purple-800':'from-orange-600 to-orange-800')+' text-white rounded-2xl p-4 text-center"><div class="text-xs opacity-80 mb-1">Resultado '+anio+'</div><div class="text-lg font-bold font-mono">'+fmtS(resultado)+'</div></div>';
+            html+='</div>';
+
+            html+='<div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4">';
+            html+='<div class="px-5 py-3 bg-gradient-to-r from-purple-700 to-indigo-700 text-white font-bold">📋 Vista Previa — Asiento de Apertura al 01-01-'+anioSig+'</div>';
+            html+='<div class="p-5">';
+            html+='<p class="text-sm text-gray-600 mb-4 p-3 bg-purple-50 rounded-xl border border-purple-100">Al confirmar se generará un <strong>asiento de apertura con fecha 01-01-'+anioSig+'</strong> con los saldos reales de todas las cuentas de Activo y Pasivo al cierre del '+anio+'. El resultado del ejercicio ('+fmtS(resultado)+') se traspasa a <strong>31201 — Resultado Ejercicio Ant.</strong></p>';
+
+            // Tabla activos (Debe en apertura)
+            html+='<div class="mb-4"><div class="text-sm font-bold text-green-700 mb-2">🏦 ACTIVOS — van al DEBE en apertura</div>';
+            html+='<div class="overflow-x-auto rounded-xl border border-gray-100"><table class="w-full text-sm"><thead><tr class="bg-gray-50 border-b text-xs uppercase text-gray-500"><th class="px-4 py-2 text-left">Código</th><th class="px-4 py-2 text-left">Cuenta</th><th class="px-4 py-2 text-right">Saldo</th></tr></thead><tbody>';
+            activos.sort((a,b)=>a.cod.localeCompare(b.cod)).forEach(i=>{
+                html+='<tr class="border-b"><td class="px-4 py-2 font-mono text-xs">'+i.cod+'</td><td class="px-4 py-2">'+i.nom+'</td><td class="px-4 py-2 text-right font-mono text-green-600">'+fmt(i.saldo)+'</td></tr>';
+            });
+            html+='<tr class="bg-green-600 text-white font-bold"><td colspan="2" class="px-4 py-2">TOTAL ACTIVO</td><td class="px-4 py-2 text-right font-mono">'+fmt(totActivo)+'</td></tr>';
+            html+='</tbody></table></div></div>';
+
+            // Tabla pasivos+patrimonio+resultado (Haber en apertura)
+            html+='<div class="mb-4"><div class="text-sm font-bold text-red-700 mb-2">💳 PASIVOS + PATRIMONIO + RESULTADO — van al HABER en apertura</div>';
+            html+='<div class="overflow-x-auto rounded-xl border border-gray-100"><table class="w-full text-sm"><thead><tr class="bg-gray-50 border-b text-xs uppercase text-gray-500"><th class="px-4 py-2 text-left">Código</th><th class="px-4 py-2 text-left">Cuenta</th><th class="px-4 py-2 text-right">Saldo</th></tr></thead><tbody>';
+            pasivos.sort((a,b)=>a.cod.localeCompare(b.cod)).forEach(i=>{
+                html+='<tr class="border-b"><td class="px-4 py-2 font-mono text-xs">'+i.cod+'</td><td class="px-4 py-2">'+i.nom+'</td><td class="px-4 py-2 text-right font-mono text-red-600">'+fmt(i.saldo)+'</td></tr>';
+            });
+            patrimonios.sort((a,b)=>a.cod.localeCompare(b.cod)).forEach(i=>{
+                html+='<tr class="border-b"><td class="px-4 py-2 font-mono text-xs">'+i.cod+'</td><td class="px-4 py-2">'+i.nom+'</td><td class="px-4 py-2 text-right font-mono text-blue-600">'+fmt(i.saldo)+'</td></tr>';
+            });
+            // Resultado va a 31201
+            const nom31201=planCuentas['31201']?.nombre||'Resultado Ejercicio Ant.';
+            html+='<tr class="border-b '+(resultado>=0?'bg-green-50':'bg-red-50')+'"><td class="px-4 py-2 font-mono text-xs">31201</td><td class="px-4 py-2 font-medium">'+nom31201+' <span class="text-xs text-gray-400">(Resultado '+anio+')</span></td><td class="px-4 py-2 text-right font-mono '+(resultado>=0?'text-green-600':'text-red-600')+'">'+fmtS(resultado)+'</td></tr>';
+            html+='<tr class="bg-blue-700 text-white font-bold"><td colspan="2" class="px-4 py-2">TOTAL PASIVO + PATRIMONIO + RESULTADO</td><td class="px-4 py-2 text-right font-mono">'+fmt(totalPasPatRes)+'</td></tr>';
+            html+='</tbody></table></div></div>';
+
+            // Verificación balance
+            const diff=totActivo-totalPasPatRes;
+            html+='<div class="p-4 rounded-xl '+(Math.abs(diff)<1?'bg-green-50 border-2 border-green-300':'bg-red-50 border-2 border-red-300')+'">';
+            html+='<div class="flex justify-between items-center"><span class="font-bold '+(Math.abs(diff)<1?'text-green-700':'text-red-700')+'">'+(Math.abs(diff)<1?'✅ Balance cuadra':'❌ Balance no cuadra — diferencia: '+fmtS(diff))+'</span><span class="font-mono text-sm">Activo '+fmt(totActivo)+' = Pas+Pat+Res '+fmt(totalPasPatRes)+'</span></div>';
+            html+='</div>';
+            html+='</div></div>';
+
+            // Botón confirmar
+            html+='<div class="bg-white rounded-2xl shadow-lg p-5 flex items-center justify-between gap-3">';
+            html+='<div class="text-sm text-gray-600">Revisa los saldos. Al confirmar se creará el asiento de apertura en el Libro Diario con fecha 01-01-'+anioSig+'</div>';
+            html+='<button onclick="confirmarCierreAnual()" class="btn-primary text-sm" style="background:linear-gradient(135deg,#581c87,#9333ea)">✅ Confirmar Apertura '+anioSig+'</button>';
+            html+='</div>';
+
+            el.innerHTML=html;
+            } catch(e) {
+                const el=document.getElementById('cierre-contenido');
+                if(el) el.innerHTML='<div class="bg-red-50 border-2 border-red-300 rounded-2xl p-6 text-center"><div class="text-4xl mb-2">⚠️</div><div class="font-bold text-red-700">'+e.message+'</div></div>';
+            }
+        }
+
+        function confirmarCierreAnual() {
+            const d=window._cierreData; if(!d)return;
+            const {anio,anioSig,activos,pasivos,patrimonios,resultado} = d;
+            if(!confirm('¿Confirmar asiento de apertura al 01-01-'+anioSig+'?\n\nSe traspastarán todos los saldos de Activo y Pasivo, y el resultado del '+anio+' ('+resultado.toLocaleString('es-CL')+') irá a Resultado Ejercicio Ant. (31201).')) return;
+
+            const fecha=anioSig+'-01-01';
+            const v=(Math.max(0,...(asientos||[]).map(a=>a.voucher||0))||0)+1;
+            const glosa='APERTURA '+anioSig;
+            const nom31201=planCuentas['31201']?.nombre||'Resultado Ejercicio Ant.';
+
+            // DEBE: todos los activos
+            activos.forEach(i=>{
+                asientos.push({fecha,voucher:v,codigo:i.cod,cuenta:i.nom,tipo:'Activo',cc:'CC000',debe:Math.round(i.saldo),haber:0,glosa});
+            });
+            // HABER: pasivos
+            pasivos.forEach(i=>{
+                asientos.push({fecha,voucher:v,codigo:i.cod,cuenta:i.nom,tipo:'Pasivo',cc:'CC000',debe:0,haber:Math.round(i.saldo),glosa});
+            });
+            // HABER: patrimonio existente
+            patrimonios.forEach(i=>{
+                asientos.push({fecha,voucher:v,codigo:i.cod,cuenta:i.nom,tipo:'Patrimonio',cc:'CC000',debe:0,haber:Math.round(i.saldo),glosa});
+            });
+            // HABER: resultado va a 31201
+            if(resultado>=0){
+                asientos.push({fecha,voucher:v,codigo:'31201',cuenta:nom31201,tipo:'Patrimonio',cc:'CC000',debe:0,haber:Math.round(resultado),glosa:glosa+' - Resultado '+anio});
+            } else {
+                asientos.push({fecha,voucher:v,codigo:'31201',cuenta:nom31201,tipo:'Patrimonio',cc:'CC000',debe:Math.round(Math.abs(resultado)),haber:0,glosa:glosa+' - Resultado '+anio});
+            }
+
+            guardarLocalStorage();
+            actualizarTodo();
+            showToast('✅ Asiento de apertura '+anioSig+' generado correctamente','success');
+            calcularCierreAnual();
+        }
+
+
         function changeTab(tabName) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -10043,6 +10240,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             if (tabName === 'informe')    iniciarInforme();
             if (tabName === 'auditoria') iniciarAuditoria();
             if (tabName === 'auditoria') iniciarAuditoria();
+            if (tabName === 'cierre') { try { iniciarCierreAnual(); } catch(e) { const el=document.getElementById('cierre-contenido'); if(el) el.innerHTML='<div class="bg-red-50 p-6 text-center rounded-2xl"><div class="text-red-700 font-bold">'+e.message+'</div></div>'; } }
         }
 
         function actualizarTodo() {
