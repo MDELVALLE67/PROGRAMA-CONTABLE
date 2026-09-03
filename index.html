@@ -1962,6 +1962,7 @@
         let sesionActual = {usuario: null, rol: null, empresa: null};
         let _firestoreListener = null;
         let _syncTimeout = null;
+        let _cargandoDatos = false; // flag para evitar syncFirebase durante carga inicial
 
         // ── FIREBASE CONFIG ───────────────────────────────────────
         const firebaseConfig = {
@@ -2130,6 +2131,7 @@
 
         function syncFirebase() {
             if (!sesionActual.empresa) return;
+            if (_cargandoDatos) return; // no sincronizar durante carga inicial
             clearTimeout(_syncTimeout);
             _syncTimeout = setTimeout(() => guardarEnFirebase(sesionActual.empresa), 2000);
         }
@@ -2352,8 +2354,7 @@
                     presupuesto[cod] = {presupuestado: 0, ejecutado: 0};
                 }
             });
-            
-            guardarLocalStorage();
+            // NO llamar guardarLocalStorage() aquí — se llama desde cargarLocalStorage con datos ya completos
         }
 
         function guardarLocalStorage() {
@@ -2451,8 +2452,7 @@
             if (!flujoCuentas || flujoCuentas.length === 0) {
                 flujoCuentas = autoPopularFlujoCuentas();
             }
-
-            guardarLocalStorage();
+            // NO llamar guardarLocalStorage() aquí — causaría sobreescribir datos con estado incompleto
         }
 
         // Login
@@ -2607,8 +2607,10 @@
                 if (rol === 'solo_lectura') {
                     document.querySelectorAll('.permisos-admin').forEach(el => el.style.display = 'none');
                 }
+                _cargandoDatos = true;
                 cargarDesdeFirebase(empresa).then(cargado => {
                     cargarLocalStorage();
+                    _cargandoDatos = false;
                     actualizarTodo();
                     initLineasDiario();
                     // Actualizar nombre empresa por si Firebase trajo config actualizada
