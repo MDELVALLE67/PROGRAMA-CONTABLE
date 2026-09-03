@@ -2016,18 +2016,43 @@
                     'ppto_montos_' + empresa,
                     'plan_cuentas_' + empresa,
                     'usuarios_claves'
-                    // empresas_config es global, se guarda solo en doc 'global', no por empresa
                 ];
                 const datos = {};
                 keys.forEach(k => {
                     const v = localStorage.getItem(k);
                     if (v) datos[k] = v;
                 });
-                await db.collection('empresas').doc(empresa).set({datos, updated: new Date().toISOString(), timestamp: Date.now()});
-                // NOTA: empresas_config se guarda en doc 'global' SOLO desde guardarConfigEmpresas()
-                // No se toca aqui para evitar sobrescribir nombres con versiones antiguas
-                console.log('Firebase guardado OK:', Object.keys(datos));
-            } catch(e) { console.warn('Firebase save error:', e); }
+
+                // Separar asientos en chunks de ~700KB para evitar límite 1MB de Firestore
+                const keyAsientos = 'asientos_' + empresa;
+                const asientosRaw = datos[keyAsientos] || '';
+                const CHUNK_SIZE = 700000; // 700KB por chunk
+
+                if (asientosRaw.length > CHUNK_SIZE) {
+                    // Guardar asientos en chunks separados
+                    delete datos[keyAsientos];
+                    const chunks = [];
+                    for (let i = 0; i < asientosRaw.length; i += CHUNK_SIZE) {
+                        chunks.push(asientosRaw.slice(i, i + CHUNK_SIZE));
+                    }
+                    // Guardar doc principal sin asientos
+                    datos['asientos_chunks'] = chunks.length;
+                    await db.collection('empresas').doc(empresa).set({datos, updated: new Date().toISOString(), timestamp: Date.now()});
+                    // Guardar cada chunk en subcolección
+                    for (let i = 0; i < chunks.length; i++) {
+                        await db.collection('empresas').doc(empresa).collection('chunks').doc('asientos_' + i).set({data: chunks[i]});
+                    }
+                    // Borrar chunks viejos si había menos
+                    for (let i = chunks.length; i < 10; i++) {
+                        try { await db.collection('empresas').doc(empresa).collection('chunks').doc('asientos_' + i).delete(); } catch(e) {}
+                    }
+                    console.log('Firebase guardado en', chunks.length, 'chunks OK');
+                } else {
+                    datos['asientos_chunks'] = 0;
+                    await db.collection('empresas').doc(empresa).set({datos, updated: new Date().toISOString(), timestamp: Date.now()});
+                    console.log('Firebase guardado OK:', Object.keys(datos));
+                }
+            } catch(e) { console.warn('Firebase save error:', e); showToast('Error guardando en la nube: ' + e.message, 'error'); }
         }
 
         async function cargarDesdeFirebase(empresa) {
@@ -2057,15 +2082,27 @@
                 }
                 const doc = await db.collection('empresas').doc(empresa).get();
                 if (doc.exists && doc.data().datos) {
+                    const datos = doc.data().datos;
                     // Limpiar datos locales de esta empresa (NO borrar empresas_config, es config global)
                     const keysToRemove = Object.keys(localStorage).filter(k => 
                         k.endsWith('_' + empresa) || k === 'usuarios_claves'
                     );
                     keysToRemove.forEach(k => localStorage.removeItem(k));
                     // Escribir datos de Firebase — NUNCA pisar empresas_config (es global)
-                    Object.entries(doc.data().datos).forEach(([k,v]) => {
-                        if (k !== 'empresas_config') localStorage.setItem(k, v);
+                    Object.entries(datos).forEach(([k,v]) => {
+                        if (k !== 'empresas_config' && k !== 'asientos_chunks') localStorage.setItem(k, v);
                     });
+                    // Rearmar asientos desde chunks si corresponde
+                    const numChunks = parseInt(datos['asientos_chunks'] || '0');
+                    if (numChunks > 0) {
+                        let asientosCompletos = '';
+                        for (let i = 0; i < numChunks; i++) {
+                            const chunkDoc = await db.collection('empresas').doc(empresa).collection('chunks').doc('asientos_' + i).get();
+                            if (chunkDoc.exists) asientosCompletos += chunkDoc.data().data || '';
+                        }
+                        if (asientosCompletos) localStorage.setItem('asientos_' + empresa, asientosCompletos);
+                        console.log('Asientos cargados desde', numChunks, 'chunks OK');
+                    }
                     return true;
                 }
             } catch(e) { console.warn('Firebase load error:', e); }
