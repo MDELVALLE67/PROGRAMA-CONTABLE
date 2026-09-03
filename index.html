@@ -2010,64 +2010,34 @@
         async function guardarEnFirebase(empresa) {
             if (!empresa || !db) return;
             try {
-                const batch = db.batch();
-
-                // ── Asientos: partir en chunks de 400 asientos (~200KB c/u) ──
-                const asientosJson = localStorage.getItem('asientos_' + empresa);
-                const todosAsientos = asientosJson ? JSON.parse(asientosJson) : [];
-                const CHUNK = 400;
-                const totalChunks = Math.max(1, Math.ceil(todosAsientos.length / CHUNK));
-
-                for (let i = 0; i < totalChunks; i++) {
-                    const chunk = todosAsientos.slice(i * CHUNK, (i + 1) * CHUNK);
-                    const docId = empresa + '_asientos_' + i;
-                    const ref = db.collection('empresas_data').doc(docId);
-                    batch.set(ref, {
-                        empresa,
-                        chunk: i,
-                        totalChunks,
-                        data: JSON.stringify(chunk),
-                        updated: new Date().toISOString()
-                    });
-                }
-
-                // Borrar chunks sobrantes si se redujeron
-                const oldMeta = await db.collection('empresas').doc(empresa).get();
-                const oldChunks = (oldMeta.exists && oldMeta.data().totalAsientosChunks) || 0;
-                if (oldChunks > totalChunks) {
-                    for (let i = totalChunks; i < oldChunks; i++) {
-                        const ref = db.collection('empresas_data').doc(empresa + '_asientos_' + i);
-                        batch.delete(ref);
-                    }
-                }
-
-                // ── Config/otros: doc principal (sin asientos) ──
+                const keys = [
+                    'asientos_' + empresa,
+                    'flujo_' + empresa,
+                    'ppto_montos_' + empresa,
+                    'plan_cuentas_' + empresa,
+                    'usuarios_claves'
+                    // empresas_config es global, se guarda solo en doc 'global', no por empresa
+                ];
                 const datos = {};
-                ['flujo_'+empresa, 'ppto_montos_'+empresa, 'plan_cuentas_'+empresa, 'usuarios_claves'].forEach(k => {
+                keys.forEach(k => {
                     const v = localStorage.getItem(k);
                     if (v) datos[k] = v;
                 });
-                const mainRef = db.collection('empresas').doc(empresa);
-                batch.set(mainRef, {
-                    datos,
-                    totalAsientosChunks: totalChunks,
-                    totalAsientos: todosAsientos.length,
-                    updated: new Date().toISOString(),
-                    timestamp: Date.now()
-                });
-
-                await batch.commit();
-                console.log(`Firebase OK: ${todosAsientos.length} asientos en ${totalChunks} chunk(s)`);
-            } catch(e) { console.warn('Firebase save error:', e.message); }
+                await db.collection('empresas').doc(empresa).set({datos, updated: new Date().toISOString(), timestamp: Date.now()});
+                // NOTA: empresas_config se guarda en doc 'global' SOLO desde guardarConfigEmpresas()
+                // No se toca aqui para evitar sobrescribir nombres con versiones antiguas
+                console.log('Firebase guardado OK:', Object.keys(datos));
+            } catch(e) { console.warn('Firebase save error:', e); }
         }
 
         async function cargarDesdeFirebase(empresa) {
             if (!empresa || !db) return false;
             try {
-                // ── Cargar config global ──
+                // Load global config first (empresas_config y campos individuales)
                 const globalDoc = await db.collection('empresas').doc('global').get();
                 if (globalDoc.exists && globalDoc.data().datos) {
                     const gd = globalDoc.data().datos;
+                    // Fusionar nombres: campos individuales > empresas_config JSON > local > default
                     const empKeys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8','empresa_9','empresa_10','empresa_11','empresa_12','empresa_13','empresa_14','empresa_15'];
                     let cfgLocal = {};
                     try { cfgLocal = JSON.parse(localStorage.getItem('empresas_config')) || {}; } catch(e) {}
@@ -2079,63 +2049,25 @@
                         const nFb    = cfgFbJson[k] && cfgFbJson[k].nombre && cfgFbJson[k].nombre.trim();
                         const nLocal = cfgLocal[k] && cfgLocal[k].nombre && cfgLocal[k].nombre.trim();
                         cfgMerged[k] = {
-                            nombre: nInd || nFb || nLocal || EMPRESAS_DEFAULT[k]?.nombre || k,
+                            nombre: nInd || nFb || nLocal || EMPRESAS_DEFAULT[k].nombre,
                             rut: gd['emp_' + k + '_rut'] || (cfgFbJson[k] && cfgFbJson[k].rut) || (cfgLocal[k] && cfgLocal[k].rut) || ''
                         };
                     });
                     localStorage.setItem('empresas_config', JSON.stringify(cfgMerged));
                 }
-
-                // ── Cargar doc principal (config, flujo, ppto, plan, usuarios) ──
                 const doc = await db.collection('empresas').doc(empresa).get();
-                if (!doc.exists) return false;
-                const mainData = doc.data();
-
-                // Limpiar datos locales de esta empresa
-                Object.keys(localStorage)
-                    .filter(k => k.endsWith('_' + empresa) || k === 'usuarios_claves')
-                    .forEach(k => localStorage.removeItem(k));
-
-                // Restaurar config (sin asientos — se cargan aparte)
-                if (mainData.datos) {
-                    Object.entries(mainData.datos).forEach(([k, v]) => {
-                        if (k !== 'empresas_config' && !k.startsWith('asientos_')) {
-                            localStorage.setItem(k, v);
-                        }
+                if (doc.exists && doc.data().datos) {
+                    // Limpiar datos locales de esta empresa (NO borrar empresas_config, es config global)
+                    const keysToRemove = Object.keys(localStorage).filter(k => 
+                        k.endsWith('_' + empresa) || k === 'usuarios_claves'
+                    );
+                    keysToRemove.forEach(k => localStorage.removeItem(k));
+                    // Escribir datos de Firebase — NUNCA pisar empresas_config (es global)
+                    Object.entries(doc.data().datos).forEach(([k,v]) => {
+                        if (k !== 'empresas_config') localStorage.setItem(k, v);
                     });
+                    return true;
                 }
-
-                // ── Cargar asientos desde chunks ──
-                const totalChunks = mainData.totalAsientosChunks || 0;
-
-                if (totalChunks > 0) {
-                    // Nueva estructura: chunks en empresas_data
-                    const chunkPromises = [];
-                    for (let i = 0; i < totalChunks; i++) {
-                        chunkPromises.push(
-                            db.collection('empresas_data').doc(empresa + '_asientos_' + i).get()
-                        );
-                    }
-                    const chunkDocs = await Promise.all(chunkPromises);
-                    const todosAsientos = [];
-                    chunkDocs
-                        .sort((a, b) => (a.data()?.chunk||0) - (b.data()?.chunk||0))
-                        .forEach(d => {
-                            if (d.exists && d.data().data) {
-                                try {
-                                    todosAsientos.push(...JSON.parse(d.data().data));
-                                } catch(e) {}
-                            }
-                        });
-                    localStorage.setItem('asientos_' + empresa, JSON.stringify(todosAsientos));
-                    console.log(`Firebase cargado: ${todosAsientos.length} asientos desde ${totalChunks} chunk(s)`);
-                } else if (mainData.datos && mainData.datos['asientos_' + empresa]) {
-                    // Estructura antigua: asientos en doc principal
-                    localStorage.setItem('asientos_' + empresa, mainData.datos['asientos_' + empresa]);
-                    console.log('Firebase cargado: estructura antigua');
-                }
-
-                return true;
             } catch(e) { console.warn('Firebase load error:', e); }
             return false;
         }
@@ -3379,13 +3311,6 @@
             const fmt = n => '$' + Math.round(n).toLocaleString('es-CL');
             const desde = (document.getElementById('reportes-desde')||{}).value||'';
             const hasta = (document.getElementById('reportes-hasta')||{}).value||'';
-
-            // DEBUG: log asientos count
-            console.log(`[Reportes] Total asientos: ${asientos.length}, empresa: ${sesionActual?.empresa}, desde: ${desde}, hasta: ${hasta}`);
-            if (asientos.length > 0) {
-                const sinTipo = asientos.filter(a => !planCuentas[a.codigo]?.tipo && !a.tipo);
-                if (sinTipo.length > 0) console.warn(`[Reportes] ${sinTipo.length} asientos sin tipo:`, sinTipo.slice(0,3).map(a=>a.codigo));
-            }
 
             // Aggregate by cuenta codigo con filtro fecha
             const mayor = {};
@@ -6416,32 +6341,24 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             });
         }
 
-        function calcularMayorCompleto(desde='', hasta='', filtrarCeros=true) {
+        function calcularMayorCompleto(desde='', hasta='') {
             const tipoPrefix = {'1':'Activo','2':'Pasivo','3':'Patrimonio','4':'Ingreso','5':'Gasto'};
             const mayor = {};
             const src = desde||hasta ? asientosFiltrados(desde, hasta) : asientos;
             src.forEach(a => {
                 const cod    = String(a.codigo||'').trim();
+                // SIEMPRE buscar en planCuentas primero — el tipo del asiento puede estar desactualizado
                 const cuenta = planCuentas[cod] || null;
                 const tipo   = (cuenta?.tipo) || (a.tipo || '') || tipoPrefix[cod.charAt(0)] || '';
                 const nombre = (cuenta?.nombre) || (a.cuenta || cod);
                 if (!tipo) return;
                 if (!mayor[cod]) mayor[cod] = {nombre, tipo, nivel: cuenta?.nivel||0, debe:0, haber:0, movs:[]};
+                // Si el mayor ya existe pero tenía tipo inferido y ahora encontramos planCuentas, corregir
                 if (cuenta?.tipo && mayor[cod].tipo !== cuenta.tipo) mayor[cod].tipo = cuenta.tipo;
                 mayor[cod].debe  += (parseFloat(a.debe)  || 0);
                 mayor[cod].haber += (parseFloat(a.haber) || 0);
                 mayor[cod].movs.push(a);
             });
-            // Filtrar cuentas con saldo cero si se pide
-            if (filtrarCeros) {
-                Object.keys(mayor).forEach(cod => {
-                    const d = mayor[cod];
-                    const saldo = d.tipo === 'Activo' || d.tipo === 'Gasto'
-                        ? d.debe - d.haber
-                        : d.haber - d.debe;
-                    if (Math.round(saldo) === 0 && Math.round(d.debe) === 0) delete mayor[cod];
-                });
-            }
             return mayor;
         }
 
@@ -10313,7 +10230,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 actualizarSelectFlujo();
                 renderFlujo();
             }
-            if (tabName === 'reportes') calcularReportes();
+            if (tabName === 'reportes')    calcularReportes();
             if (tabName === 'mayor')       actualizarTablaMayor();
             if (tabName === 'diario')      actualizarTablaAsientos();
             if (tabName === 'dashboard')  { actualizarTop5Deudores(); renderGraficoIngresosGastos(); }
