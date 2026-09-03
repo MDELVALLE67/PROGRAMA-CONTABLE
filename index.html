@@ -6341,24 +6341,32 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             });
         }
 
-        function calcularMayorCompleto(desde='', hasta='') {
+        function calcularMayorCompleto(desde='', hasta='', filtrarCeros=true) {
             const tipoPrefix = {'1':'Activo','2':'Pasivo','3':'Patrimonio','4':'Ingreso','5':'Gasto'};
             const mayor = {};
             const src = desde||hasta ? asientosFiltrados(desde, hasta) : asientos;
             src.forEach(a => {
                 const cod    = String(a.codigo||'').trim();
-                // SIEMPRE buscar en planCuentas primero — el tipo del asiento puede estar desactualizado
                 const cuenta = planCuentas[cod] || null;
                 const tipo   = (cuenta?.tipo) || (a.tipo || '') || tipoPrefix[cod.charAt(0)] || '';
                 const nombre = (cuenta?.nombre) || (a.cuenta || cod);
                 if (!tipo) return;
                 if (!mayor[cod]) mayor[cod] = {nombre, tipo, nivel: cuenta?.nivel||0, debe:0, haber:0, movs:[]};
-                // Si el mayor ya existe pero tenía tipo inferido y ahora encontramos planCuentas, corregir
                 if (cuenta?.tipo && mayor[cod].tipo !== cuenta.tipo) mayor[cod].tipo = cuenta.tipo;
                 mayor[cod].debe  += (parseFloat(a.debe)  || 0);
                 mayor[cod].haber += (parseFloat(a.haber) || 0);
                 mayor[cod].movs.push(a);
             });
+            // Filtrar cuentas con saldo cero si se pide
+            if (filtrarCeros) {
+                Object.keys(mayor).forEach(cod => {
+                    const d = mayor[cod];
+                    const saldo = d.tipo === 'Activo' || d.tipo === 'Gasto'
+                        ? d.debe - d.haber
+                        : d.haber - d.debe;
+                    if (Math.round(saldo) === 0 && Math.round(d.debe) === 0) delete mayor[cod];
+                });
+            }
             return mayor;
         }
 
@@ -10230,7 +10238,17 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 actualizarSelectFlujo();
                 renderFlujo();
             }
-            if (tabName === 'reportes')    calcularReportes();
+            if (tabName === 'reportes') {
+                // Recargar desde Firebase para asegurar datos actualizados
+                if (sesionActual.empresa && window.db) {
+                    cargarDesdeFirebase(sesionActual.empresa).then(() => {
+                        cargarLocalStorage();
+                        calcularReportes();
+                    }).catch(() => calcularReportes());
+                } else {
+                    calcularReportes();
+                }
+            }
             if (tabName === 'mayor')       actualizarTablaMayor();
             if (tabName === 'diario')      actualizarTablaAsientos();
             if (tabName === 'dashboard')  { actualizarTop5Deudores(); renderGraficoIngresosGastos(); }
