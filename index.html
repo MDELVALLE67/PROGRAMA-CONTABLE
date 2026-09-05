@@ -4515,7 +4515,18 @@
                 '.pct-bar-wrap { background:#e5e7eb; border-radius:9999px; height:8px; width:80px; display:inline-block; vertical-align:middle; margin-right:6px; }',
                 '.pct-bar { height:8px; border-radius:9999px; }',
                 '.footer { margin-top:32px; padding-top:12px; border-top:1px solid #ccc; text-align:center; font-size:10px; color:#999; }',
-                '@media print { body { padding:15px; } }'
+                '@media print { ',
+                '  @page { size: A4 landscape; margin: 8mm; }',
+                '  body { padding: 8px; font-size: 10px; }',
+                '  table { font-size: 9px; page-break-inside: auto; }',
+                '  tr { page-break-inside: avoid; }',
+                '  th, td { padding: 4px 5px !important; }',
+                '  .seccion-titulo { page-break-before: auto; }',
+                '  .kpi-row { flex-wrap: nowrap; }',
+                '  .kpi-box { padding: 8px 10px; }',
+                '  .kpi-val { font-size: 14px; }',
+                '  .header h2 { font-size: 15px; }',
+                '}'
             ].join('\n');
 
             const d = iframe.contentDocument || iframe.contentWindow.document;
@@ -10748,17 +10759,20 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 <style>
                     * { box-sizing: border-box; }
                     @media print {
-                        @page { margin: 8mm 6mm; size: A4; }
+                        @page { margin: 8mm 6mm; size: A4 landscape; }
                         body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: #fff !important; padding: 0 !important; }
                         .no-print { display: none !important; }
                         .bloque { page-break-inside: avoid; break-inside: avoid; margin-bottom: 10px !important; }
                         .bloque-cc { page-break-inside: auto; break-inside: auto; }
-                        table { page-break-inside: auto; font-size: 9px !important; }
+                        .bloque-cc table { font-size: 7px !important; width: 100% !important; table-layout: fixed; }
+                        .bloque-cc td, .bloque-cc th { padding: 2px 3px !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+                        table { page-break-inside: auto; font-size: 8px !important; }
                         tr { page-break-inside: avoid; break-inside: avoid; }
                         thead { display: table-header-group; }
                         tfoot { display: table-footer-group; }
                         .header-principal { border-radius: 0 !important; margin: 0 0 10px 0 !important; padding: 10px 14px !important; }
                         .header-principal div:first-child { font-size: 14px !important; }
+                        div[style*="overflow-x"] { overflow: visible !important; }
                     }
                     body { font-family: Arial, sans-serif; background: #f1f5f9; padding: 16px; margin: 0; font-size: 11px; }
                     table { width: 100% !important; border-collapse: collapse !important; font-size: 10px; }
