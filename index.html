@@ -2609,11 +2609,16 @@
                 }
                 _cargandoDatos = true;
                 cargarDesdeFirebase(empresa).then(cargado => {
+                    // Verificar que los asientos realmente llegaron antes de cargar
+                    const asientosRaw = localStorage.getItem('asientos_' + empresa);
+                    const nAsientos = asientosRaw ? JSON.parse(asientosRaw).length : 0;
+                    console.log('[LOGIN] Firebase cargado:', cargado, '| Asientos en localStorage:', nAsientos);
                     cargarLocalStorage();
+                    const nAsientosCargados = asientos ? asientos.length : 0;
+                    console.log('[LOGIN] Asientos después de cargarLocalStorage:', nAsientosCargados);
                     _cargandoDatos = false;
                     actualizarTodo();
                     initLineasDiario();
-                    // Actualizar nombre empresa por si Firebase trajo config actualizada
                     document.getElementById('empresa-nombre').textContent = getNombreEmpresa(empresa);
                     actualizarSelectorEmpresas();
                     showToast('¡Bienvenido ' + usuario + (cargado ? ' — datos sincronizados ☁️' : ' — sin conexión, datos locales'), 'success');
@@ -7805,7 +7810,13 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                         });
                         cargarLocalStorage();
                         actualizarTodo();
-                        showToast('📥 Backup importado correctamente', 'success');
+                        // Guardar en Firebase inmediatamente para que persista en todos los dispositivos
+                        _cargandoDatos = false;
+                        guardarEnFirebase(sesionActual.empresa).then(() => {
+                            showToast('📥 Backup importado y sincronizado con Firebase ✅', 'success');
+                        }).catch(() => {
+                            showToast('📥 Backup importado en local (sin conexión Firebase)', 'success');
+                        });
                     } catch(err) {
                         showToast('❌ Error al leer el archivo', 'error');
                     }
