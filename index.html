@@ -7773,25 +7773,31 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
         // ── BACKUP EXPORTAR / IMPORTAR ────────────────────────────
         function exportarBackup() {
             const empresa = sesionActual.empresa || 'anfa_renca';
+            // Primero guardar datos actuales en localStorage
+            guardarLocalStorage();
             const backup = {
-                version: '1.0',
+                version: '2.0',
                 fecha: new Date().toISOString(),
                 empresa: empresa,
                 datos: {}
             };
-            // Recopilar todos los datos de localStorage para esta empresa
-            const keys = [
-                empresa + '_asientos',
-                empresa + '_planCuentas',
-                empresa + '_centrosCosto',
-                empresa + '_presupuesto',
-                'usuarios_claves',
-                'empresas_config'
-            ];
-            keys.forEach(k => {
+            // Guardar desde memoria directamente (más confiable que localStorage)
+            backup.datos['asientos_' + empresa]     = JSON.stringify(asientos);
+            backup.datos['plan_cuentas_' + empresa] = JSON.stringify(planCuentas);
+            backup.datos['flujo_' + empresa]        = JSON.stringify(flujoCuentas);
+            // Config global
+            ['usuarios_claves','empresas_config'].forEach(k => {
                 const val = localStorage.getItem(k);
                 if (val) backup.datos[k] = val;
             });
+            // Presupuesto si existe
+            if (presupuesto && Object.keys(presupuesto).length) {
+                const montos = {};
+                Object.entries(presupuesto).forEach(([cod, d]) => {
+                    if (d.presupuestado > 0) montos[cod] = d.presupuestado;
+                });
+                if (Object.keys(montos).length) backup.datos['ppto_montos_' + empresa] = JSON.stringify(montos);
+            }
             const json = JSON.stringify(backup, null, 2);
             const blob = new Blob([json], {type: 'application/json'});
             const url  = URL.createObjectURL(blob);
@@ -7800,7 +7806,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             a.download = `backup_${empresa}_${new Date().toISOString().slice(0,10)}.json`;
             a.click();
             URL.revokeObjectURL(url);
-            showToast('📤 Backup exportado correctamente', 'success');
+            showToast('📤 Backup exportado — ' + asientos.length + ' asientos', 'success');
         }
 
         function importarBackup() {
@@ -10742,16 +10748,57 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 if (s.wrap === 'table') el = el.closest('table') || el;
                 const inner = inlinearEstilos(el);
                 if (s.titulo) {
-                    const esCc = s.id === 'inf-cc-wrapper';
-                    bloques += `<div class="${esCc ? 'bloque-cc' : 'bloque'}" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.1);overflow:hidden;margin-bottom:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">
-                        <div style="background:${s.color};color:#fff;font-weight:700;font-size:13px;padding:8px 16px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">${s.titulo}</div>
-                        <div style="padding:10px 14px;overflow-x:auto;">${inner}</div>
-                    </div>`;
+                    bloques += '<div class="bloque" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.1);overflow:hidden;margin-bottom:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'
+                        + '<div style="background:'+s.color+';color:#fff;font-weight:700;font-size:13px;padding:8px 16px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'+s.titulo+'</div>'
+                        + '<div style="padding:10px 14px;">'+inner+'</div>'
+                        + '</div>';
                 } else {
-                    bloques += `<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;">${inner}</div>`;
+                    bloques += '<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:18px;">'+inner+'</div>';
                 }
             });
 
+            // Generar tabla CC dividida en grupos de 5 meses para caber en landscape A4
+            (function() {
+                const fmt  = n => '$' + Math.round(Math.abs(n)).toLocaleString('es-CL');
+                const fmtS = n => (n < 0 ? '-' : '') + fmt(n);
+                const mesNom = m => { const d = new Date(m+'-01T12:00:00'); return d.toLocaleString('es-CL',{month:'short',year:'2-digit'}); };
+                const ccs = {}, mesesSet = {};
+                asientos.forEach(a => {
+                    const fecha = (a.fecha||'').substring(0,10);
+                    if (!fecha || (desde && fecha < desde) || (hasta && fecha > hasta)) return;
+                    const cuenta = planCuentas[a.codigo];
+                    const tipo = (cuenta&&cuenta.tipo) ? cuenta.tipo : (a.tipo||'');
+                    if (tipo !== 'Ingreso' && tipo !== 'Gasto') return;
+                    const cc = a.cc || 'SIN CC';
+                    const ccNom = (centrosCosto[cc]&&centrosCosto[cc].nombre) ? centrosCosto[cc].nombre : cc;
+                    const mes = fecha.substring(0,7);
+                    if (!ccs[cc]) ccs[cc] = {nom:ccNom, ing:0, gas:0, meses:{}};
+                    if (!ccs[cc].meses[mes]) ccs[cc].meses[mes] = {ing:0, gas:0};
+                    mesesSet[mes] = 1;
+                    if (tipo==='Ingreso') { ccs[cc].ing += (a.haber||0)-(a.debe||0); ccs[cc].meses[mes].ing += (a.haber||0)-(a.debe||0); }
+                    if (tipo==='Gasto')   { ccs[cc].gas += (a.debe||0)-(a.haber||0); ccs[cc].meses[mes].gas += (a.debe||0)-(a.haber||0); }
+                });
+                const meses = Object.keys(mesesSet).sort();
+                const ccRows = Object.entries(ccs).sort((a,b) => a[1].nom.localeCompare(b[1].nom));
+                const MESES_POR_GRUPO = 5;
+                const grupos = [];
+                for (let i = 0; i < meses.length; i += MESES_POR_GRUPO) grupos.push(meses.slice(i, i + MESES_POR_GRUPO));
+                if (grupos.length === 0) grupos.push([]);
+                grupos.forEach((grpMeses, gi) => {
+                    const label = 'Resumen por Centro de Costo' + (gi > 0 ? ' (cont. '+(gi+1)+')' : '');
+                    const thM = grpMeses.map(m => '<th style="text-align:right;padding:3px 5px;min-width:60px">'+mesNom(m)+'</th>').join('');
+                    const thead = '<thead><tr style="background:#92400e;color:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact"><th style="text-align:left;padding:3px 6px;min-width:110px">Centro de Costo</th><th style="text-align:right;padding:3px 5px">Ingresos</th><th style="text-align:right;padding:3px 5px">Gastos</th><th style="text-align:right;padding:3px 5px">Resultado</th>'+thM+'</tr></thead>';
+                    let tIng=0, tGas=0;
+                    const tbodyRows = ccRows.map((entry,idx) => {
+                        const d = entry[1]; const res = d.ing - d.gas; tIng += d.ing; tGas += d.gas;
+                        const tdM = grpMeses.map(m => { const r = d.meses[m]||{ing:0,gas:0}; const mr = r.ing-r.gas; return '<td style="text-align:right;padding:2px 5px;font-family:monospace;color:'+(mr>=0?'#1d4ed8':'#dc2626')+'">'+fmtS(mr)+'</td>'; }).join('');
+                        return '<tr style="background:'+(idx%2===0?'#fff':'#f9fafb')+';border-bottom:1px solid #e5e7eb"><td style="padding:2px 6px;font-weight:500">'+d.nom+'</td><td style="text-align:right;padding:2px 5px;font-family:monospace;color:#15803d">'+fmt(d.ing)+'</td><td style="text-align:right;padding:2px 5px;font-family:monospace;color:#c2410c">'+fmt(d.gas)+'</td><td style="text-align:right;padding:2px 5px;font-family:monospace;font-weight:700;color:'+(res>=0?'#1d4ed8':'#dc2626')+'">'+fmtS(res)+'</td>'+tdM+'</tr>';
+                    }).join('');
+                    const tfootM = grpMeses.map(() => '<td></td>').join('');
+                    const tfoot = '<tfoot><tr style="background:#92400e;color:#fff;font-weight:700;-webkit-print-color-adjust:exact;print-color-adjust:exact"><td style="padding:3px 6px">TOTAL</td><td style="text-align:right;padding:3px 5px;font-family:monospace">'+fmt(tIng)+'</td><td style="text-align:right;padding:3px 5px;font-family:monospace">'+fmt(tGas)+'</td><td style="text-align:right;padding:3px 5px;font-family:monospace">'+fmtS(tIng-tGas)+'</td>'+tfootM+'</tr></tfoot>';
+                    bloques += '<div class="bloque-cc" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.1);overflow:hidden;margin-bottom:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact;"><div style="background:linear-gradient(135deg,#b45309,#92400e);color:#fff;font-weight:700;font-size:13px;padding:8px 16px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'+label+'</div><div style="padding:6px 8px;"><table style="width:100%;border-collapse:collapse;font-size:9px;">'+thead+'<tbody>'+tbodyRows+'</tbody>'+tfoot+'</table></div></div>';
+                });
+            })();
             const w = window.open('', '_blank', 'width=1100,height=860');
             w.document.write(`<!DOCTYPE html><html><head>
                 <meta charset="UTF-8">
