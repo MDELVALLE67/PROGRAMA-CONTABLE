@@ -2281,7 +2281,7 @@
                 "42":      {nombre: "Ingresos No Operacionales", tipo: "Ingreso",    nivel: 2},
                 "421":     {nombre: "Otros Ingresos",            tipo: "Ingreso",    nivel: 3},
                 "42101":   {nombre: "Intereses Ganados",         tipo: "Ingreso",    nivel: 4},
-                "42102":   {nombre: "Ingresos Varios",           tipo: "Ingreso",    nivel: 4},
+                "42102":   {nombre: "Ingresos de Seleccion",           tipo: "Ingreso",    nivel: 4},
                 // 5. GASTOS
                 "5":       {nombre: "GASTOS",                    tipo: "Gasto",      nivel: 1},
                 "51":      {nombre: "Gastos Operacionales",      tipo: "Gasto",      nivel: 2},
@@ -7854,7 +7854,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             'Multas':                    'INGRESO|41103|Multas',
             'Consultas Pases e Inscripciones': 'INGRESO|41102|Consultas Pases e Inscripciones',
             'Cuotas Socios':             'INGRESO|41104|Cuotas Socios',
-            'Ingresos Varios':           'INGRESO|42102|Ingresos Varios',
+            'Ingresos de Seleccion':    'INGRESO|42102|Ingresos de Seleccion',
             'Pagos':                     'PAGO',
             'Gastos Generales':          'GASTOS_GENERALES',
             'Cuerpo Arbitral':           'CUERPO_ARBITRAL',
@@ -8408,7 +8408,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 "41103":{"nombre":"Comisiones","tipo":"Ingreso","nivel":4},
                 "42":{"nombre":"Ingresos No Operacionales","tipo":"Ingreso","nivel":2},
                 "42101":{"nombre":"Intereses Ganados","tipo":"Ingreso","nivel":4},
-                "42102":{"nombre":"Ingresos Varios","tipo":"Ingreso","nivel":4},
+                "42102":{"nombre":"Ingresos de Seleccion","tipo":"Ingreso","nivel":4},
                 "5":{"nombre":"GASTOS","tipo":"Gasto","nivel":1},
                 "51":{"nombre":"Gastos Operacionales","tipo":"Gasto","nivel":2},
                 "511":{"nombre":"Costo de Ventas","tipo":"Gasto","nivel":3},
@@ -8517,7 +8517,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
         multa:       { cod:'41103', nombre:'Multas',         cta_debe:'112XX', cta_haber:'41103', label:'Multa' },
         inscripcion: { cod:'41102', nombre:'Consultas Pases e Inscripciones', cta_debe:'112XX', cta_haber:'41102', label:'Consultas Pases e Inscripciones' },
         cuota:       { cod:'41104', nombre:'Cuotas Socios',  cta_debe:'112XX', cta_haber:'41104', label:'Cuota' },
-        ingvarios:   { cod:'42102', nombre:'Ingresos Varios',cta_debe:'112XX', cta_haber:'42102', label:'Ingreso Varios' },
+        ingvarios:   { cod:'42102', nombre:'Ingresos de Seleccion',cta_debe:'112XX', cta_haber:'42102', label:'Ingresos de Seleccion' },
         pago:        { cod:'11101', nombre:'Pago a Caja',    cta_debe:'111XX', cta_haber:'112XX', label:'Pago' },
     };
 
@@ -8655,7 +8655,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             'Multas':                    'INGRESO|41103|Multas',
             'Inscripciones':             'INGRESO|41102|Inscripciones',
             'Cuotas Socios':             'INGRESO|41104|Cuotas Socios',
-            'Ingresos Varios':           'INGRESO|42102|Ingresos Varios',
+            'Ingresos de Seleccion':    'INGRESO|42102|Ingresos de Seleccion',
             'Pagos':                     'PAGO',
             'Gastos Generales':          'GASTOS_GENERALES',
             'Cuerpo Arbitral':           'CUERPO_ARBITRAL',
@@ -8809,7 +8809,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                     {col:4, cod:'41102', nombre:'Consultas Pases e Inscripciones'},
                     {col:5, cod:'41104', nombre:'Cuotas Socios'},
                     {col:6, cod:'41105', nombre:'Cuota Mortuoria'},
-                    {col:7, cod:'42102', nombre:'Ingresos Varios'},
+                    {col:7, cod:'42102', nombre:'Ingresos de Seleccion'},
                 ];
                 for (let ri = 5; ri < rows.length; ri++) {
                     const row = rows[ri];
@@ -11257,7 +11257,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                             <option value="multa">Multas</option>
                             <option value="inscripcion">Consultas Pases e Inscripciones</option>
                             <option value="cuota">Cuotas Socios</option>
-                            <option value="ingvarios">Ingresos Varios</option>
+                            <option value="ingvarios">Ingresos de Seleccion</option>
                             <option value="pago">Ingreso a Caja (Pago)</option>
                         </select>
                     </div>
