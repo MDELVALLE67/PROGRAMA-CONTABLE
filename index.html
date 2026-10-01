@@ -5291,13 +5291,27 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             renderRptCC();
         }
 
+        // Unifica centros de costo guardados como código (CC004) o como nombre (Altamirano).
+        // No modifica los movimientos originales; solo normaliza la clave usada en reportes.
+        function normalizarClaveCentroCosto(valor, respaldo) {
+            var raw = String(valor == null ? '' : valor).trim();
+            if (!raw) return respaldo || 'CC000';
+            if (Object.prototype.hasOwnProperty.call(centrosCosto, raw)) return raw;
+            var buscado = raw.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es-CL');
+            var encontrado = Object.entries(centrosCosto).find(function(par) {
+                var nombre = String((par[1] && par[1].nombre) || '').trim();
+                return nombre.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es-CL') === buscado;
+            });
+            return encontrado ? encontrado[0] : raw;
+        }
+
         function buildRptCC(desde, hasta) {
             // Returns: { cc: { nombre, cuentas: { codigo: {nombre,tipo,debe,haber,saldo,movs:[]} } } }
             const src = asientosFiltrados(desde, hasta);
             const data = {};
 
             src.forEach(a => {
-                const cc = a.cc || 'CC000';
+                const cc = normalizarClaveCentroCosto(a.cc, 'CC000');
                 const ccNombre = centrosCosto[cc]?.nombre || cc;
                 const cuenta = planCuentas[a.codigo];
                 if (!cuenta) return;
@@ -10861,7 +10875,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 var cuenta = planCuentas[a.codigo];
                 var tipo = (cuenta&&cuenta.tipo)?cuenta.tipo:(a.tipo||'');
                 if (tipo !== 'Ingreso' && tipo !== 'Gasto') return; // solo ing/gas para CC
-                var cc = a.cc || 'SIN CC';
+                var cc = normalizarClaveCentroCosto(a.cc, 'SIN CC');
                 var ccNom = (centrosCosto[cc]&&centrosCosto[cc].nombre) ? centrosCosto[cc].nombre : cc;
                 var mes = fecha.substring(0,7);
                 if (!ccs[cc]) ccs[cc]={nom:ccNom,ing:0,gas:0,meses:{}};
@@ -11017,7 +11031,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 if (s.wrap === 'table') el = el.closest('table') || el;
                 const inner = inlinearEstilos(el);
                 if (s.titulo) {
-                    bloques += '<div class="bloque" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.1);overflow:hidden;margin-bottom:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'
+                    bloques += '<div class="bloque'+(s.id === 'inf-cc-wrapper' ? ' bloque-cc' : '')+'" style="background:#fff;border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,.1);overflow:hidden;margin-bottom:14px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'
                         + '<div style="background:'+s.color+';color:#fff;font-weight:700;font-size:13px;padding:8px 16px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">'+s.titulo+'</div>'
                         + '<div style="padding:10px 14px;">'+inner+'</div>'
                         + '</div>';
@@ -11035,19 +11049,22 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 <style>
                     * { box-sizing: border-box; }
                     @media print {
-                        @page { margin: 8mm 6mm; size: A4 landscape; }
-                        body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: #fff !important; padding: 0 !important; }
+                        @page { margin: 9mm 8mm; size: A4 landscape; }
+                        body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: #fff !important; padding: 0 !important; font-size: 12px !important; }
                         .no-print { display: none !important; }
-                        .bloque { page-break-inside: avoid; break-inside: avoid; margin-bottom: 10px !important; }
-                        .bloque-cc { page-break-inside: auto; break-inside: auto; }
-                        .bloque-cc table { font-size: 7px !important; width: 100% !important; table-layout: fixed; }
-                        .bloque-cc td, .bloque-cc th { padding: 2px 3px !important; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-                        table { page-break-inside: auto; font-size: 8px !important; }
+                        .bloque { page-break-inside: auto; break-inside: auto; margin-bottom: 12px !important; }
+                        .bloque:not(.bloque-cc) { page-break-inside: avoid; break-inside: avoid; }
+                        .bloque-cc { page-break-inside: auto !important; break-inside: auto !important; overflow: visible !important; }
+                        .bloque-cc > div:last-child { overflow: visible !important; padding-left: 0 !important; padding-right: 0 !important; }
+                        .bloque-cc table { font-size: 10.5px !important; width: 100% !important; table-layout: auto; border-collapse: collapse !important; }
+                        .bloque-cc td, .bloque-cc th { padding: 5px 6px !important; font-size: 10.5px !important; line-height: 1.25 !important; overflow: visible !important; text-overflow: clip !important; white-space: nowrap; }
+                        table { page-break-inside: auto; break-inside: auto; font-size: 10.5px !important; }
+                        th, td { font-size: 10.5px !important; }
                         tr { page-break-inside: avoid; break-inside: avoid; }
-                        thead { display: table-header-group; }
-                        tfoot { display: table-footer-group; }
-                        .header-principal { border-radius: 0 !important; margin: 0 0 10px 0 !important; padding: 10px 14px !important; }
-                        .header-principal div:first-child { font-size: 14px !important; }
+                        thead { display: table-header-group !important; }
+                        tfoot { display: table-footer-group !important; }
+                        .header-principal { border-radius: 0 !important; margin: 0 0 12px 0 !important; padding: 12px 16px !important; }
+                        .header-principal div:first-child { font-size: 17px !important; }
                         div[style*="overflow-x"] { overflow: visible !important; }
                     }
                     body { font-family: Arial, sans-serif; background: #f1f5f9; padding: 16px; margin: 0; font-size: 11px; }
@@ -11211,45 +11228,112 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
 
         function exportarInformeExcel() {
             if (typeof XLSX === 'undefined') { showToast('Excel no disponible','error'); return; }
-            const desde = document.getElementById('inf-desde').value;
-            const hasta = document.getElementById('inf-hasta').value;
-            const ccFilt = document.getElementById('inf-cc').value;
-            const src = asientos.filter(a => {
-                if (desde && (a.fecha||'') < desde) return false;
-                if (hasta && (a.fecha||'') > hasta) return false;
-                if (ccFilt && a.cc !== ccFilt) return false;
-                return true;
-            });
-            const tipoPrefix = {'1':'Activo','2':'Pasivo','3':'Patrimonio','4':'Ingreso','5':'Gasto'};
 
-            // Hoja 1: Detalle
-            const detRows = [['Fecha','Voucher','Código','Cuenta','Tipo','CC','Debe','Haber','Glosa']];
-            src.sort((a,b)=>(a.fecha||'').localeCompare(b.fecha||'')).forEach(a => {
-                const cod=String(a.codigo||'').trim();
-                const cta=planCuentas[cod];
-                detRows.push([a.fecha,a.voucher,cod,cta?.nombre||a.cuenta||'',cta?.tipo||a.tipo||tipoPrefix[cod.charAt(0)]||'',
-                    centrosCosto[a.cc]?.nombre||a.cc||'',a.debe||0,a.haber||0,a.glosa||'']);
-            });
-
-            // Hoja 2: Mensual
-            const mesMap = {};
-            src.forEach(a => {
-                const mes=(a.fecha||'0000-00').substring(0,7);
-                const cod=String(a.codigo||'').trim();
-                const tipo=planCuentas[cod]?.tipo||a.tipo||tipoPrefix[cod.charAt(0)]||'';
-                if (!mesMap[mes]) mesMap[mes]={ing:0,gas:0};
-                if (tipo==='Ingreso') mesMap[mes].ing += parseFloat(a.haber)||0;
-                if (tipo==='Gasto')   mesMap[mes].gas += parseFloat(a.debe)||0;
-            });
-            const mesRows = [['Mes','Ingresos','Gastos','Resultado']];
-            Object.keys(mesMap).sort().forEach(m => {
-                const d=mesMap[m]; mesRows.push([m, d.ing, d.gas, d.ing-d.gas]);
-            });
-
+            // Exporta el contenido del INFORME POR PERÍODO que está en pantalla.
+            // Esta función no escribe ni modifica datos contables.
+            const desde = document.getElementById('inf-desde')?.value || '';
+            const hasta = document.getElementById('inf-hasta')?.value || '';
+            const ccSelect = document.getElementById('inf-cc');
+            const ccNombre = ccSelect?.selectedOptions?.[0]?.text || 'Todos los centros';
+            const empresa = getNombreEmpresa(sesionActual?.empresa || '');
             const wb = XLSX.utils.book_new();
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(detRows), 'Detalle');
-            XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(mesRows), 'Resumen Mensual');
-            XLSX.writeFile(wb, 'informe_periodo_'+desde+'_'+hasta+'.xlsx');
+            const titulo = [
+                ['INFORME POR PERÍODO'],
+                ['Empresa', empresa],
+                ['Desde', desde || 'Inicio', 'Hasta', hasta || 'Actualidad'],
+                ['Centro de costo', ccNombre],
+                []
+            ];
+
+            // Convierte tablas que ya forman parte del informe visible en filas Excel.
+            function filasTabla(selector) {
+                const tabla = document.querySelector(selector);
+                if (!tabla) return [];
+                return Array.from(tabla.querySelectorAll('tr')).map(tr =>
+                    Array.from(tr.querySelectorAll('th,td')).map(c => (c.innerText || '').trim())
+                ).filter(fila => fila.some(v => v !== ''));
+            }
+            // Para secciones diseñadas con bloques en vez de tablas, conserva el
+            // texto mostrado por el informe, sin reconstruir ni alterar cálculos.
+            function filasTexto(selector) {
+                const el = document.querySelector(selector);
+                if (!el) return [['Sin datos']];
+                const lineas = (el.innerText || '').split(/\n+/).map(x => x.trim()).filter(Boolean);
+                return lineas.length ? lineas.map(x => [x]) : [['Sin datos']];
+            }
+            function agregarHoja(nombre, filas) {
+                const ws = XLSX.utils.aoa_to_sheet([...titulo, ...filas]);
+                ws['!cols'] = [{wch:26},{wch:24},{wch:18},{wch:18},{wch:18},{wch:18},{wch:18},{wch:18}];
+                XLSX.utils.book_append_sheet(wb, ws, nombre);
+            }
+
+            // Resumen principal del informe (no el detalle de asientos del Libro Diario).
+            const kpis = filasTexto('#inf-kpis');
+            agregarHoja('Resumen', [
+                ['RESUMEN DEL PERÍODO'], ...kpis,
+                [], ['ESTADO DE RESULTADOS'], ...filasTexto('#inf-resultado-content'),
+                [], ['BALANCE GENERAL'], ...filasTexto('#inf-balance-content')
+            ]);
+
+            const mensual = filasTabla('#inf-mensual-table');
+            if (mensual.length) agregarHoja('Resultado Mensual', [['DETALLE MENSUAL — ESTADO DE RESULTADOS'], ...mensual]);
+
+            const centros = filasTabla('#inf-cc-wrapper table');
+            if (centros.length) agregarHoja('Centros de Costo', [['RESUMEN POR CENTRO DE COSTO'], ...centros]);
+
+            const balanceMes = filasTabla('#inf-balance-mes-content table');
+            if (balanceMes.length) agregarHoja('Balance por Mes', [['BALANCE GENERAL POR MES'], ...balanceMes]);
+
+            // Hoja adicional: detalle real por centro de costo y cuenta, con sus movimientos.
+            // Solo LEE asientos y plan de cuentas; no modifica registros ni cálculos contables.
+            const ccElegido = ccSelect?.value || '';
+            const movsCC = (Array.isArray(asientos) ? asientos : []).filter(a => {
+                const fecha = String(a.fecha || '').substring(0, 10);
+                if (!fecha || (desde && fecha < desde) || (hasta && fecha > hasta)) return false;
+                if (ccElegido && String(a.cc || '') !== String(ccElegido)) return false;
+                const cuenta = (planCuentas || {})[a.codigo];
+                const tipo = (cuenta && cuenta.tipo) ? cuenta.tipo : (a.tipo || '');
+                return tipo === 'Ingreso' || tipo === 'Gasto';
+            }).sort((a,b) => String(a.cc||'').localeCompare(String(b.cc||'')) ||
+                String(a.codigo||'').localeCompare(String(b.codigo||'')) ||
+                String(a.fecha||'').localeCompare(String(b.fecha||'')) ||
+                String(a.voucher||'').localeCompare(String(b.voucher||'')));
+
+            const detalleCC = [[
+                'Centro de costo','Código CC','Código cuenta','Nombre cuenta','Tipo',
+                'Total Debe cuenta','Total Haber cuenta','Saldo cuenta',
+                'Fecha movimiento','Comprobante','Glosa','Debe movimiento','Haber movimiento'
+            ]];
+            const gruposCC = {};
+            movsCC.forEach(a => {
+                const ccKey = (typeof normalizarClaveCentroCosto === 'function')
+                    ? normalizarClaveCentroCosto(a.cc, 'SIN CC') : (a.cc || 'SIN CC');
+                const ccInfo = (centrosCosto || {})[ccKey] || {};
+                const ccNom = ccInfo.nombre || (a.cc ? String(a.cc) : 'SIN CC');
+                const cuenta = (planCuentas || {})[a.codigo] || {};
+                const codCuenta = String(a.codigo || '');
+                const tipo = cuenta.tipo || a.tipo || '';
+                const key = ccKey + '||' + codCuenta;
+                if (!gruposCC[key]) gruposCC[key] = {ccKey, ccNom, codCuenta, nombre: cuenta.nombre || a.cuenta || codCuenta, tipo, debe:0, haber:0, movs:[]};
+                const g = gruposCC[key];
+                g.debe += Number(a.debe) || 0;
+                g.haber += Number(a.haber) || 0;
+                g.movs.push(a);
+            });
+            Object.values(gruposCC).sort((a,b) => a.ccNom.localeCompare(b.ccNom) || a.codCuenta.localeCompare(b.codCuenta)).forEach(g => {
+                detalleCC.push([g.ccNom, g.ccKey, g.codCuenta, g.nombre, g.tipo, g.debe, g.haber, g.debe-g.haber, '', '', 'TOTAL CUENTA', '', '']);
+                g.movs.forEach(m => detalleCC.push([
+                    g.ccNom, g.ccKey, g.codCuenta, g.nombre, g.tipo, '', '', '',
+                    String(m.fecha || '').substring(0,10), m.voucher || '', m.glosa || m.concepto || '',
+                    Number(m.debe) || 0, Number(m.haber) || 0
+                ]));
+            });
+            const wsDetalleCC = XLSX.utils.aoa_to_sheet(detalleCC);
+            wsDetalleCC['!cols'] = [{wch:28},{wch:14},{wch:15},{wch:36},{wch:12},{wch:18},{wch:18},{wch:18},{wch:16},{wch:14},{wch:42},{wch:18},{wch:18}];
+            XLSX.utils.book_append_sheet(wb, wsDetalleCC, 'Detalle CC por Cuenta');
+
+            XLSX.writeFile(wb, 'informe_periodo_' + (desde || 'inicio') + '_' + (hasta || 'hoy') + '.xlsx');
+            showToast('Excel del Informe por Período generado', 'success');
         }
 
         // Inicializar fecha al cargar
