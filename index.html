@@ -10441,17 +10441,31 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             const activos=[],pasivos=[],patrimonios=[];
 
             Object.entries(may).forEach(([cod,d])=>{
-                const cta=planCuentas[cod]; if(!cta||cta.nivel!==4)return;
-                const tipo=cta.tipo||d.tipo;
+                const cta=planCuentas[cod];
+                const esAnfa=(sesionActual&&sesionActual.empresa==='anfa_renca');
+                let tipo=(cta&&cta.tipo)||d.tipo;
+                if(esAnfa){
+                    // ANFA conserva exactamente el criterio original.
+                    if(!cta||cta.nivel!==4)return;
+                } else {
+                    // En empresas 2+, no descartar movimientos por diferencias en el nivel
+                    // o por cuentas personalizadas que no estén en el plan base.
+                    const prefijo=String(cod).charAt(0);
+                    if(!tipo) tipo=({'1':'Activo','2':'Pasivo','3':'Patrimonio','4':'Ingreso','5':'Gasto'})[prefijo];
+                    if(!tipo)return;
+                    const tieneSubcuentas=Object.keys(planCuentas||{}).some(k=>k!==cod&&String(k).startsWith(String(cod)));
+                    const esDetalle=cta ? (Number(cta.nivel)===4 || (!tieneSubcuentas && String(cod).length>=4)) : String(cod).length>=5;
+                    if(!esDetalle)return;
+                }
                 if(tipo==='Activo'){
                     const s=d.debe-d.haber;
-                    if(Math.round(s)!==0){totActivo+=s;activos.push({cod,nom:cta.nombre||d.nombre,saldo:s});}
+                    if(Math.round(s)!==0){totActivo+=s;activos.push({cod,nom:(cta&&cta.nombre)||d.nombre,saldo:s});}
                 } else if(tipo==='Pasivo'){
                     const s=d.haber-d.debe;
-                    if(Math.round(s)!==0){totPasivo+=s;pasivos.push({cod,nom:cta.nombre||d.nombre,saldo:s});}
+                    if(Math.round(s)!==0){totPasivo+=s;pasivos.push({cod,nom:(cta&&cta.nombre)||d.nombre,saldo:s});}
                 } else if(tipo==='Patrimonio'){
                     const s=d.haber-d.debe;
-                    if(Math.round(s)!==0){totPatrimonio+=s;patrimonios.push({cod,nom:cta.nombre||d.nombre,saldo:s});}
+                    if(Math.round(s)!==0){totPatrimonio+=s;patrimonios.push({cod,nom:(cta&&cta.nombre)||d.nombre,saldo:s});}
                 } else if(tipo==='Ingreso'){
                     totIng+=d.haber-d.debe;
                 } else if(tipo==='Gasto'){
