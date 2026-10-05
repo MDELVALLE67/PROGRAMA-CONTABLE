@@ -2525,6 +2525,8 @@
             } else {
                 inicializarDatos();
             }
+            const _es67 = (key === 'empresa_6' || key === 'empresa_7');
+            if (_es67) aplicarPlanEmpresa67(key);
 
             // ── 1. Restaurar plan de cuentas PRIMERO (incluye cuentas personalizadas) ──
             // El plan base del código es la fuente de verdad para cuentas conocidas.
@@ -2534,9 +2536,11 @@
                     const savedPlan = JSON.parse(planData);
                     const planBase  = Object.keys(planCuentas); // códigos del plan hardcodeado
                     Object.entries(savedPlan).forEach(([cod, cuenta]) => {
+                        if (_es67 && !String(cod).includes('-') && !planBase.includes(cod)) {
+                            return;
+                        }
                         if (planBase.includes(cod)) {
-                            // Cuenta conocida: respetar nombre del usuario pero usar tipo del plan base
-                            planCuentas[cod].nombre = cuenta.nombre || planCuentas[cod].nombre;
+                            if (!_es67) planCuentas[cod].nombre = cuenta.nombre || planCuentas[cod].nombre;
                             // NO sobreescribir tipo — el plan base es correcto para cuentas conocidas
                         } else {
                             // Cuenta nueva creada por el usuario: agregar completa
@@ -7198,7 +7202,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 flujoCuentas.forEach(f => { actividadMap[f.codigo] = f.actividad; });
 
                 const cuentasCaja = Object.entries(planCuentas)
-                    .filter(([cod,c]) => c.nivel===4 && cod.startsWith('111'))
+                    .filter(([cod,c]) => c.nivel===4 && (cod.startsWith('111')||cod.startsWith('1101')))
                     .map(([cod,c]) => ({codigo:cod, nombre:c.nombre}));
 
                 const grupos = {operacion:[], inversion:[], financiamiento:[]};
@@ -7467,7 +7471,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             if (!sel) return;
             sel.innerHTML = '<option value="">Seleccionar cuenta...</option>';
             Object.entries(planCuentas)
-                .filter(([cod, c]) => c.nivel === 4 && cod.startsWith('111'))
+                .filter(([cod, c]) => c.nivel === 4 && (cod.startsWith('111')||cod.startsWith('1101')))
                 .sort((a,b) => a[0].localeCompare(b[0]))
                 .forEach(([cod, c]) => {
                     const o = document.createElement('option');
@@ -8643,6 +8647,39 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
         });
         imprimirInforme('Cartolas — Todos los Clubes', html);
     }
+
+        function aplicarPlanEmpresa67(key) {
+            const G = (n,t,v) => ({nombre:n,tipo:t,nivel:v});
+            const A = (n,t) => ({nombre:n,tipo:t,nivel:4});
+            const comun = {
+                "1":G("ACTIVO","Activo",1),"11":G("Activo Circulante","Activo",2),
+                "2":G("PASIVO","Pasivo",1),"21":G("Pasivo Circulante","Pasivo",2),"23":G("Patrimonio","Patrimonio",2),
+                "3":G("INGRESOS","Ingreso",1),"31":G("Ingresos Operacionales","Ingreso",2),
+                "4":G("GASTOS","Gasto",1),"42":G("Gastos Financieros e Impuestos","Gasto",2),
+                "1101-01":A("Caja","Activo"),"1103-01":A("Clientes","Activo"),"1108-02":A("IVA Crédito Fiscal","Activo"),
+                "2111-02":A("IVA Débito Fiscal","Pasivo"),"2116-01":A("Proveedores","Pasivo"),
+                "2301-01":A("Capital Pagado","Patrimonio"),"2302-01":A("Reservas Revalorización Capital","Patrimonio"),
+                "2305-02":A("Utilidad Ejercicio 2024","Patrimonio"),"3101-01":A("Ingresos por Ventas","Ingreso")
+            };
+            const e6 = {
+                "45":G("Corrección Monetaria e Impuestos","Gasto",2),
+                "1106-03":A("Pago Provisional Mensual","Activo"),"2113-01":A("Acreedores Varios","Pasivo"),
+                "4201-09":A("Gastos Financieros","Gasto"),"4501-01":A("Correción Monetaria de pasivos","Gasto"),
+                "4501-03":A("Interes , Reajustes","Gasto"),"4502-01":A("Impuesto a la Renta","Gasto")
+            };
+            const e7 = {
+                "1101-02":A("Banco Santander","Activo"),"1108-01":A("Pagos Provisionales Mensuales","Activo"),
+                "2112-01":A("Acreedores Varios","Pasivo"),"3102-01":A("Correccion Monetaria Activo","Ingreso"),
+                "4201-03":A("Gastos Financieros","Gasto"),"4201-04":A("Interes, Multas,","Gasto"),
+                "4202-01":A("Impuesto a la Renta","Gasto"),"4292-01":A("Correccion Monetaria Pasivo","Gasto")
+            };
+            planCuentas = Object.assign({}, comun, key === 'empresa_6' ? e6 : e7);
+            presupuesto = {};
+            Object.entries(planCuentas).forEach(([cod,c]) => {
+                if (c.nivel===4 && (c.tipo==='Ingreso'||c.tipo==='Gasto'))
+                    presupuesto[cod] = {presupuestado:0, ejecutado:0};
+            });
+        }
 
         function inicializarDatosGenericos() {
             planCuentas = {
@@ -9823,7 +9860,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             flujoBody += '<p class="text-sm text-gray-600 mb-4 p-3 bg-teal-50 rounded-xl border border-teal-100">📌 <strong>Qué es el Flujo de Caja:</strong> Muestra los movimientos reales de dinero en las cuentas de Caja y Banco. A diferencia del resultado contable, solo considera el efectivo que realmente entró o salió. Un flujo positivo significa más dinero disponible; negativo, menos.</p>';
 
             // Get caja movements
-            const cuentasCaja = Object.entries(planCuentas).filter(([cod,c]) => c.nivel===4 && cod.startsWith('111'));
+            const cuentasCaja = Object.entries(planCuentas).filter(([cod,c]) => c.nivel===4 && (cod.startsWith('111')||cod.startsWith('1101')));
             let totalEntradas=0, totalSalidas=0;
             const flujRows = [];
             cuentasCaja.forEach(([cod, cta]) => {
