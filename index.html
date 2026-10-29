@@ -11103,8 +11103,11 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                         @page { margin: 9mm 8mm; size: A4 landscape; }
                         body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; background: #fff !important; padding: 0 !important; font-size: 12px !important; }
                         .no-print { display: none !important; }
-                        .bloque { page-break-inside: auto; break-inside: auto; margin-bottom: 12px !important; }
-                        .bloque:not(.bloque-cc) { page-break-inside: avoid; break-inside: avoid; }
+                        .bloque { page-break-inside: auto !important; break-inside: auto !important; margin-bottom: 12px !important; overflow: visible !important; box-shadow: none !important; }
+                        .bloque div { max-width: 100% !important; }
+                        .bloque table { width: 100% !important; table-layout: auto; font-size: 9.5px !important; }
+                        .bloque th, .bloque td { padding: 3px 4px !important; font-size: 9.5px !important; white-space: nowrap; }
+                        .bloque > div:last-child { overflow: visible !important; }
                         .bloque-cc { page-break-inside: auto !important; break-inside: auto !important; overflow: visible !important; }
                         .bloque-cc > div:last-child { overflow: visible !important; padding-left: 0 !important; padding-right: 0 !important; }
                         .bloque-cc table { font-size: 10.5px !important; width: 100% !important; table-layout: auto; border-collapse: collapse !important; }
