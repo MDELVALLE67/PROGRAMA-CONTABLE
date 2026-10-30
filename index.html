@@ -482,6 +482,10 @@
 
     <!-- MAIN APP -->
     <div id="app-main" class="hidden min-h-screen">
+        <div id="alerta-descuadre" class="hidden" style="position:sticky;top:0;z-index:60;background:#dc2626;color:#fff;padding:10px 16px;font-size:14px;font-weight:600;display:none;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap">
+            <span id="alerta-descuadre-txt"></span>
+            <button onclick="verDetalleDescuadre()" style="background:#fff;color:#dc2626;border:none;border-radius:8px;padding:4px 14px;font-weight:700;cursor:pointer">Ver detalle</button>
+        </div>
         <!-- Header -->
         <div class="header-glass">
             <div class="max-w-7xl mx-auto px-6 py-6">
@@ -509,6 +513,9 @@
                                 <p class="text-xs text-blue-200" id="usuario-rol">Administrador</p>
                             </div>
                         </div>
+                        <button onclick="exportarBackupTodas()" title="Backup TODAS las empresas" class="permisos-admin p-2 bg-white/10 rounded-lg text-white hover:bg-white/20 transition-all">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2 3.6 3 8 3s8-1 8-3V7M4 7c0 2 3.6 3 8 3s8-1 8-3M4 7c0-2 3.6-3 8-3s8 1 8 3M4 12c0 2 3.6 3 8 3s8-1 8-3"/></svg>
+                        </button>
                         <button onclick="exportarBackup()" title="Exportar backup" class="p-2 bg-white/10 rounded-lg text-white hover:bg-white/20 transition-all">
                             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
@@ -1968,6 +1975,7 @@
     </div>
 
     <script>
+        function esc(v){return String(v==null?'':v).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];});}
         // Estado global
         let sesionActual = {usuario: null, rol: null, empresa: null};
         let _firestoreListener = null;
@@ -2148,7 +2156,7 @@
                     await db.collection('empresas').doc(empresa).collection('chunks').doc('asientos_' + i).set({data: chunks[i]});
                 }
                 for (let i=chunks.length; i<10; i++) {
-                    try { await db.collection('empresas').doc(empresa).collection('chunks').doc('asientos_' + i).delete(); } catch(e) {}
+                    try { await db.collection('empresas').doc(empresa).collection('chunks').doc('asientos_' + i).delete(); } catch(e) { console.warn('[SYS]', e); }
                 }
                 await db.collection('empresas').doc(empresa).set({
                     datos, updated: new Date().toISOString(), timestamp: Date.now()
@@ -2167,8 +2175,8 @@
                 if (globalDoc.exists && globalDoc.data().datos) {
                     const gd = globalDoc.data().datos;
                     const empKeys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8','empresa_9','empresa_10','empresa_11','empresa_12','empresa_13','empresa_14','empresa_15'];
-                    let cfgLocal = {}; try { cfgLocal = JSON.parse(localStorage.getItem('empresas_config')) || {}; } catch(e) {}
-                    let cfgFbJson = {}; if (gd.empresas_config) { try { cfgFbJson = JSON.parse(gd.empresas_config) || {}; } catch(e) {} }
+                    let cfgLocal = {}; try { cfgLocal = JSON.parse(localStorage.getItem('empresas_config')) || {}; } catch(e) { console.warn('[SYS]', e); }
+                    let cfgFbJson = {}; if (gd.empresas_config) { try { cfgFbJson = JSON.parse(gd.empresas_config) || {}; } catch(e) { console.warn('[SYS]', e); } }
                     const cfgMerged = {};
                     empKeys.forEach(k => {
                         const nInd=gd['emp_'+k+'_nombre']&&gd['emp_'+k+'_nombre'].trim();
@@ -2192,7 +2200,7 @@
                 const localAsientos = localRaw ? JSON.parse(localRaw) : [];
                 const localTs = _syncTombstones(empresa);
                 let remoteTs = {};
-                try { remoteTs = JSON.parse(datos['tombstones_' + empresa] || '{}') || {}; } catch(e) {}
+                try { remoteTs = JSON.parse(datos['tombstones_' + empresa] || '{}') || {}; } catch(e) { console.warn('[SYS]', e); }
                 const mergedTs = {};
                 Object.keys({...remoteTs,...localTs}).forEach(id => mergedTs[id]=Math.max(Number(remoteTs[id])||0,Number(localTs[id])||0));
                 const merged = _syncMergeAsientos(localAsientos, remoteAsientos || [], localTs, remoteTs);
@@ -2222,7 +2230,7 @@
                 const localRaw = localStorage.getItem('asientos_' + empresa);
                 const localAsientos = localRaw ? JSON.parse(localRaw) : [];
                 let localTs = _syncTombstones(empresa), remoteTs = {};
-                try { remoteTs = JSON.parse(datos['tombstones_' + empresa] || '{}') || {}; } catch(e) {}
+                try { remoteTs = JSON.parse(datos['tombstones_' + empresa] || '{}') || {}; } catch(e) { console.warn('[SYS]', e); }
                 const merged = _syncMergeAsientos(localAsientos, remoteAsientos, localTs, remoteTs);
                 const before = JSON.stringify(localAsientos);
                 const after = JSON.stringify(merged);
@@ -2242,7 +2250,7 @@
         }
 
         function instalarListenerFirebase(empresa) {
-            if (_firestoreListener) { try { _firestoreListener(); } catch(e) {} _firestoreListener=null; }
+            if (_firestoreListener) { try { _firestoreListener(); } catch(e) { console.warn('[SYS]', e); } _firestoreListener=null; }
             if (!db || !empresa) return;
             _firestoreListener = db.collection('empresas').doc(empresa).onSnapshot(() => {
                 // Dar tiempo a que terminen de escribirse los chunks antes de leerlos.
@@ -2306,7 +2314,7 @@
             try {
                 const raw = localStorage.getItem('empresas_config');
                 if (raw) parsed = JSON.parse(raw) || {};
-            } catch(e) {}
+            } catch(e) { console.warn('[SYS]', e); }
             const resultado = {};
             keys.forEach(k => {
                 const n = parsed[k] && parsed[k].nombre && parsed[k].nombre.trim();
@@ -2670,7 +2678,7 @@
             const cfg = getEmpresasConfig();
             const keys = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8','empresa_9','empresa_10','empresa_11','empresa_12','empresa_13','empresa_14','empresa_15'];
             const val = sel.value;
-            sel.innerHTML = keys.map(k => `<option value="${k}">${cfg[k]?.nombre || k}</option>`).join('');
+            sel.innerHTML = keys.map(k => `<option value="${k}">${esc(cfg[k]?.nombre || k)}</option>`).join('');
             sel.value = val;
         }
 
@@ -2683,6 +2691,9 @@
             if (saved) {
                 try {
                     const savedObj = JSON.parse(saved);
+                    if (savedObj && Object.keys(savedObj).length) {
+                        Object.keys(defaults).forEach(u => { if (!(u in savedObj)) delete defaults[u]; });
+                    }
                     Object.keys(savedObj).forEach(u => {
                         if (!defaults[u]) defaults[u] = {password:'', rol:'solo_lectura'};
                         // Handle both string format (old) and object format (new)
@@ -2693,7 +2704,7 @@
                             if (savedObj[u].rol) defaults[u].rol = savedObj[u].rol;
                         }
                     });
-                } catch(e) {}
+                } catch(e) { console.warn('[SYS]', e); }
             }
             return defaults;
         }
@@ -2721,7 +2732,7 @@
                                 }
                             }
                         }
-                    } catch(e) {}
+                    } catch(e) { console.warn('[SYS]', e); }
                     const usuariosRecargados = getUsuarios();
                     if (usuariosRecargados[usuario] && usuariosRecargados[usuario].password === password) {
                         iniciarSesionConExito(empresa, usuario, usuariosRecargados[usuario].rol);
@@ -2925,7 +2936,7 @@
                 .map(([codigo, cuenta]) => `
                 <tr class="cuenta-row">
                     <td class="font-mono font-semibold">${codigo}</td>
-                    <td>${cuenta.nombre}</td>
+                    <td>${esc(cuenta.nombre)}</td>
                     <td><span class="px-2 py-1 text-xs rounded font-medium ${colores[cuenta.tipo] || 'bg-gray-100'}">${cuenta.tipo}</span></td>
                     <td class="text-center">
                         <button onclick="abrirEditarCuenta('${codigo}')" class="text-blue-600 hover:text-blue-800 permisos-admin mr-2" title="Editar">
@@ -2996,7 +3007,7 @@
                 .map(([codigo, centro]) => `
                 <tr class="centro-row">
                     <td class="font-mono font-semibold">${codigo}</td>
-                    <td>${centro.nombre}</td>
+                    <td>${esc(centro.nombre)}</td>
                     <td class="text-center">
                         <button onclick="eliminarCentroCosto('${codigo}')" class="text-red-600 hover:text-red-800 permisos-admin">
                             <svg class="w-5 h-5 inline" fill="currentColor" viewBox="0 0 20 20">
@@ -3022,7 +3033,7 @@
             select.innerHTML = '<option value="">Seleccionar...</option>' + 
                 Object.entries(centrosCosto)
                     .sort((a, b) => a[0].localeCompare(b[0]))
-                    .map(([codigo, centro]) => `<option value="${codigo}">${codigo} - ${centro.nombre}</option>`)
+                    .map(([codigo, centro]) => `<option value="${codigo}">${codigo} - ${esc(centro.nombre)}</option>`)
                     .join('');
         }
 
@@ -3032,7 +3043,7 @@
             select.innerHTML = '<option value="">Seleccionar cuenta...</option>' + 
                 Object.entries(planCuentas)
                     .sort((a, b) => a[0].localeCompare(b[0]))
-                    .map(([codigo, cuenta]) => `<option value="${codigo}">${codigo} - ${cuenta.nombre}</option>`)
+                    .map(([codigo, cuenta]) => `<option value="${codigo}">${codigo} - ${esc(cuenta.nombre)}</option>`)
                     .join('');
         }
 
@@ -3049,7 +3060,7 @@
                 Object.entries(planCuentas)
                     .filter(([,c]) => c.nivel === 4)
                     .sort((a,b) => a[0].localeCompare(b[0]))
-                    .map(([cod,c]) => `<option value="${cod}">${cod} - ${c.nombre}</option>`)
+                    .map(([cod,c]) => `<option value="${cod}">${cod} - ${esc(c.nombre)}</option>`)
                     .join('');
         }
 
@@ -3057,7 +3068,7 @@
             return '<option value="">-- Centro --</option>' +
                 Object.entries(centrosCosto)
                     .sort((a,b) => a[0].localeCompare(b[0]))
-                    .map(([cod,c]) => `<option value="${cod}">${cod} - ${c.nombre}</option>`)
+                    .map(([cod,c]) => `<option value="${cod}">${cod} - ${esc(c.nombre)}</option>`)
                     .join('');
         }
 
@@ -3266,11 +3277,11 @@
                         <td style="text-align:center"><input type="checkbox" class="check-asiento" data-idx="${i}" style="width:15px;height:15px;cursor:pointer"></td>
                         <td>${a.fecha}</td>
                         <td class="font-mono">${a.voucher}</td>
-                        <td>${centrosCosto[a.cc]?.nombre || a.cc}</td>
-                        <td>${a.cuenta}</td>
+                        <td>${esc(centrosCosto[a.cc]?.nombre || a.cc)}</td>
+                        <td>${esc(a.cuenta)}</td>
                         <td class="text-right font-mono font-semibold ${a.debe > 0 ? 'text-green-600' : 'text-gray-400'}">${a.debe > 0 ? '$' + a.debe.toLocaleString('es-CL') : '-'}</td>
                         <td class="text-right font-mono font-semibold ${a.haber > 0 ? 'text-blue-600' : 'text-gray-400'}">${a.haber > 0 ? '$' + a.haber.toLocaleString('es-CL') : '-'}</td>
-                        <td>${a.glosa}</td>
+                        <td>${esc(a.glosa)}</td>
                         <td class="text-center">
                             <div class="flex gap-2 justify-center">
                                 <button onclick="abrirEditarAsiento(${i})" title="Editar" class="p-1.5 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-all">
@@ -3431,11 +3442,11 @@
             tabla.innerHTML = asientos.slice(-10).reverse().map(a => `
                 <tr>
                     <td>${a.fecha}</td>
-                    <td>${a.cuenta}</td>
-                    <td>${centrosCosto[a.cc]?.nombre || a.cc}</td>
+                    <td>${esc(a.cuenta)}</td>
+                    <td>${esc(centrosCosto[a.cc]?.nombre || a.cc)}</td>
                     <td class="text-right font-mono font-semibold ${a.debe > 0 ? 'text-green-600' : 'text-gray-400'}">${a.debe > 0 ? '$' + a.debe.toLocaleString() : '-'}</td>
                     <td class="text-right font-mono font-semibold ${a.haber > 0 ? 'text-blue-600' : 'text-gray-400'}">${a.haber > 0 ? '$' + a.haber.toLocaleString() : '-'}</td>
-                    <td>${a.glosa}</td>
+                    <td>${esc(a.glosa)}</td>
                 </tr>
             `).join('');
         }
@@ -3480,7 +3491,7 @@
                     return `
                     <tr class="mayor-row">
                         <td class="font-mono font-semibold">${codigo}</td>
-                        <td>${d.nombre}</td>
+                        <td>${esc(d.nombre)}</td>
                         <td>${d.tipo}</td>
                         <td class="text-right font-mono">${d.debe > 0 ? '$' + d.debe.toLocaleString() : '-'}</td>
                         <td class="text-right font-mono">${d.haber > 0 ? '$' + d.haber.toLocaleString() : '-'}</td>
@@ -3540,7 +3551,7 @@
             const rowsDet = (arr, color) => arr.length
                 ? arr.map(r => `<div class="flex justify-between items-center py-1.5 px-3 text-sm border-b border-gray-50">
                     <span class="text-gray-600 font-mono text-xs mr-2">${r.cod}</span>
-                    <span class="flex-1 text-gray-700">${r.nombre}</span>
+                    <span class="flex-1 text-gray-700">${esc(r.nombre)}</span>
                     <span class="font-mono font-semibold ${color}">${fmt(r.monto)}</span>
                   </div>`).join('')
                 : '<div class="text-xs text-gray-400 px-3 py-2">Sin movimientos</div>';
@@ -3972,7 +3983,7 @@
                 return `<tr class="border-b border-gray-100 hover:bg-blue-50 text-xs">
                 <td class="px-2 py-1.5 text-center text-gray-400">${n}</td>
                 <td class="px-2 py-1.5 font-mono font-semibold text-gray-500">${r.codigo}</td>
-                <td class="px-2 py-1.5 text-gray-800">${r.nombre}</td>
+                <td class="px-2 py-1.5 text-gray-800">${esc(r.nombre)}</td>
                 <td class="px-1 py-1.5 text-center"><span class="px-1.5 py-0.5 rounded text-xs font-bold ${tc(r.tipo)}">${r.tipo.substring(0,3).toUpperCase()}</span></td>
                 <td class="px-2 py-1.5 text-right font-mono ${r.sumaD>0?'text-gray-800':'text-gray-200'}">${fmt(r.sumaD)}</td>
                 <td class="px-2 py-1.5 text-right font-mono ${r.sumaH>0?'text-gray-800':'text-gray-200'}">${fmt(r.sumaH)}</td>
@@ -4000,7 +4011,7 @@
 
             // Fila resultado del ejercicio
             const filaResultado = filaRes ? `<tr class="text-xs font-bold italic border-b border-yellow-300" style="background:#fefce8">
-                <td colspan="4" class="px-2 py-2 text-yellow-800">${filaRes.nombre}</td>
+                <td colspan="4" class="px-2 py-2 text-yellow-800">${esc(filaRes.nombre)}</td>
                 <td class="px-2 py-2 text-right font-mono text-gray-300">-</td>
                 <td class="px-2 py-2 text-right font-mono text-gray-300">-</td>
                 <td class="px-2 py-2 text-right font-mono text-gray-300">-</td>
@@ -4097,7 +4108,7 @@
                 return `<tr style="${i%2===0?'background:#f8fafc':''}">
                 <td style="padding:3px 4px;text-align:center;font-size:9px;color:#94a3b8">${n}</td>
                 <td style="padding:3px 4px;font-family:monospace;font-size:9px;font-weight:600;color:#64748b">${r.codigo}</td>
-                <td style="padding:3px 4px;font-size:9px">${r.nombre}</td>
+                <td style="padding:3px 4px;font-size:9px">${esc(r.nombre)}</td>
                 <td style="padding:3px 4px;text-align:center;font-size:8px;font-weight:700;color:${tcolor(r.tipo)}">${r.tipo.substring(0,3).toUpperCase()}</td>
                 <td style="padding:3px 4px;text-align:right;font-family:monospace;font-size:9px;color:${r.sumaD>0?'#1e293b':'#e2e8f0'}">${fmt(r.sumaD)}</td>
                 <td style="padding:3px 4px;text-align:right;font-family:monospace;font-size:9px;color:${r.sumaH>0?'#1e293b':'#e2e8f0'}">${fmt(r.sumaH)}</td>
@@ -4123,7 +4134,7 @@
             </tr>`;
 
             const filaResultado = filaRes ? `<tr style="background:#fefce8;font-weight:700;font-style:italic;font-size:9px">
-                <td colspan="4" style="padding:5px 4px;color:#854d0e">${filaRes.nombre}</td>
+                <td colspan="4" style="padding:5px 4px;color:#854d0e">${esc(filaRes.nombre)}</td>
                 <td style="padding:5px 4px;text-align:right;font-family:monospace;color:#e2e8f0">-</td>
                 <td style="padding:5px 4px;text-align:right;font-family:monospace;color:#e2e8f0">-</td>
                 <td style="padding:5px 4px;text-align:right;font-family:monospace;color:#e2e8f0">-</td>
@@ -4518,7 +4529,7 @@
                 const varColor = cuenta.tipo==='Ingreso' ? (variacion>=0?'text-green-600':'text-red-600') : (variacion<=0?'text-green-600':'text-red-600');
                 const row = `<tr>
                     <td class="font-mono font-semibold text-xs">${codigo}</td>
-                    <td>${cuenta.nombre}</td>
+                    <td>${esc(cuenta.nombre)}</td>
                     <td><span class="px-2 py-1 text-xs rounded font-medium ${cuenta.tipo==='Ingreso'?'bg-purple-100 text-purple-800':'bg-orange-100 text-orange-800'}">${cuenta.tipo}</span></td>
                     <td class="text-right font-mono">$${Math.round(ppto).toLocaleString('es-CL')}</td>
                     <td class="text-right font-mono">$${Math.round(ejec).toLocaleString('es-CL')}</td>
@@ -4581,7 +4592,7 @@
                 Object.entries(planCuentas)
                     .filter(([_, cuenta]) => cuenta.tipo === 'Ingreso' || cuenta.tipo === 'Gasto')
                     .sort((a, b) => a[0].localeCompare(b[0]))
-                    .map(([codigo, cuenta]) => `<option value="${codigo}">${codigo} - ${cuenta.nombre} (${cuenta.tipo})</option>`)
+                    .map(([codigo, cuenta]) => `<option value="${codigo}">${codigo} - ${esc(cuenta.nombre)} (${cuenta.tipo})</option>`)
                     .join('');
         }
 
@@ -4722,7 +4733,7 @@
                 const varSig   = variacion >= 0 ? '+' : '-';
                 const row = `<tr style="border-bottom:1px solid #f1f5f9">
                     <td style="padding:7px 10px;font-family:monospace;font-size:11px">${codigo}</td>
-                    <td style="padding:7px 10px">${cuenta.nombre}</td>
+                    <td style="padding:7px 10px">${esc(cuenta.nombre)}</td>
                     <td style="padding:7px 10px;text-align:right;font-family:monospace">$${Math.round(ppto).toLocaleString('es-CL')}</td>
                     <td style="padding:7px 10px;text-align:right;font-family:monospace">$${Math.round(ejec).toLocaleString('es-CL')}</td>
                     <td style="padding:7px 10px;text-align:right;font-family:monospace;${varColor}">${varSig}$${Math.round(Math.abs(variacion)).toLocaleString('es-CL')}</td>
@@ -4913,11 +4924,11 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                     <td>${a.fecha}</td>
                     <td style="text-align:center;font-family:monospace">${a.voucher}</td>
                     <td><span style="font-family:monospace;font-size:11px;background:#f1f5f9;padding:2px 6px;border-radius:4px">${a.codigo}</span></td>
-                    <td>${a.cuenta}</td>
+                    <td>${esc(a.cuenta)}</td>
                     <td>${centrosCosto[a.cc]?.nombre||a.cc}</td>
                     <td class="num">${a.debe>0?fmtM(a.debe):'-'}</td>
                     <td class="num">${a.haber>0?fmtM(a.haber):'-'}</td>
-                    <td style="font-size:11px;color:#555">${a.glosa}</td>
+                    <td style="font-size:11px;color:#555">${esc(a.glosa)}</td>
                 </tr>`;
             }).join('');
             const html = `
@@ -5167,7 +5178,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 const bg = c.nivel===1?'background:#e8f4f8':c.nivel===2?'background:#f8fafc':'';
                 return `<tr style="${bg}">
                     <td style="font-family:monospace;font-size:11px">${cod}</td>
-                    <td style="${fw}">${indent}${c.nombre}</td>
+                    <td style="${fw}">${indent}${esc(c.nombre)}</td>
                     <td><span class="badge ${badge(c.tipo)}">${c.tipo}</span></td>
                     <td style="text-align:center;color:#888;font-size:11px">Nivel ${c.nivel}</td>
                 </tr>`;
@@ -5197,7 +5208,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 totI+=t.ingresos; totG+=t.gastos;
                 return `<tr>
                     <td style="font-family:monospace;font-size:11px">${cod}</td>
-                    <td style="font-weight:600">${c.nombre}</td>
+                    <td style="font-weight:600">${esc(c.nombre)}</td>
                     <td class="num" style="color:#047857">${fmtM(t.ingresos)}</td>
                     <td class="num" style="color:#DC2626">${fmtM(t.gastos)}</td>
                     <td class="num" style="color:${res>=0?'#047857':'#DC2626'};font-weight:700">${fmtM(res)}</td>
@@ -5230,7 +5241,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 const barW=Math.min(pct,100).toFixed(0);
                 return `<tr>
                     <td style="font-family:monospace;font-size:11px">${cod}</td>
-                    <td>${c.nombre}</td>
+                    <td>${esc(c.nombre)}</td>
                     <td><span class="badge ${c.tipo==='Ingreso'?'badge-ing':'badge-gasto'}">${c.tipo}</span></td>
                     <td class="num">${fmtM(ppto)}</td>
                     <td class="num">${fmtM(ejec)}</td>
@@ -5391,7 +5402,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
 
                     return `<tr class="border-b border-gray-100 hover:bg-blue-50 cursor-pointer text-sm" onclick="this.nextElementSibling.classList.toggle('hidden')">
                         <td class="px-3 py-2.5 font-mono font-semibold text-gray-600 pl-6">▶ ${cod}</td>
-                        <td class="px-3 py-2.5 text-gray-800">${c.nombre}</td>
+                        <td class="px-3 py-2.5 text-gray-800">${esc(c.nombre)}</td>
                         <td class="px-3 py-2.5"><span class="px-2 py-0.5 rounded-full text-xs font-bold ${tipoColor(c.tipo)}">${c.tipo}</span></td>
                         <td class="px-3 py-2.5 text-right font-mono text-green-700 font-semibold">${c.debe>0?fmt(c.debe):'-'}</td>
                         <td class="px-3 py-2.5 text-right font-mono text-blue-700 font-semibold">${c.haber>0?fmt(c.haber):'-'}</td>
@@ -5411,7 +5422,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 <div class="bg-white rounded-2xl shadow-lg overflow-hidden mb-4">
                     <div class="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-blue-800 to-blue-600 text-white">
                         <span class="text-lg font-mono font-bold">${ccCod}</span>
-                        <span class="text-lg font-bold flex-1">${cc.nombre}</span>
+                        <span class="text-lg font-bold flex-1">${esc(cc.nombre)}</span>
                         <div class="flex gap-4 text-sm">
                             <span class="bg-white/20 px-3 py-1 rounded-lg">📥 Debe: <strong>${fmt(ccDebe)}</strong></span>
                             <span class="bg-white/20 px-3 py-1 rounded-lg">📤 Haber: <strong>${fmt(ccHaber)}</strong></span>
@@ -6447,7 +6458,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                     if (!window.db) { actualizarSelectorEmpresas(); return; }
                     const empKeys2 = ['anfa_renca','empresa_2','empresa_3','empresa_4','empresa_5','empresa_6','empresa_7','empresa_8','empresa_9','empresa_10','empresa_11','empresa_12','empresa_13','empresa_14','empresa_15'];
                     let cfgLocal2 = {};
-                    try { cfgLocal2 = JSON.parse(localStorage.getItem('empresas_config')) || {}; } catch(e) {}
+                    try { cfgLocal2 = JSON.parse(localStorage.getItem('empresas_config')) || {}; } catch(e) { console.warn('[SYS]', e); }
 
                     // Leer doc global de Firebase
                     const globalDoc = await window.db.collection('empresas').doc('global').get();
@@ -6458,7 +6469,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                         // Intentar leer empresas_config JSON primero
                         let cfgFbJson = {};
                         if (gd.empresas_config) {
-                            try { cfgFbJson = JSON.parse(gd.empresas_config) || {}; } catch(e) {}
+                            try { cfgFbJson = JSON.parse(gd.empresas_config) || {}; } catch(e) { console.warn('[SYS]', e); }
                             console.log('[EMPRESAS] empresas_config JSON:', JSON.stringify(cfgFbJson).substring(0,200));
                         }
 
@@ -6496,7 +6507,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                                 localStorage.setItem('usuarios_claves', doc.data().datos['usuarios_claves']);
                                 break;
                             }
-                        } catch(e) {}
+                        } catch(e) { console.warn('[SYS]', e); }
                     }
 
                 } catch(e) { console.warn('[EMPRESAS] Error precarga Firebase:', e); }
@@ -6518,7 +6529,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                     });
                     if (_cambio) localStorage.setItem('empresas_config', JSON.stringify(_cfg));
                 }
-            } catch(e) {}
+            } catch(e) { console.warn('[SYS]', e); }
             actualizarSelectorEmpresas(); // inmediato con localStorage
             // Intentar con Firebase - reintenta hasta 3 veces si db no está lista aún
             let _precargaIntentos = 0;
@@ -7144,7 +7155,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 Object.entries(planCuentas)
                     .filter(([,c]) => c.nivel === 4)
                     .sort((a,b) => a[0].localeCompare(b[0]))
-                    .map(([cod,c]) => `<option value="${cod}">${cod} - ${c.nombre} (${c.tipo})</option>`)
+                    .map(([cod,c]) => `<option value="${cod}">${cod} - ${esc(c.nombre)} (${c.tipo})</option>`)
                     .join('');
         }
 
@@ -7761,7 +7772,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                     <td class="px-4 py-2 text-gray-700 text-xs">${p.banco.desc}${p.manual?'<span class="ml-1 px-1.5 py-0.5 bg-purple-100 text-purple-700 text-xs rounded">Manual</span>':''}</td>
                     <td class="px-4 py-2 text-right font-mono font-semibold ${p.banco.monto>=0?'text-green-700':'text-red-700'}">${fmt(p.banco.monto)}</td>
                     <td class="px-4 py-2 font-mono text-xs text-gray-500">${fmtDate(p.libro.fecha)}</td>
-                    <td class="px-4 py-2 text-gray-700 text-xs">V${p.libro.voucher} ${p.libro.glosa}</td>
+                    <td class="px-4 py-2 text-gray-700 text-xs">V${p.libro.voucher} ${esc(p.libro.glosa)}</td>
                     <td class="px-4 py-2 text-right font-mono font-semibold ${p.libro.monto>=0?'text-green-700':'text-red-700'}">${fmt(p.libro.monto)}</td>
                     <td class="px-4 py-2 text-center"><span class="px-2 py-0.5 rounded-full text-xs font-bold ${Math.abs(p.banco.monto-p.libro.monto)<1?'bg-green-100 text-green-700':'bg-yellow-100 text-yellow-700'}">${Math.abs(p.banco.monto-p.libro.monto)<1?'✓ OK':fmt(p.banco.monto-p.libro.monto)}</span></td>
                 </tr>`).join('')
@@ -7787,8 +7798,8 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                 ? _concSoloLibro.map((m,i) => `
                 <tr class="border-b ${i%2?'bg-gray-50':''} hover:bg-blue-50" id="libro-row-${i}">
                     <td class="px-4 py-2 font-mono text-xs text-gray-500">${fmtDate(m.fecha)}</td>
-                    <td class="px-4 py-2 text-gray-700 text-xs">V${m.voucher} — ${m.glosa}</td>
-                    <td class="px-4 py-2 text-xs text-gray-500">${m.cuenta}</td>
+                    <td class="px-4 py-2 text-gray-700 text-xs">V${m.voucher} — ${esc(m.glosa)}</td>
+                    <td class="px-4 py-2 text-xs text-gray-500">${esc(m.cuenta)}</td>
                     <td class="px-4 py-2 text-right font-mono font-semibold ${m.monto>=0?'text-green-700':'text-red-700'}">${fmt(m.monto)}</td>
                 </tr>`).join('')
                 : '<tr><td colspan="4" class="px-4 py-6 text-center text-gray-400">✅ Todo en banco está contabilizado</td></tr>';
@@ -7933,6 +7944,86 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
 
         // Tabs
         // ── BACKUP EXPORTAR / IMPORTAR ────────────────────────────
+        let _descuadrados = [];
+        function verificarCuadratura() {
+            try {
+                const g = {};
+                (asientos || []).forEach(a => {
+                    const k = String(a.voucher);
+                    if (!g[k]) g[k] = {voucher: a.voucher, fecha: a.fecha, glosa: a.glosa, debe: 0, haber: 0, lineas: 0};
+                    g[k].debe += Number(a.debe) || 0;
+                    g[k].haber += Number(a.haber) || 0;
+                    g[k].lineas++;
+                });
+                _descuadrados = Object.values(g).filter(x => Math.abs(x.debe - x.haber) > 0.99)
+                    .sort((a, b) => (Number(a.voucher) || 0) - (Number(b.voucher) || 0));
+                const bar = document.getElementById('alerta-descuadre');
+                if (!bar) return;
+                if (_descuadrados.length) {
+                    const v = _descuadrados.slice(0, 5).map(x => '#' + x.voucher).join(', ');
+                    document.getElementById('alerta-descuadre-txt').textContent =
+                        '⚠️ ' + _descuadrados.length + ' asiento(s) descuadrado(s): voucher ' + v + (_descuadrados.length > 5 ? '…' : '');
+                    bar.style.display = 'flex';
+                } else {
+                    bar.style.display = 'none';
+                }
+            } catch (e) { console.warn('[CUADRATURA]', e); }
+        }
+        function verDetalleDescuadre() {
+            if (!_descuadrados.length) return;
+            const fm = n => '$' + (Number(n) || 0).toLocaleString('es-CL');
+            const filas = _descuadrados.map(x => `<tr>
+                <td style="padding:6px 10px;font-weight:700">#${esc(x.voucher)}</td>
+                <td style="padding:6px 10px">${esc(x.fecha)}</td>
+                <td style="padding:6px 10px">${esc(x.glosa)}</td>
+                <td style="padding:6px 10px;text-align:right">${fm(x.debe)}</td>
+                <td style="padding:6px 10px;text-align:right">${fm(x.haber)}</td>
+                <td style="padding:6px 10px;text-align:right;color:#dc2626;font-weight:700">${fm(x.debe - x.haber)}</td></tr>`).join('');
+            const ov = document.createElement('div');
+            ov.id = 'ov-descuadre';
+            ov.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+            ov.innerHTML = `<div style="background:#fff;border-radius:14px;max-width:900px;width:100%;max-height:85vh;overflow:auto;padding:18px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+                    <strong style="font-size:16px;color:#dc2626">Asientos descuadrados (${_descuadrados.length})</strong>
+                    <button onclick="document.getElementById('ov-descuadre').remove()" style="border:none;background:#e2e8f0;border-radius:8px;padding:4px 12px;cursor:pointer;font-weight:700">Cerrar</button>
+                </div>
+                <table style="width:100%;border-collapse:collapse;font-size:13px">
+                    <thead><tr style="background:#f1f5f9;text-align:left"><th style="padding:6px 10px">Voucher</th><th style="padding:6px 10px">Fecha</th><th style="padding:6px 10px">Glosa</th><th style="padding:6px 10px;text-align:right">Debe</th><th style="padding:6px 10px;text-align:right">Haber</th><th style="padding:6px 10px;text-align:right">Diferencia</th></tr></thead>
+                    <tbody>${filas}</tbody></table></div>`;
+            document.body.appendChild(ov);
+        }
+        (function () {
+            const _a = actualizarTablaAsientos;
+            actualizarTablaAsientos = function () { const r = _a.apply(this, arguments); verificarCuadratura(); return r; };
+            const _c = cargarLocalStorage;
+            cargarLocalStorage = function () { const r = _c.apply(this, arguments); verificarCuadratura(); return r; };
+        })();
+
+        async function exportarBackupTodas() {
+            if (!window.db) { showToast('Firebase no disponible', 'error'); return; }
+            showToast('Generando backup de todas las empresas...', 'success');
+            try {
+                guardarLocalStorage();
+                const out = {version:'2.0', fecha:new Date().toISOString(), empresas:{}};
+                const col = await window.db.collection('empresas').get();
+                for (const d of col.docs) {
+                    const datos = d.data().datos || {};
+                    const n = datos.asientos_chunks || 0;
+                    let a = '';
+                    for (let i=0;i<n;i++) { const c = await d.ref.collection('chunks').doc('asientos_'+i).get(); a += c.exists ? c.data().data : ''; }
+                    if (a) datos['asientos_'+d.id] = a;
+                    delete datos.asientos_chunks;
+                    out.empresas[d.id] = datos;
+                }
+                const b = new Blob([JSON.stringify(out)], {type:'application/json'});
+                const l = document.createElement('a');
+                l.href = URL.createObjectURL(b);
+                l.download = 'backup_TODAS_' + new Date().toISOString().slice(0,10) + '.json';
+                l.click();
+                showToast('Backup listo: ' + Object.keys(out.empresas).length + ' empresas', 'success');
+            } catch(e) { showToast('Error en backup: ' + e.message, 'error'); }
+        }
+
         function exportarBackup() {
             const empresa = sesionActual.empresa || 'anfa_renca';
             // Primero guardar datos actuales en localStorage
@@ -8471,8 +8562,8 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             <td style="padding:5px 8px;font-family:monospace;white-space:nowrap">${a.fecha}</td>
             <td style="padding:5px 8px;font-family:monospace">${a.voucher}</td>
             <td style="padding:5px 8px;font-family:monospace;font-weight:600">${a.codigo}</td>
-            <td style="padding:5px 8px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${a.cuenta}</td>
-            <td style="padding:5px 8px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#64748b">${a.glosa}</td>
+            <td style="padding:5px 8px;max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(a.cuenta)}</td>
+            <td style="padding:5px 8px;max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#64748b">${esc(a.glosa)}</td>
             <td style="padding:5px 8px;text-align:right;font-family:monospace;color:#15803d;font-weight:600">${a.debe>0?fmtP(a.debe):'-'}</td>
             <td style="padding:5px 8px;text-align:right;font-family:monospace;color:#1d4ed8;font-weight:600">${a.haber>0?fmtP(a.haber):'-'}</td>
         </tr>`).join('')}
@@ -9526,7 +9617,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             const conMovs = Object.values(clubData).filter(c=>c.totalCargos>0||c.totalAbonos>0);
             console.log('Clubes con movimientos CxC:', conMovs.length);
             conMovs.forEach(c => console.log(' -', c.nombre, 'cargos:', c.totalCargos, 'abonos:', c.totalAbonos));
-            alert('Ver consola. Asientos: '+asientos.length+', CxC: '+cxcAsientos.length+', Clubes con movs: '+conMovs.length);
+            console.log('Asientos: '+asientos.length+', CxC: '+cxcAsientos.length+', Clubes con movs: '+conMovs.length);
         }
 
         // ══════════════════════════════════════════════════════════════
@@ -10680,7 +10771,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
                         o.value = k; o.textContent = v.nombre || k;
                         sel.appendChild(o);
                     });
-            } catch(e) {}
+            } catch(e) { console.warn('[SYS]', e); }
             ejecutarInforme();
             } catch(err) {
                 console.error('iniciarInforme error:', err);
@@ -11869,11 +11960,14 @@ document.addEventListener('click', function(e){
   }
 
   if(t.id==='btn-del'){
+    if(sesionActual&&sesionActual.rol==='solo_lectura'){showToast('Sin permisos','error');return;}
     var sel2 = Array.from(document.querySelectorAll('.check-asiento:checked'));
     if(!sel2.length) return;
     if(!confirm('¿Eliminar '+sel2.length+' movimiento(s)?')) return;
     var ids = sel2.map(function(c){return parseInt(c.getAttribute('data-idx'));}).sort(function(a,b){return b-a;});
-    ids.forEach(function(i){asientos.splice(i,1);});
+    var _k=(sesionActual&&sesionActual.empresa)||'default'; var _ts=_syncTombstones(_k);
+    ids.forEach(function(i){var a=asientos[i]; if(a){_ts[a._id||('legacy_'+_syncHash(_syncCanonical(a)))]=Date.now();} asientos.splice(i,1);});
+    _syncSaveTombstones(_k,_ts);
     guardarLocalStorage(); syncFirebase();
     actualizarTablaAsientos(); actualizarUltimosMovimientos(); actualizarTablaMayor(); calcularReportes();
     showToast('🗑️ '+ids.length+' eliminado(s)','success');
