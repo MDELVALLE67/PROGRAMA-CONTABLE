@@ -20,6 +20,7 @@
     <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" onerror="window._firebaseLoadError=true"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js" onerror="window._firebaseLoadError=true"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js" onerror="window._firebaseLoadError=true"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
@@ -2079,6 +2080,11 @@
                         firebase.initializeApp(firebaseConfig);
                     }
                     db = firebase.firestore();
+                    try {
+                        window._authPromise = firebase.auth().signInAnonymously()
+                            .then(() => console.log('[AUTH] sesión anónima OK'))
+                            .catch(e => console.warn('[AUTH] anónima falló:', e.code));
+                    } catch (e) { console.warn('[AUTH]', e); }
                     window.db = db; // exponer globalmente para guardarConfigEmpresas y otras funciones
                     // Habilitar persistencia offline para que funcione aunque no haya internet momentáneamente
                     db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
@@ -8003,6 +8009,7 @@ body { background:#fff; padding:28px 32px; color:#1E293B; font-size:13px; }
             if (!window.db) { showToast('Firebase no disponible', 'error'); return; }
             showToast('Generando backup de todas las empresas...', 'success');
             try {
+                if (window._authPromise) await window._authPromise;
                 guardarLocalStorage();
                 const out = {version:'2.0', fecha:new Date().toISOString(), empresas:{}};
                 const col = await window.db.collection('empresas').get();
